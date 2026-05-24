@@ -1174,10 +1174,26 @@ body {
 
 <div class="container">
 
+  <!-- Banner API key mancante -->
+  <div id="noKeyBanner" style="display:none; align-items:center; gap:14px; padding:14px 18px;
+    background:rgba(255,140,30,0.10); border:1px solid rgba(255,140,30,0.35);
+    border-radius:10px; margin-bottom:20px; flex-wrap:wrap;">
+    <span class="material-symbols-rounded" style="color:var(--accent);font-size:22px;">lock</span>
+    <span style="flex:1; font-size:14px; color:var(--ink);">
+      <strong>API key non configurata.</strong>
+      Inserisci la tua API key Windsor.ai per visualizzare i dati del profilo.
+    </span>
+    <button onclick="document.getElementById('modal').classList.add('show')"
+      style="background:var(--accent);border:none;color:var(--bg);padding:8px 16px;
+      border-radius:7px;cursor:pointer;font-family:var(--font-mono);font-size:12px;
+      font-weight:700;display:inline-flex;align-items:center;gap:6px;
+      touch-action:manipulation;">
+      <span class="material-symbols-rounded" style="font-size:16px;">settings</span>
+      Configura ora
+    </button>
+  </div>
+
   <section class="hero">
-    <div class="hero-eyebrow">Editorial dashboard</div>
-    <h1 class="hero-title">Le metriche che <span class="accent">contano</span>, in un unico colpo d'occhio.</h1>
-    <p class="hero-lede">Dati Instagram live da Windsor.ai, aggiornati automaticamente a ogni apertura. Refresha la pagina per vedere i dati di oggi.</p>
     <div class="hero-meta">
       <span><span class="material-symbols-rounded">calendar_month</span><span id="metaPeriod">—</span></span>
       <span><span class="material-symbols-rounded">cloud_sync</span><span>Powered by Windsor.ai</span></span>
@@ -1188,6 +1204,26 @@ body {
       <span id="freshnessText">Verifica freschezza dati…</span>
     </div>
   </section>
+
+  <!-- TAB NAVIGATOR -->
+  <nav class="tab-nav" role="tablist" aria-label="Sezioni dashboard">
+    <button class="tab-btn active" data-tab="performance" onclick="tabSwitch(this)" role="tab">
+      <span class="material-symbols-rounded">bar_chart</span>
+      <span class="tab-label">Performance</span>
+    </button>
+    <button class="tab-btn" data-tab="contentlab" onclick="tabSwitch(this)" role="tab">
+      <span class="material-symbols-rounded">science</span>
+      <span class="tab-label">Content Lab</span>
+    </button>
+    <button class="tab-btn" data-tab="calendario" onclick="tabSwitch(this)" role="tab">
+      <span class="material-symbols-rounded">calendar_month</span>
+      <span class="tab-label">Calendario</span>
+    </button>
+    <button class="tab-btn" data-tab="strategia" onclick="tabSwitch(this)" role="tab">
+      <span class="material-symbols-rounded">map</span>
+      <span class="tab-label">Strategia</span>
+    </button>
+  </nav>
 
   <!-- DAILY ACTION (Feature #9) -->
   <div class="daily-action">
@@ -1360,26 +1396,6 @@ body {
       <dt>🎯 Target</dt><dd> = soglia di riferimento calcolata sul profilo: verde se raggiunto, rosso se sotto il 50%.</dd>
     </dl>
   </div>
-
-  <!-- TAB NAVIGATOR -->
-  <nav class="tab-nav" role="tablist" aria-label="Sezioni dashboard">
-    <button class="tab-btn active" data-tab="performance" onclick="tabSwitch(this)" role="tab">
-      <span class="material-symbols-rounded">bar_chart</span>
-      <span class="tab-label">Performance</span>
-    </button>
-    <button class="tab-btn" data-tab="contentlab" onclick="tabSwitch(this)" role="tab">
-      <span class="material-symbols-rounded">science</span>
-      <span class="tab-label">Content Lab</span>
-    </button>
-    <button class="tab-btn" data-tab="calendario" onclick="tabSwitch(this)" role="tab">
-      <span class="material-symbols-rounded">calendar_month</span>
-      <span class="tab-label">Calendario</span>
-    </button>
-    <button class="tab-btn" data-tab="strategia" onclick="tabSwitch(this)" role="tab">
-      <span class="material-symbols-rounded">map</span>
-      <span class="tab-label">Strategia</span>
-    </button>
-  </nav>
 
   <!-- WEEKS (Modifica #2: settimane con date GG/MM) -->
   <section class="section" data-tab="performance">
@@ -3256,8 +3272,17 @@ function calSetupEvents() {
 }
 
 async function init() {
+  // Attiva tab performance subito — così il layout è sempre visibile
+  document.querySelectorAll('section[data-tab="performance"]').forEach(s => s.classList.add('tab-active'));
   const apiKey = getKey();
-  if (!apiKey) { setStatus('error', 'API key non configurata'); document.getElementById('modal').classList.add('show'); return; }
+  if (!apiKey) {
+    setStatus('error', '⚙️  Configura la API key per vedere i dati');
+    // Mostra banner visibile in cima
+    const banner = document.getElementById('noKeyBanner');
+    if (banner) banner.style.display = 'flex';
+    document.getElementById('modal').classList.add('show');
+    return;
+  }
   setStatus('', 'Caricamento dati…');
   try {
     const [daily, posts, profile] = await Promise.all([
@@ -3271,8 +3296,6 @@ async function init() {
     // Calendario
     calPublishedPosts = posts;
     calSetupEvents();
-    // Attiva tab performance all'avvio
-    document.querySelectorAll('section[data-tab="performance"]').forEach(s => s.classList.add('tab-active'));
     const validPosts = posts.filter(p => p.media_reach != null && p.media_reach > 0);
     const ctx = renderKPIs(daily, profile, validPosts);
     if (ctx) {
@@ -3323,7 +3346,7 @@ document.getElementById('btnShare').addEventListener('click', () => document.get
 document.getElementById('btnShareClose').addEventListener('click', () => document.getElementById('modalShare').classList.remove('show'));
 document.getElementById('modalShare').addEventListener('click', (e) => { if (e.target.id === 'modalShare') document.getElementById('modalShare').classList.remove('show'); });
 
-init();
+document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
 </html>
