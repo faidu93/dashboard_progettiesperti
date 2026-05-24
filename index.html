@@ -1205,8 +1205,6 @@ body {
     </div>
   </section>
 
-  </section><!-- /tab-summary -->
-
   <!-- TAB NAVIGATOR -->
   <nav class="tab-nav" role="tablist" aria-label="Sezioni dashboard">
     <button class="tab-btn active" data-tab="calendario" onclick="tabSwitch(this)" role="tab">
@@ -1255,7 +1253,7 @@ body {
   </div>
 
   <!-- FUNNEL BAR -->
-  <section class="funnel-bar">
+  <div class="funnel-bar">
     <div class="funnel-step">
       <span class="funnel-step-label">Reach totale periodo</span>
       <span class="funnel-step-value" id="fb-reach">—</span>
@@ -1273,10 +1271,10 @@ body {
       <span class="funnel-step-value" id="fb-follow">—</span>
       <span class="funnel-step-conv" id="fb-follow-conv">—</span>
     </div>
-  </section>
+  </div>
 
   <!-- KPI BAND (Modifica #1: 5 KPI con varianze 7gg + 30gg) -->
-  <section class="kpi-band" id="kpiBand">
+  <div class="kpi-band" id="kpiBand">
     <div class="kpi">
       <div class="kpi-label">👥 Follower</div>
       <div class="kpi-value" id="k-followers">—</div>
@@ -1392,7 +1390,7 @@ body {
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
   <div class="glossary">
     <div class="glossary-title"><span class="material-symbols-rounded">help</span>Cosa significano i KPI</div>
@@ -1405,6 +1403,8 @@ body {
       <dt>🎯 Target</dt><dd> = soglia di riferimento calcolata sul profilo: verde se raggiunto, rosso se sotto il 50%.</dd>
     </dl>
   </div>
+
+  </section><!-- /tab-summary -->
 
   <!-- FOLLOWER ANALYSIS -->
   <section class="section" data-tab="performance">
@@ -3319,6 +3319,7 @@ async function init() {
     calPublishedPosts = posts;
     calSetupEvents();
     ytSetupEvents();
+    calRender(); // render calendario IG subito (tab attiva di default)
 
     // Fetch YouTube video pubblicati
     try {
