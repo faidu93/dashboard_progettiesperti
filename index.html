@@ -3323,20 +3323,22 @@ async function init() {
 
     // Fetch YouTube video pubblicati
     try {
-      const ytRaw = await fetchWindsor(apiKey, ['published_at','video_title','views','likes'], { date_preset: 'last_1y' }, 'youtube');
-      // Aggrega per video_title — usa published_at come data reale di pubblicazione
+      const ytRaw = await fetchWindsor(apiKey, ['published_at','video_title','views','likes'], {}, 'youtube');
+      // Deduplicazione per titolo: ogni video ha una sola published_at reale
       const ytMap = {};
       ytRaw.forEach(r => {
         const t = r.video_title || 'Video';
-        const pubDate = (r.published_at || '').slice(0, 10); // YYYY-MM-DD
+        const pubDate = (r.published_at || '').slice(0, 10);
         if (!pubDate) return;
-        if (!ytMap[t]) {
-          ytMap[t] = { date: pubDate, title: t, views: 0, likes: 0 };
+        const key = t + '|' + pubDate; // dedup per titolo+data (2 video potrebbero avere lo stesso titolo)
+        if (!ytMap[key]) {
+          ytMap[key] = { date: pubDate, title: t, views: 0, likes: 0 };
         }
-        ytMap[t].views += (r.views || 0);
-        ytMap[t].likes += (r.likes || 0);
+        ytMap[key].views += (r.views || 0);
+        ytMap[key].likes += (r.likes || 0);
       });
       window.ytPublishedVideos = Object.values(ytMap);
+      console.log('YT videos loaded:', window.ytPublishedVideos.length);
     } catch(e) {
       console.log('YouTube fetch non disponibile:', e);
       window.ytPublishedVideos = [];
