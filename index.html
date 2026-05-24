@@ -3302,11 +3302,16 @@ async function init() {
   }
   setStatus('', 'Caricamento dati…');
   try {
-    const [daily, posts, profile] = await Promise.all([
-      fetchWindsor(apiKey, ['date','reach','views','accounts_engaged','likes','comments','saves','shares','total_interactions','follows_and_unfollows','follower_count_1d'], { date_preset: 'last_90d' }),
+    const [daily, posts, profile, followerDaily] = await Promise.all([
+      fetchWindsor(apiKey, ['date','reach','views','accounts_engaged','likes','comments','saves','shares','total_interactions','follows_and_unfollows'], { date_preset: 'last_90d' }),
       fetchWindsor(apiKey, ['media_id','timestamp','media_type','media_caption','media_permalink','media_reach','media_engagement','media_like_count','media_comments_count','media_saved','media_shares'], { date_preset: 'last_90d' }),
-      fetchWindsor(apiKey, ['account_name','followers_count','media_count']).then(r => Array.isArray(r) ? r[0] : r)
+      fetchWindsor(apiKey, ['account_name','followers_count','media_count']).then(r => Array.isArray(r) ? r[0] : r),
+      fetchWindsor(apiKey, ['date','follower_count_1d'], { date_preset: 'last_30d' }).catch(() => [])
     ]);
+    // Unisco follower_count_1d nei daily
+    const follMap = {};
+    (followerDaily || []).forEach(r => { if (r.date) follMap[r.date] = r.follower_count_1d; });
+    daily.forEach(d => { if (follMap[d.date] != null) d.follower_count_1d = follMap[d.date]; });
     daily.sort((a,b) => new Date(a.date) - new Date(b.date));
     CACHED = { daily, posts, profile };
     renderFreshness(daily);
