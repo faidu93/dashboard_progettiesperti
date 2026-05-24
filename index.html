@@ -1034,8 +1034,8 @@ body {
   /* Griglia: colonna etichetta + 7 giorni */
   .cal-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
   }
   .cal-dow {
     font-family: var(--font-mono); font-size: 10.5px; font-weight: 700;
@@ -1044,12 +1044,12 @@ body {
   }
   .cal-dow.weekend { color: rgba(160,160,168,0.45); }
   .cal-day {
-    min-height: 90px; background: var(--bg-elev-2);
-    border-radius: 8px; padding: 8px;
+    min-height: 82px; background: var(--bg-elev-2);
+    border-radius: 6px; padding: 6px;
     border: 1px solid var(--line);
     display: flex; flex-direction: column; gap: 3px;
     cursor: pointer; transition: border-color 0.12s;
-    position: relative;
+    position: relative; overflow: hidden;
   }
   .cal-day:hover { border-color: var(--accent); }
   .cal-day.today {
@@ -1205,9 +1205,19 @@ body {
     </div>
   </section>
 
+  </section><!-- /tab-summary -->
+
   <!-- TAB NAVIGATOR -->
   <nav class="tab-nav" role="tablist" aria-label="Sezioni dashboard">
-    <button class="tab-btn active" data-tab="performance" onclick="tabSwitch(this)" role="tab">
+    <button class="tab-btn active" data-tab="calendario" onclick="tabSwitch(this)" role="tab">
+      <span class="material-symbols-rounded">calendar_month</span>
+      <span class="tab-label">Calendario</span>
+    </button>
+    <button class="tab-btn" data-tab="summary" onclick="tabSwitch(this)" role="tab">
+      <span class="material-symbols-rounded">dashboard</span>
+      <span class="tab-label">Summary</span>
+    </button>
+    <button class="tab-btn" data-tab="performance" onclick="tabSwitch(this)" role="tab">
       <span class="material-symbols-rounded">bar_chart</span>
       <span class="tab-label">Performance</span>
     </button>
@@ -1215,15 +1225,14 @@ body {
       <span class="material-symbols-rounded">science</span>
       <span class="tab-label">Content Lab</span>
     </button>
-    <button class="tab-btn" data-tab="calendario" onclick="tabSwitch(this)" role="tab">
-      <span class="material-symbols-rounded">calendar_month</span>
-      <span class="tab-label">Calendario</span>
-    </button>
     <button class="tab-btn" data-tab="strategia" onclick="tabSwitch(this)" role="tab">
       <span class="material-symbols-rounded">map</span>
       <span class="tab-label">Strategia</span>
     </button>
   </nav>
+
+  <!-- TAB: SUMMARY (daily action + funnel + KPI) -->
+  <section class="section" data-tab="summary" style="margin-bottom:0;">
 
   <!-- DAILY ACTION (Feature #9) -->
   <div class="daily-action">
@@ -1396,6 +1405,46 @@ body {
       <dt>🎯 Target</dt><dd> = soglia di riferimento calcolata sul profilo: verde se raggiunto, rosso se sotto il 50%.</dd>
     </dl>
   </div>
+
+  <!-- FOLLOWER ANALYSIS -->
+  <section class="section" data-tab="performance">
+    <div class="section-head">
+      <div><div class="section-eyebrow">👥 Crescita</div><div class="section-title">Analisi follower</div></div>
+      <div class="section-meta live">Live · dati giornalieri</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><span class="material-symbols-rounded">group_add</span>Follower: entrati vs usciti</div>
+      <div class="panel-sub">Nuovi follower al giorno e saldo netto · ultimi 14 giorni</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0;">
+        <div style="background:var(--bg-elev-2);padding:14px;border-radius:8px;text-align:center;">
+          <div style="font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">Nuovi follow</div>
+          <div style="font-size:26px;font-weight:700;color:var(--pos);font-variant-numeric:tabular-nums;" id="follNew">—</div>
+          <div style="font-size:10px;color:var(--ink-mute);margin-top:4px;">ultimi 14gg</div>
+        </div>
+        <div style="background:var(--bg-elev-2);padding:14px;border-radius:8px;text-align:center;">
+          <div style="font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">Unfollow stimati</div>
+          <div style="font-size:26px;font-weight:700;color:var(--neg);font-variant-numeric:tabular-nums;" id="follLost">—</div>
+          <div style="font-size:10px;color:var(--ink-mute);margin-top:4px;">ultimi 14gg</div>
+        </div>
+        <div style="background:var(--bg-elev-2);padding:14px;border-radius:8px;text-align:center;">
+          <div style="font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">Retention</div>
+          <div style="font-size:26px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;" id="follRetention">—</div>
+          <div style="font-size:10px;color:var(--ink-mute);margin-top:4px;">netti / nuovi</div>
+        </div>
+      </div>
+      <div style="height:180px;position:relative;margin-top:12px;">
+        <canvas id="chartFollowers"></canvas>
+      </div>
+      <div class="glossary" style="margin-top:14px;">
+        <div class="glossary-title"><span class="material-symbols-rounded">help</span>Come leggere</div>
+        <dl>
+          <dt>Nuovi follow</dt><dd> = follower acquisiti (follower_count_1d di Instagram). Solo ingressi, non include le uscite.</dd>
+          <dt>Unfollow stimati</dt><dd> = differenza tra nuovi follow e saldo netto. Es: 20 nuovi - 12 netti = ~8 unfollow.</dd>
+          <dt>Retention</dt><dd> = saldo netto / nuovi follow × 100. Sopra il 70% = ottimo. Sotto il 50% = troppi ti abbandonano.</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
 
   <!-- WEEKS (Modifica #2: settimane con date GG/MM) -->
   <section class="section" data-tab="performance">
@@ -1727,10 +1776,10 @@ body {
     </div>
   </div>
 
-  <!-- CALENDARIO EDITORIALE -->
+  <!-- CALENDARIO INSTAGRAM -->
   <section class="section" data-tab="calendario">
     <div class="section-head">
-      <div><div class="section-eyebrow">📅 Pianificazione</div><div class="section-title">Calendario editoriale</div></div>
+      <div><div class="section-eyebrow">📸 Instagram</div><div class="section-title">Calendario Instagram</div></div>
       <div class="section-meta">Windsor.ai + pianificati</div>
     </div>
     <div class="panel">
@@ -1751,7 +1800,35 @@ body {
         <span><i class="cl-car"></i>CAROSELLO</span>
         <span><i class="cl-reel"></i>REEL</span>
         <span><i class="cl-story"></i>STORY</span>
-        <span><i class="cl-plan"></i>Pianificato (bordo tratteggiato)</span>
+        <span><i class="cl-plan"></i>Pianificato</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CALENDARIO YOUTUBE -->
+  <section class="section" data-tab="calendario">
+    <div class="section-head">
+      <div><div class="section-eyebrow">🎬 YouTube</div><div class="section-title">Calendario YouTube</div></div>
+      <div class="section-meta live">Windsor.ai + pianificati</div>
+    </div>
+    <div class="panel">
+      <div class="cal-nav">
+        <div class="cal-nav-title" id="ytMonthTitle">—</div>
+        <div class="cal-nav-btns">
+          <button class="cal-btn" id="ytPrev"><span class="material-symbols-rounded">chevron_left</span></button>
+          <button class="cal-btn" id="ytToday">Oggi</button>
+          <button class="cal-btn" id="ytNext"><span class="material-symbols-rounded">chevron_right</span></button>
+          <button class="cal-btn primary" id="ytAddBtn">
+            <span class="material-symbols-rounded">add</span>Pianifica
+          </button>
+        </div>
+      </div>
+      <div class="cal-grid" id="ytGrid"></div>
+      <div class="cal-legend">
+        <span><i style="background:rgba(255,0,0,0.45);width:10px;height:10px;border-radius:2px;display:inline-block;"></i>VIDEO</span>
+        <span><i style="background:rgba(90,174,240,0.45);width:10px;height:10px;border-radius:2px;display:inline-block;"></i>SHORT</span>
+        <span><i style="background:rgba(54,201,118,0.45);width:10px;height:10px;border-radius:2px;display:inline-block;"></i>LIVE</span>
+        <span><i class="cl-plan"></i>Pianificato</span>
       </div>
     </div>
   </section>
@@ -1892,7 +1969,7 @@ body {
 </div>
 
 <script>
-const WINDSOR_BASE = 'https://connectors.windsor.ai/instagram';
+const WINDSOR_BASE = 'https://connectors.windsor.ai/';
 const MONTHS_NUM = ['01','02','03','04','05','06','07','08','09','10','11','12'];
 const COLLAB_KEY = 'epf_collab_posts'; // localStorage key per i post collaborativi
 
@@ -1915,12 +1992,12 @@ function toggleCollab(mediaId) {
   try { localStorage.setItem(COLLAB_KEY, JSON.stringify([...s])); } catch(e) {}
 }
 
-async function fetchWindsor(apiKey, fields, opts = {}) {
+async function fetchWindsor(apiKey, fields, opts = {}, connector = 'instagram') {
   const params = new URLSearchParams({ api_key: apiKey, fields: fields.join(',') });
   if (opts.date_preset) params.set('date_preset', opts.date_preset);
   if (opts.date_from) params.set('date_from', opts.date_from);
   if (opts.date_to) params.set('date_to', opts.date_to);
-  const url = `${WINDSOR_BASE}?${params}`;
+  const url = `${WINDSOR_BASE}${connector}?${params}`;
   const res = await fetch(url);
   if (!res.ok) { const body = await res.text().catch(()=>'' ); throw new Error(`HTTP ${res.status} — ${body.slice(0,200)}`); }
   const j = await res.json();
@@ -2844,7 +2921,7 @@ function tabSwitch(btn) {
   if (tabId === 'performance' && CACHED && CACHED.period) {
     renderReachChart(CACHED.period);
   }
-  if (tabId === 'calendario') calRender();
+  if (tabId === 'calendario') { calRender(); ytRender(); }
 }
 
 // ============================================================================
@@ -2999,7 +3076,9 @@ function calOpenModal(ds, id) {
   document.getElementById('calEditId').value = id || '';
   document.getElementById('calDate').value = ds || calDateStr(new Date());
   document.getElementById('calTime').value = '10:00';
+  document.getElementById('calType').innerHTML = '<option value="IMAGE">📊 IMAGE</option><option value="CAROUSEL_ALBUM">🎠 CAROSELLO</option><option value="REELS">🎬 REEL</option><option value="STORY">📱 STORY</option>';
   document.getElementById('calType').value = 'IMAGE';
+  document.getElementById('calModal').dataset.platform = 'ig';
   document.getElementById('calTitle').value = '';
   document.getElementById('calNotes').value = '';
   document.getElementById('calDeleteBtn').style.display = 'none';
@@ -3030,6 +3109,7 @@ function calSetupEvents() {
     if (e.target.id === 'calDetail') document.getElementById('calDetail').classList.remove('show');
   };
   document.getElementById('calSaveBtn').onclick = () => {
+    const platform = document.getElementById('calModal').dataset.platform || 'ig';
     const id = document.getElementById('calEditId').value;
     const date = document.getElementById('calDate').value;
     const time = document.getElementById('calTime').value;
@@ -3037,29 +3117,180 @@ function calSetupEvents() {
     const title = document.getElementById('calTitle').value.trim();
     const notes = document.getElementById('calNotes').value.trim();
     if (!date || !title) { alert('Inserisci almeno data e titolo.'); return; }
-    const items = calLoad();
+    const loadFn = platform === 'yt' ? ytCalLoad : calLoad;
+    const saveFn = platform === 'yt' ? ytCalSave : calSave;
+    const renderFn = platform === 'yt' ? ytRender : calRender;
+    const items = loadFn();
     if (id) {
       const idx = items.findIndex(i => i.id === id);
       if (idx >= 0) items[idx] = {id, date, time, type, title, notes};
     } else {
       items.push({id: Date.now().toString(), date, time, type, title, notes});
     }
-    calSave(items);
+    saveFn(items);
     document.getElementById('calModal').classList.remove('show');
-    calRender();
+    renderFn();
   };
   document.getElementById('calDeleteBtn').onclick = () => {
+    const platform = document.getElementById('calModal').dataset.platform || 'ig';
     const id = document.getElementById('calEditId').value;
     if (!id || !confirm('Eliminare questo post pianificato?')) return;
-    calSave(calLoad().filter(i => i.id !== id));
+    const loadFn = platform === 'yt' ? ytCalLoad : calLoad;
+    const saveFn = platform === 'yt' ? ytCalSave : calSave;
+    const renderFn = platform === 'yt' ? ytRender : calRender;
+    saveFn(loadFn().filter(i => i.id !== id));
     document.getElementById('calModal').classList.remove('show');
-    calRender();
+    renderFn();
   };
 }
 
+
+// ============================================================================
+// CALENDARIO YOUTUBE (solo pianificati, no Windsor per ora)
+// ============================================================================
+const YT_CAL_KEY = 'epf_yt_calendar';
+let ytCurrentDate = new Date();
+
+function ytCalLoad() {
+  try { return JSON.parse(localStorage.getItem(YT_CAL_KEY) || '[]'); } catch { return []; }
+}
+function ytCalSave(items) { localStorage.setItem(YT_CAL_KEY, JSON.stringify(items)); }
+
+function ytRender() {
+  const grid = document.getElementById('ytGrid');
+  const titleEl = document.getElementById('ytMonthTitle');
+  if (!grid) return;
+  const MONTHS = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
+    'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  const DOW = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  const y = ytCurrentDate.getFullYear();
+  const m = ytCurrentDate.getMonth();
+  titleEl.textContent = MONTHS[m] + ' ' + y;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const firstDay = new Date(y, m, 1);
+  const lastDay = new Date(y, m+1, 0);
+  const startDow = (firstDay.getDay() + 6) % 7;
+  const planned = ytCalLoad();
+  let h = DOW.map((d,i) => `<div class="cal-dow${i>=5?' weekend':''}">${d}</div>`).join('');
+  for (let i = 0; i < startDow; i++) {
+    const d = new Date(y, m, 1-(startDow-i));
+    h += `<div class="cal-day other-month"><span class="cal-day-num">${d.getDate()}</span></div>`;
+  }
+  for (let day = 1; day <= lastDay.getDate(); day++) {
+    const date = new Date(y, m, day);
+    const ds = calDateStr(date);
+    const isToday = date.getTime() === today.getTime();
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+    let cls = isToday ? ' today' : '';
+    if (isWeekend) cls += ' weekend-day';
+    const plan = planned.filter(p => p.date === ds);
+    let posts = '';
+    const typeColors = { VIDEO: 'rgba(255,0,0,0.15)', SHORT: 'rgba(90,174,240,0.15)', LIVE: 'rgba(54,201,118,0.15)' };
+    const typeFg = { VIDEO: '#ff4444', SHORT: '#5aaef0', LIVE: '#36c976' };
+    // Video pubblicati da Windsor
+    const ytPub = (window.ytPublishedVideos || []).filter(v => v.date === ds);
+    ytPub.forEach(v => {
+      const shortT = v.title.length > 25 ? v.title.slice(0,25)+'…' : v.title;
+      posts += `<div class="cal-post pub" style="background:rgba(255,0,0,0.2);color:#ff6666;"
+        title="${v.title} · ${v.views} views · ${v.likes} likes">▶ ${shortT}</div>`;
+    });
+
+    plan.forEach(p => {
+      const bg = typeColors[p.type] || 'rgba(255,255,255,0.05)';
+      const fg = typeFg[p.type] || 'var(--ink-soft)';
+      posts += `<div class="cal-post plan" style="border-color:${fg};color:${fg};background:${bg};"
+        onclick="ytEditPlanned(event,'${p.id}')"
+        title="${p.time||''} ${p.title}">${p.time?p.time.slice(0,5)+' ':''}${p.title}</div>`;
+    });
+    h += `<div class="cal-day${cls}" data-date="${ds}" onclick="ytDayClick(event,'${ds}')">
+      <span class="cal-day-num">${day}</span>${posts}<div class="cal-plus">+</div></div>`;
+  }
+  const used = startDow + lastDay.getDate();
+  const tail = (7 - (used % 7)) % 7;
+  for (let i = 1; i <= tail; i++) {
+    h += `<div class="cal-day other-month"><span class="cal-day-num">${i}</span></div>`;
+  }
+  grid.innerHTML = h;
+}
+
+function ytDayClick(e, ds) {
+  if (e.target.closest('.cal-post')) return;
+  ytOpenModal(ds);
+}
+function ytEditPlanned(e, id) {
+  e.stopPropagation();
+  const item = ytCalLoad().find(i => i.id === id);
+  if (!item) return;
+  document.getElementById('calEditId').value = id;
+  document.getElementById('calDate').value = item.date;
+  document.getElementById('calTime').value = item.time || '10:00';
+  document.getElementById('calType').innerHTML = '<option value="VIDEO">🎬 VIDEO</option><option value="SHORT">📱 SHORT</option><option value="LIVE">🔴 LIVE</option>';
+  document.getElementById('calType').value = item.type;
+  document.getElementById('calTitle').value = item.title;
+  document.getElementById('calNotes').value = item.notes || '';
+  document.getElementById('calDeleteBtn').style.display = 'inline-flex';
+  document.getElementById('calModalTitle').textContent = 'Modifica post YouTube';
+  document.getElementById('calModal').dataset.platform = 'yt';
+  document.getElementById('calModal').classList.add('show');
+}
+function ytOpenModal(ds) {
+  document.getElementById('calEditId').value = '';
+  document.getElementById('calDate').value = ds || calDateStr(new Date());
+  document.getElementById('calTime').value = '10:00';
+  document.getElementById('calType').innerHTML = '<option value="VIDEO">🎬 VIDEO</option><option value="SHORT">📱 SHORT</option><option value="LIVE">🔴 LIVE</option>';
+  document.getElementById('calType').value = 'VIDEO';
+  document.getElementById('calTitle').value = '';
+  document.getElementById('calNotes').value = '';
+  document.getElementById('calDeleteBtn').style.display = 'none';
+  document.getElementById('calModalTitle').textContent = 'Pianifica post YouTube';
+  document.getElementById('calModal').dataset.platform = 'yt';
+  document.getElementById('calModal').classList.add('show');
+}
+function ytSetupEvents() {
+  document.getElementById('ytPrev').onclick = () => { ytCurrentDate = new Date(ytCurrentDate.getFullYear(), ytCurrentDate.getMonth()-1,1); ytRender(); };
+  document.getElementById('ytNext').onclick = () => { ytCurrentDate = new Date(ytCurrentDate.getFullYear(), ytCurrentDate.getMonth()+1,1); ytRender(); };
+  document.getElementById('ytToday').onclick = () => { ytCurrentDate = new Date(); ytRender(); };
+  document.getElementById('ytAddBtn').onclick = () => ytOpenModal(null);
+}
+
+// ============================================================================
+// FOLLOWER ANALYSIS — chart + KPI
+// ============================================================================
+function renderFollowerAnalysis(daily) {
+  // Prendo gli ultimi 14 giorni con dati validi
+  const valid = daily.filter(d => d.follower_count_1d != null || d.follows_and_unfollows != null).slice(-14);
+  if (valid.length === 0) return;
+  const newF = valid.reduce((s,d) => s + (d.follower_count_1d||0), 0);
+  const netF = valid.reduce((s,d) => s + (d.follows_and_unfollows||0), 0);
+  const lostF = Math.max(0, newF - netF);
+  const retention = newF > 0 ? Math.round(netF/newF*100) : 0;
+  const el = (id,v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
+  el('follNew', '+' + newF);
+  el('follLost', '-' + lostF);
+  el('follRetention', retention + '%');
+  // Chart
+  const ctx = document.getElementById('chartFollowers');
+  if (!ctx) return;
+  new Chart(ctx.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: valid.map(d => fmtDate(new Date(d.date))),
+      datasets: [
+        { label: 'Nuovi follow', data: valid.map(d => d.follower_count_1d||0), backgroundColor: 'rgba(54,201,118,0.6)', borderRadius: 3, barPercentage: 0.7 },
+        { label: 'Saldo netto', data: valid.map(d => d.follows_and_unfollows||0), backgroundColor: 'rgba(255,140,30,0.6)', borderRadius: 3, barPercentage: 0.7 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, position: 'top', labels: { font: { family: 'Inter', size: 11 }, color: '#a0a0a8', boxWidth: 12, padding: 12 } } },
+      scales: { x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 10 }, color: '#6b6b74' } }, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { family: 'Inter', size: 10 }, color: '#6b6b74' } } }
+    }
+  });
+}
+
 async function init() {
-  // Attiva tab performance subito — così il layout è sempre visibile
-  document.querySelectorAll('section[data-tab="performance"]').forEach(s => s.classList.add('tab-active'));
+  // Attiva tab calendario subito
+  document.querySelectorAll('section[data-tab="calendario"]').forEach(s => s.classList.add('tab-active'));
   const apiKey = getKey();
   if (!apiKey) {
     setStatus('error', '⚙️  Configura la API key per vedere i dati');
@@ -3072,7 +3303,7 @@ async function init() {
   setStatus('', 'Caricamento dati…');
   try {
     const [daily, posts, profile] = await Promise.all([
-      fetchWindsor(apiKey, ['date','reach','views','accounts_engaged','likes','comments','saves','shares','total_interactions','follows_and_unfollows'], { date_preset: 'last_90d' }),
+      fetchWindsor(apiKey, ['date','reach','views','accounts_engaged','likes','comments','saves','shares','total_interactions','follows_and_unfollows','follower_count_1d'], { date_preset: 'last_90d' }),
       fetchWindsor(apiKey, ['media_id','timestamp','media_type','media_caption','media_permalink','media_reach','media_engagement','media_like_count','media_comments_count','media_saved','media_shares'], { date_preset: 'last_90d' }),
       fetchWindsor(apiKey, ['account_name','followers_count','media_count']).then(r => Array.isArray(r) ? r[0] : r)
     ]);
@@ -3082,12 +3313,35 @@ async function init() {
     // Calendario
     calPublishedPosts = posts;
     calSetupEvents();
+    ytSetupEvents();
+
+    // Fetch YouTube video pubblicati
+    try {
+      const ytRaw = await fetchWindsor(apiKey, ['date','video_title','views','likes'], { date_preset: 'last_30d' }, 'youtube');
+      // Aggrega per video_title (un video ha molte righe, una per giorno)
+      // Teniamo la data più vecchia come data di pubblicazione
+      const ytMap = {};
+      ytRaw.forEach(r => {
+        const t = r.video_title || 'Video';
+        if (!ytMap[t] || r.date < ytMap[t].date) {
+          ytMap[t] = { date: r.date, title: t, views: 0, likes: 0 };
+        }
+        ytMap[t].views += (r.views || 0);
+        ytMap[t].likes += (r.likes || 0);
+      });
+      window.ytPublishedVideos = Object.values(ytMap);
+    } catch(e) {
+      console.log('YouTube fetch non disponibile:', e);
+      window.ytPublishedVideos = [];
+    }
+    ytRender();
     const validPosts = posts.filter(p => p.media_reach != null && p.media_reach > 0);
     const ctx = renderKPIs(daily, profile, validPosts);
     if (ctx) {
       CACHED.period = ctx.period;
       renderWeeks(ctx.period);
       renderReachChart(ctx.period);
+      renderFollowerAnalysis(daily);
     }
     renderLatest(validPosts);
     renderTopPostsByFormat(validPosts);
