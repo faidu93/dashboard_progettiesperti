@@ -34,7 +34,9 @@
   --font-mono: 'Inter', -apple-system, system-ui, sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { background: var(--bg); }
+html, body { background: var(--bg); overflow-x: hidden; }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
 body {
   font-family: var(--font-body);
   color: var(--ink); font-size: 15px; line-height: 1.55;
@@ -301,6 +303,13 @@ body {
 .week-card.mid { border-top-color: rgba(255,140,30,0.5); }
 .week-card.weak { border-top-color: rgba(255,140,30,0.2); }
 .week-card.current { border-top-color: var(--accent-bright); }
+
+.week-posts .week-metric-val { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.week-types { display: inline-flex; gap: 4px; font-size: 9.5px; font-weight: 600; }
+.wt { background: var(--bg-elev); border-radius: 3px; padding: 2px 5px; line-height: 1; font-family: var(--font-mono); }
+.wt-img { color: var(--accent-bright); }
+.wt-car { color: var(--info); }
+.wt-reel { color: var(--pos); }
 .week-best-badge { font-size: 9.5px; padding: 2px 6px; background: var(--pos); color: var(--bg); border-radius: 3px; font-weight: 700; letter-spacing: 0.04em; margin-left: 6px; vertical-align: middle; }
 .week-card.current::after { content: 'IN CORSO'; position: absolute; top: 10px; right: 12px; font-family: var(--font-mono); font-size: 8.5px; padding: 2px 6px; background: rgba(255,140,30,0.15); color: var(--accent); border-radius: 3px; font-weight: 600; letter-spacing: 0.06em; }
 .week-label { font-family: var(--font-mono); font-size: 11px; color: var(--accent); font-weight: 500; margin-bottom: 2px; }
@@ -487,7 +496,11 @@ body {
 /* ──────────────────────────────────────────
    RESPONSIVE — mobile grande (≤768px)
 ────────────────────────────────────────── */
-@media (max-width: 768px) {
+@media (max-width: 768px) {  /* Anti-overflow mobile */
+  .panel, .section, .container, .heatmap-wrap, .tab-nav { max-width: 100%; }
+  img, canvas, svg { max-width: 100%; height: auto; }
+  .heatmap-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
   /* Generali */
   .container { padding: 20px 14px 40px; }
   .nav-inner { padding: 12px 14px; gap: 10px; }
@@ -532,6 +545,8 @@ body {
 
   /* Latest */
   .latest-card { grid-template-columns: 1fr; gap: 8px; }
+  .latest-stats { min-width: 0; grid-template-columns: repeat(3, 1fr) !important; gap: 8px; }
+  .latest-meta { min-width: 0; }
   .latest-meta { flex-direction: row; align-items: center; gap: 8px; flex-wrap: wrap; }
   .latest-stats { grid-template-columns: repeat(3, 1fr); justify-items: start; }
   .latest-stat { align-items: flex-start; }
@@ -609,7 +624,7 @@ body {
   .funnel-step-val { font-size: 20px; }
 
   /* Settimane: 1 colonna */
-  .weeks-grid { grid-template-columns: 1fr; }
+  .weeks-grid { grid-template-columns: 1fr; gap: 8px; }
 
   /* Heatmap: riduco ancora */
   .heatmap { grid-template-columns: 38px repeat(5, 1fr); gap: 2px; }
@@ -1151,6 +1166,129 @@ body {
   .cal-detail-caption { font-size: 12px; color: var(--ink-soft); line-height: 1.5; max-height: 90px; overflow-y: auto; white-space: pre-line; }
   .cal-detail-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 
+
+
+  /* ============ TREND DELLA SETTIMANA ============ */
+  .trends-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .trend-col { display: flex; flex-direction: column; gap: 10px; }
+  .trend-col-title {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+    color: var(--ink-mute); text-transform: uppercase; letter-spacing: 0.06em;
+    display: flex; align-items: center; gap: 6px; margin-bottom: 4px;
+  }
+  .trend-col-title .material-symbols-rounded { font-size: 16px; color: var(--accent); }
+  .trend-list { display: flex; flex-direction: column; gap: 10px; }
+  .trend-item {
+    background: var(--bg-elev-2); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 8px; padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .trend-tag {
+    font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em; padding: 3px 7px;
+    border-radius: 4px; align-self: flex-start;
+    background: rgba(255,140,30,0.15); color: var(--accent-bright);
+  }
+  .trend-tag.hot { background: rgba(239,90,90,0.18); color: var(--neg); }
+  .trend-tag.format { background: rgba(54,201,118,0.15); color: var(--pos); }
+  .trend-body { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+  .trend-body strong { color: var(--ink); font-weight: 600; }
+  @media (max-width: 768px) { .trends-grid { grid-template-columns: 1fr; } }
+
+
+  /* ============ BACHECA + COMPETITOR ============ */
+  .board-tabs { display: flex; gap: 6px; margin-bottom: 16px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+  .board-tab {
+    background: transparent; border: 1px solid var(--line); color: var(--ink-soft);
+    padding: 8px 14px; border-radius: 7px; cursor: pointer;
+    font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+    transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .board-tab:hover { background: var(--bg-elev-2); color: var(--ink); }
+  .board-tab.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .board-count {
+    background: rgba(0,0,0,0.25); padding: 1px 7px; border-radius: 10px;
+    font-size: 10px; font-weight: 700;
+  }
+  .board-tab:not(.active) .board-count { background: var(--bg-elev-2); color: var(--ink-mute); }
+  .board-pane { display: none; }
+  .board-pane.active { display: block; }
+
+  .board-toolbar {
+    display: flex; gap: 12px; align-items: center; justify-content: space-between;
+    margin-bottom: 14px; flex-wrap: wrap;
+  }
+
+  .board-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+  }
+  .board-empty {
+    grid-column: 1/-1; text-align: center; padding: 40px 20px;
+    color: var(--ink-mute); font-size: 13px; background: var(--bg-elev-2);
+    border-radius: 10px; border: 1px dashed var(--line);
+  }
+  .idea-tile {
+    background: var(--bg-elev-2); border: 1px solid var(--line);
+    border-left: 3px solid var(--accent); border-radius: 8px;
+    padding: 12px 14px; cursor: pointer;
+    display: flex; flex-direction: column; gap: 8px;
+    transition: border-color 0.15s, transform 0.12s;
+  }
+  .idea-tile:hover { border-color: var(--line-strong); transform: translateY(-2px); }
+  .idea-tile.s-idea { border-left-color: var(--accent); }
+  .idea-tile.s-draft { border-left-color: var(--info); }
+  .idea-tile.s-planned { border-left-color: var(--accent-bright); }
+  .idea-tile.s-published { border-left-color: var(--pos); opacity: 0.7; }
+  .idea-tile-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .idea-tile-status {
+    font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .idea-tile.s-idea .idea-tile-status { background: rgba(255,140,30,0.15); color: var(--accent-bright); }
+  .idea-tile.s-draft .idea-tile-status { background: rgba(90,174,240,0.15); color: var(--info); }
+  .idea-tile.s-planned .idea-tile-status { background: rgba(255,140,30,0.25); color: var(--accent); }
+  .idea-tile.s-published .idea-tile-status { background: rgba(54,201,118,0.15); color: var(--pos); }
+  .idea-tile-type {
+    font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute);
+    padding: 2px 6px; background: var(--bg-elev); border-radius: 3px;
+  }
+  .idea-tile-title { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.35; }
+  .idea-tile-notes { font-size: 11.5px; color: var(--ink-soft); line-height: 1.45; max-height: 60px; overflow: hidden; }
+  .idea-tile-source { font-size: 10.5px; color: var(--ink-mute); font-family: var(--font-mono); font-style: italic; }
+  .idea-tile-source .material-symbols-rounded { font-size: 12px; vertical-align: -2px; }
+
+  .competitor-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .competitor-tile {
+    background: var(--bg-elev-2); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;
+    transition: border-color 0.15s, transform 0.12s;
+  }
+  .competitor-tile:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .competitor-tile-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .competitor-username { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--ink); }
+  .competitor-username::before { content: '@'; color: var(--ink-mute); }
+  .competitor-note { font-size: 11px; color: var(--ink-soft); line-height: 1.4; min-height: 16px; }
+  .competitor-actions { display: flex; gap: 6px; margin-top: 4px; }
+  .competitor-actions a, .competitor-actions button {
+    flex: 1; padding: 6px 8px; font-size: 11px; font-family: var(--font-mono); font-weight: 600;
+    border-radius: 5px; border: 1px solid var(--line); cursor: pointer;
+    background: var(--bg-elev); color: var(--ink-soft); text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    transition: all 0.15s;
+  }
+  .competitor-actions a:hover { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .competitor-actions button:hover { color: var(--ink); border-color: var(--line-strong); }
+
+  @media (max-width: 640px) {
+    .board-tabs { gap: 4px; }
+    .board-tab { padding: 7px 10px; font-size: 11px; }
+    .board-grid, .competitor-grid { grid-template-columns: 1fr; }
+  }
 
 </style>
 </head>
@@ -1833,6 +1971,98 @@ body {
     </div>
   </section>
 
+
+  <!-- BACHECA IDEE + COMPETITOR -->
+  <section class="section" data-tab="calendario">
+    <div class="section-head">
+      <div><div class="section-eyebrow">💡 Bacheca</div><div class="section-title">Idee & competitor</div></div>
+      <div class="section-meta">Salva idee al volo · monitora i top profili</div>
+    </div>
+
+    <div class="panel">
+      <div class="board-tabs">
+        <button class="board-tab active" data-board="ideas" onclick="boardSwitch(this)">📝 Bacheca idee <span class="board-count" id="boardIdeasCount">0</span></button>
+        <button class="board-tab" data-board="competitors" onclick="boardSwitch(this)">👀 Competitor</button>
+      </div>
+
+      <!-- BACHECA IDEE -->
+      <div class="board-pane active" id="board-ideas">
+        <div class="board-toolbar">
+          <button class="cal-btn primary" onclick="boardOpenIdea(null)"><span class="material-symbols-rounded">add</span>Nuova idea</button>
+          <div style="font-size:11px;color:var(--ink-mute);font-family:var(--font-mono);">Scrivi idee al volo · clicca <strong>Pianifica</strong> per spostarle nel calendario</div>
+        </div>
+        <div class="board-grid" id="boardGrid">
+          <div class="board-empty">Nessuna idea ancora. Cliccaci sopra <strong>Nuova idea</strong> per iniziare.</div>
+        </div>
+      </div>
+
+      <!-- COMPETITOR -->
+      <div class="board-pane" id="board-competitors">
+        <div class="board-toolbar">
+          <button class="cal-btn primary" onclick="competitorOpen(null)"><span class="material-symbols-rounded">add</span>Aggiungi profilo</button>
+          <div style="font-size:11px;color:var(--ink-mute);font-family:var(--font-mono);">Apri su Instagram, vedi cosa pubblicano, torna qui e salva l'idea</div>
+        </div>
+        <div class="competitor-grid" id="competitorGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL IDEA -->
+  <div class="cal-modal-bg" id="ideaModal">
+    <div class="cal-modal">
+      <h3 id="ideaModalTitle">Nuova idea</h3>
+      <input type="hidden" id="ideaEditId">
+      <div class="cal-field">
+        <label>Titolo / Concept</label>
+        <input type="text" id="ideaTitle" placeholder="Es: TOP 10 colpi mercato sotto i 10 crediti">
+      </div>
+      <div class="cal-field">
+        <label>Formato</label>
+        <select id="ideaType">
+          <option value="IMAGE">📊 IMAGE</option>
+          <option value="CAROUSEL_ALBUM">🎠 CAROSELLO</option>
+          <option value="REELS">🎬 REEL</option>
+          <option value="STORY">📱 STORY</option>
+        </select>
+      </div>
+      <div class="cal-field">
+        <label>Note (opzionali)</label>
+        <textarea id="ideaNotes" placeholder="Copy, riferimenti, link al competitor da cui hai preso spunto…"></textarea>
+      </div>
+      <div class="cal-field">
+        <label>Fonte ispirazione (opzionale)</label>
+        <input type="text" id="ideaSource" placeholder="Es: @laboratoriocalcistico — top 11 della stagione">
+      </div>
+      <div class="cal-modal-actions">
+        <button class="cal-btn" id="ideaDeleteBtn" style="color:var(--neg);display:none;" onclick="boardDeleteIdea()">Elimina</button>
+        <button class="cal-btn" onclick="document.getElementById('ideaModal').classList.remove('show')">Annulla</button>
+        <button class="cal-btn" onclick="boardPromoteIdea()" id="ideaPromoteBtn" style="display:none;"><span class="material-symbols-rounded">event</span>Pianifica nel calendario</button>
+        <button class="cal-btn primary" onclick="boardSaveIdea()"><span class="material-symbols-rounded">save</span>Salva</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL COMPETITOR -->
+  <div class="cal-modal-bg" id="competitorModal">
+    <div class="cal-modal" style="max-width:380px;">
+      <h3 id="competitorModalTitle">Aggiungi profilo</h3>
+      <input type="hidden" id="compEditId">
+      <div class="cal-field">
+        <label>Username Instagram (senza @)</label>
+        <input type="text" id="compUsername" placeholder="Es: laboratoriocalcistico">
+      </div>
+      <div class="cal-field">
+        <label>Note (opzionali)</label>
+        <input type="text" id="compNote" placeholder="Es: Top-list tecniche, 16k follower">
+      </div>
+      <div class="cal-modal-actions">
+        <button class="cal-btn" id="compDeleteBtn" style="color:var(--neg);display:none;" onclick="boardDeleteCompetitor()">Elimina</button>
+        <button class="cal-btn" onclick="document.getElementById('competitorModal').classList.remove('show')">Annulla</button>
+        <button class="cal-btn primary" onclick="boardSaveCompetitor()"><span class="material-symbols-rounded">save</span>Salva</button>
+      </div>
+    </div>
+  </div>
+
   <!-- IDEE DI CONTENUTO (Modifica #3) -->
   <section class="section" data-tab="calendario">
     <div class="section-head">
@@ -2214,7 +2444,7 @@ function renderKPI(id, value, valueCls, wk1, wk2) {
   document.getElementById(id+'-wk2-delta').className = `kpi-delta-val ${wk2.delta.cls}`;
 }
 
-function renderWeeks(period) {
+function renderWeeks(period, posts) {
   const grid = document.getElementById('weeksGrid');
   grid.innerHTML = '';
   const weeks = [];
@@ -2229,8 +2459,25 @@ function renderWeeks(period) {
     foll: w.reduce((s,r)=>s+((r.follows_and_unfollows||0)),0),
   }));
   const maxReach = Math.max(...stats.map(s=>s.reach));
+  // Conteggio post per settimana (per tipo)
+  const postsByWeek = weeks.map(w => {
+    if (!posts || w.length === 0) return { total:0, IMAGE:0, CAROUSEL_ALBUM:0, REELS:0 };
+    const start = new Date(w[0].date); start.setHours(0,0,0,0);
+    const end = new Date(w[w.length-1].date); end.setHours(23,59,59,999);
+    const inWeek = posts.filter(p => {
+      const t = new Date(p.timestamp);
+      return t >= start && t <= end;
+    });
+    return {
+      total: inWeek.length,
+      IMAGE: inWeek.filter(p => p.media_type === 'IMAGE').length,
+      CAROUSEL_ALBUM: inWeek.filter(p => p.media_type === 'CAROUSEL_ALBUM').length,
+      REELS: inWeek.filter(p => p.media_type === 'REELS').length,
+    };
+  });
   weeks.forEach((w, idx) => {
     const s = stats[idx];
+    const pCount = postsByWeek[idx];
     const er = s.reach > 0 ? (s.ints/s.reach)*100 : 0;
     const dStart = new Date(w[0].date);
     const dEnd = new Date(w[w.length-1].date);
@@ -2250,7 +2497,8 @@ function renderWeeks(period) {
       <div class="week-metric"><span class="week-metric-label">Reach</span><span class="week-metric-val${s.reach===maxReach?' accent':''}">${numIt(s.reach)}</span></div>
       <div class="week-metric"><span class="week-metric-label">Interazioni</span><span class="week-metric-val">${numIt(s.ints)}</span></div>
       <div class="week-metric"><span class="week-metric-label">Follower</span><span class="week-metric-val">${s.foll>=0?'+':''}${s.foll}</span></div>
-      <div class="week-metric"><span class="week-metric-label">ER</span><span class="week-metric-val">${pct1(er)}</span></div>`;
+      <div class="week-metric"><span class="week-metric-label">ER</span><span class="week-metric-val">${pct1(er)}</span></div>
+      <div class="week-metric week-posts"><span class="week-metric-label">Contenuti</span><span class="week-metric-val">${pCount.total}${pCount.total > 0 ? ' <span class="week-types">'+(pCount.IMAGE?'<span class="wt wt-img" title="IMAGE">📊'+pCount.IMAGE+'</span>':'')+(pCount.CAROUSEL_ALBUM?'<span class="wt wt-car" title="CAROSELLO">🎠'+pCount.CAROUSEL_ALBUM+'</span>':'')+(pCount.REELS?'<span class="wt wt-reel" title="REEL">🎬'+pCount.REELS+'</span>':'')+'</span>' : ''}</span></div>`;
     grid.appendChild(card);
   });
 }
@@ -2599,7 +2847,7 @@ function refreshDataDisplay() {
   const validPosts = CACHED.posts.filter(p => p.media_reach != null && p.media_reach > 0);
   const ctx = renderKPIs(CACHED.daily, CACHED.profile, validPosts);
   if (ctx) {
-    renderWeeks(ctx.period);
+    renderWeeks(ctx.period, validPosts);
   }
   renderLatest(validPosts);
   renderTopPostsByFormat(validPosts);
@@ -3128,6 +3376,14 @@ function calSetupEvents() {
       items.push({id: Date.now().toString(), date, time, type, title, notes});
     }
     saveFn(items);
+    // Se viene da un'idea, rimuovo l'idea dalla bacheca (è stata "spostata" nel calendario)
+    const fromIdea = document.getElementById('calModal').dataset.fromIdea;
+    if (fromIdea) {
+      const ideas = boardLoadIdeas().filter(i => i.id !== fromIdea);
+      boardSaveIdeas(ideas);
+      delete document.getElementById('calModal').dataset.fromIdea;
+      if (typeof boardRenderIdeas === 'function') boardRenderIdeas();
+    }
     document.getElementById('calModal').classList.remove('show');
     renderFn();
   };
@@ -3288,6 +3544,242 @@ function renderFollowerAnalysis(daily) {
   });
 }
 
+
+// ============================================================================
+// BACHECA IDEE + COMPETITOR
+// ============================================================================
+const BOARD_IDEAS_KEY = 'epf_board_ideas';
+const BOARD_COMP_KEY = 'epf_board_competitors';
+
+function boardLoadIdeas() {
+  try { return JSON.parse(localStorage.getItem(BOARD_IDEAS_KEY) || '[]'); } catch { return []; }
+}
+function boardSaveIdeas(items) { localStorage.setItem(BOARD_IDEAS_KEY, JSON.stringify(items)); }
+function boardLoadCompetitors() {
+  try { return JSON.parse(localStorage.getItem(BOARD_COMP_KEY) || '[]'); } catch { return []; }
+}
+function boardSaveCompetitors(items) { localStorage.setItem(BOARD_COMP_KEY, JSON.stringify(items)); }
+
+function boardSwitch(btn) {
+  const pane = btn.dataset.board;
+  document.querySelectorAll('.board-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.board-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('board-' + pane).classList.add('active');
+  if (pane === 'competitors') boardRenderCompetitors();
+  else boardRenderIdeas();
+}
+
+
+function boardRenderIdeas() {
+  const grid = document.getElementById('boardGrid');
+  if (!grid) return;
+  const items = boardLoadIdeas();
+  document.getElementById('boardIdeasCount').textContent = items.length;
+  if (items.length === 0) {
+    grid.innerHTML = '<div class="board-empty">Nessuna idea ancora. Clicca <strong>Nuova idea</strong> per iniziare.</div>';
+    return;
+  }
+  // Ordine: più recenti in cima
+  items.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+  const typeLabels = { IMAGE: '📊 IMAGE', CAROUSEL_ALBUM: '🎠 CAROSELLO', REELS: '🎬 REEL', STORY: '📱 STORY' };
+  grid.innerHTML = items.map(it => `
+    <div class="idea-tile" onclick="boardOpenIdea('${it.id}')">
+      <div class="idea-tile-head">
+        <span class="idea-tile-type">${typeLabels[it.type] || it.type}</span>
+      </div>
+      <div class="idea-tile-title">${escapeHtml(it.title)}</div>
+      ${it.notes ? `<div class="idea-tile-notes">${escapeHtml(it.notes)}</div>` : ''}
+      ${it.source ? `<div class="idea-tile-source"><span class="material-symbols-rounded">bookmark</span> ${escapeHtml(it.source)}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+function boardOpenIdea(id) {
+  const items = boardLoadIdeas();
+  const item = id ? items.find(i => i.id === id) : null;
+  document.getElementById('ideaEditId').value = id || '';
+  document.getElementById('ideaTitle').value = item?.title || '';
+  document.getElementById('ideaType').value = item?.type || 'IMAGE';
+  document.getElementById('ideaNotes').value = item?.notes || '';
+  document.getElementById('ideaSource').value = item?.source || '';
+  document.getElementById('ideaDeleteBtn').style.display = id ? 'inline-flex' : 'none';
+  document.getElementById('ideaPromoteBtn').style.display = id ? 'inline-flex' : 'none';
+  document.getElementById('ideaModalTitle').textContent = id ? 'Modifica idea' : 'Nuova idea';
+  document.getElementById('ideaModal').classList.add('show');
+}
+
+function boardSaveIdea() {
+  const id = document.getElementById('ideaEditId').value;
+  const title = document.getElementById('ideaTitle').value.trim();
+  if (!title) { alert('Inserisci almeno il titolo.'); return; }
+  const item = {
+    id: id || Date.now().toString(),
+    title,
+    type: document.getElementById('ideaType').value,
+    notes: document.getElementById('ideaNotes').value.trim(),
+    source: document.getElementById('ideaSource').value.trim(),
+    updatedAt: new Date().toISOString()
+  };
+  const items = boardLoadIdeas();
+  const idx = items.findIndex(i => i.id === item.id);
+  if (idx >= 0) items[idx] = item; else items.unshift(item);
+  boardSaveIdeas(items);
+  document.getElementById('ideaModal').classList.remove('show');
+  boardRenderIdeas();
+}
+
+function boardDeleteIdea() {
+  const id = document.getElementById('ideaEditId').value;
+  if (!id || !confirm('Eliminare questa idea?')) return;
+  boardSaveIdeas(boardLoadIdeas().filter(i => i.id !== id));
+  document.getElementById('ideaModal').classList.remove('show');
+  boardRenderIdeas();
+}
+
+function boardPromoteIdea() {
+  // Trasferisce l'idea nel calendario IG come post pianificato
+  const id = document.getElementById('ideaEditId').value;
+  const item = boardLoadIdeas().find(i => i.id === id);
+  if (!item) return;
+  // Apro il modal calendario pre-compilato
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  document.getElementById('ideaModal').classList.remove('show');
+  document.getElementById('calEditId').value = '';
+  document.getElementById('calDate').value = todayStr;
+  document.getElementById('calTime').value = '10:00';
+  document.getElementById('calType').innerHTML = '<option value="IMAGE">📊 IMAGE</option><option value="CAROUSEL_ALBUM">🎠 CAROSELLO</option><option value="REELS">🎬 REEL</option><option value="STORY">📱 STORY</option>';
+  document.getElementById('calType').value = item.type;
+  document.getElementById('calTitle').value = item.title;
+  document.getElementById('calNotes').value = item.notes || '';
+  document.getElementById('calDeleteBtn').style.display = 'none';
+  document.getElementById('calModalTitle').textContent = 'Pianifica da idea';
+  document.getElementById('calModal').dataset.platform = 'ig';
+  document.getElementById('calModal').dataset.fromIdea = id;
+  document.getElementById('calModal').classList.add('show');
+  // Aggiorno lo stato dell'idea a "pianificata" dopo che l'utente salva
+  // (gestito nell'evento di calSave qui sotto)
+}
+
+function boardRenderCompetitors() {
+  const grid = document.getElementById('competitorGrid');
+  if (!grid) return;
+  const items = boardLoadCompetitors();
+  if (items.length === 0) {
+    grid.innerHTML = '<div class="board-empty">Nessun profilo monitorato. Clicca <strong>Aggiungi profilo</strong> per iniziare.</div>';
+    return;
+  }
+  grid.innerHTML = items.map(c => `
+    <div class="competitor-tile">
+      <div class="competitor-tile-head">
+        <div class="competitor-username">${escapeHtml(c.username)}</div>
+      </div>
+      <div class="competitor-note">${escapeHtml(c.note || '')}</div>
+      <div class="competitor-actions">
+        <a href="https://www.instagram.com/${encodeURIComponent(c.username)}/" target="_blank" rel="noopener">
+          <span class="material-symbols-rounded" style="font-size:14px;">open_in_new</span>Apri
+        </a>
+        <button onclick="boardQuickIdea('${c.username.replace(/'/g, '')}')">
+          <span class="material-symbols-rounded" style="font-size:14px;">lightbulb</span>Idea
+        </button>
+        <button onclick="competitorOpen('${c.id}')">
+          <span class="material-symbols-rounded" style="font-size:14px;">edit</span>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function boardQuickIdea(username) {
+  // Apre il modal idea con la fonte pre-compilata
+  document.getElementById('ideaEditId').value = '';
+  document.getElementById('ideaTitle').value = '';
+  document.getElementById('ideaType').value = 'IMAGE';
+  document.getElementById('ideaNotes').value = '';
+  document.getElementById('ideaSource').value = '@' + username;
+  document.getElementById('ideaDeleteBtn').style.display = 'none';
+  document.getElementById('ideaPromoteBtn').style.display = 'none';
+  document.getElementById('ideaModalTitle').textContent = 'Idea ispirata da @' + username;
+  document.getElementById('ideaModal').classList.add('show');
+  // Switcha alla tab idee
+  document.querySelectorAll('.board-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.board-pane').forEach(p => p.classList.remove('active'));
+  document.querySelector('.board-tab[data-board="ideas"]').classList.add('active');
+  document.getElementById('board-ideas').classList.add('active');
+}
+
+function competitorOpen(id) {
+  const items = boardLoadCompetitors();
+  const item = id ? items.find(i => i.id === id) : null;
+  document.getElementById('compEditId').value = id || '';
+  document.getElementById('compUsername').value = item?.username || '';
+  document.getElementById('compNote').value = item?.note || '';
+  document.getElementById('compDeleteBtn').style.display = id ? 'inline-flex' : 'none';
+  document.getElementById('competitorModalTitle').textContent = id ? 'Modifica profilo' : 'Aggiungi profilo';
+  document.getElementById('competitorModal').classList.add('show');
+}
+
+function boardSaveCompetitor() {
+  const id = document.getElementById('compEditId').value;
+  const username = document.getElementById('compUsername').value.trim().replace(/^@/, '');
+  if (!username) { alert('Inserisci almeno l\'username.'); return; }
+  const item = {
+    id: id || Date.now().toString(),
+    username,
+    note: document.getElementById('compNote').value.trim()
+  };
+  const items = boardLoadCompetitors();
+  const idx = items.findIndex(i => i.id === item.id);
+  if (idx >= 0) items[idx] = item; else items.unshift(item);
+  boardSaveCompetitors(items);
+  document.getElementById('competitorModal').classList.remove('show');
+  boardRenderCompetitors();
+}
+
+function boardDeleteCompetitor() {
+  const id = document.getElementById('compEditId').value;
+  if (!id || !confirm('Eliminare questo profilo?')) return;
+  boardSaveCompetitors(boardLoadCompetitors().filter(i => i.id !== id));
+  document.getElementById('competitorModal').classList.remove('show');
+  boardRenderCompetitors();
+}
+
+
+// Seed iniziale: se localStorage vuoto, pre-popola con competitor e idee fresche
+function boardSeed() {
+  if (!localStorage.getItem(BOARD_COMP_KEY)) {
+    const defaultComp = [{"username": "fantacalcio_official", "note": "Account ufficiale Fantacalcio.it · top di nicchia"}, {"username": "fantamaster", "note": "Voti, consigli, news mercato · multi-format"}, {"username": "laboratoriocalcistico", "note": "Statistiche xG, analisi tecniche · ~16k"}, {"username": "euroleghefc", "note": "Aste, mercato, consigli · ~14k"}, {"username": "fantapazz", "note": "Voti e probabili formazioni"}, {"username": "fcmazza", "note": "Consigli e formazioni · contenuti video"}, {"username": "sosfanta_official", "note": "Voti, statistiche, mercato"}, {"username": "fanta.lab", "note": "Analisi performance, format simili al tuo"}];
+    defaultComp.forEach((c, i) => c.id = 'seed-c-' + i);
+    boardSaveCompetitors(defaultComp);
+  }
+  if (!localStorage.getItem(BOARD_IDEAS_KEY)) {
+    const defaultIdeas = [{"title": "TOP 10 della stagione 2025/26", "type": "IMAGE", "status": "idea", "notes": "Classifica per fantamedia o per bonus totali. Riprende il tuo format TOP-LIST che fa PI 2x+. Da pubblicare entro fine maggio.", "source": ""}, {"title": "Top 5 rivelazioni vs top 5 flop dell'anno", "type": "CAROUSEL_ALBUM", "status": "idea", "notes": "Doppia classifica in 1 carosello: pagati poco e resi tanto vs pagati tanto e flop. Alta condivisibilità nei gruppi.", "source": ""}, {"title": "I 10 nomi da segnare per l'asta 2026/27", "type": "IMAGE", "status": "idea", "notes": "Anticipo del listone: giovani in rampa, big costanti, scommesse. Da iniziare a giugno, ripetere settimanale fino ad agosto.", "source": ""}, {"title": "Listone prezzi consigliati per ruolo", "type": "CAROUSEL_ALBUM", "status": "idea", "notes": "Contenuto evergreen pre-asta. Pubblicare prima ruolo (P/D/C/A) ogni settimana di luglio. Costruisce attesa e ricorrenza.", "source": ""}, {"title": "TOP 10 modificatore difesa stagione", "type": "IMAGE", "status": "idea", "notes": "Il tuo post sul modificatore ha fatto 2,15x. Replica per la stagione finita: i 10 difensori con miglior bonus modificatore.", "source": ""}, {"title": "Reel: 3 errori d'asta che ti fanno perdere la lega", "type": "REELS", "status": "idea", "notes": "Testa il Reel educativo. Hook nei primi 2 secondi, 15-25 sec, montaggio veloce. Format poco sfruttato sul tuo profilo.", "source": ""}, {"title": "Il parere dei 20 Esperti: 1 domanda, 20 risposte", "type": "CAROUSEL_ALBUM", "status": "idea", "notes": "Attiva finalmente il claim della bio. Es: 'Miglior acquisto sotto i 15 crediti?' Differenziante che nessun competitor ha.", "source": ""}, {"title": "La squadra ideale Mantra della stagione", "type": "IMAGE", "status": "idea", "notes": "11 titolare dei più redditizi per ruolo Mantra. Sfida i follower a dire chi manca. Alto potenziale di commenti.", "source": ""}, {"title": "Collab con un profilo 5-15k della nicchia", "type": "IMAGE", "status": "idea", "notes": "Post collaborativo (es. con laboratoriocalcistico o euroleghefc) su tema d'asta. La collab è la leva #1 per crescere prima di agosto.", "source": ""}, {"title": "TOP 10 overperformer xG 2025/26", "type": "IMAGE", "status": "idea", "notes": "Giocatori con delta Gol-xG più alto. Approccio analitico/tecnico che differenzia dai contenuti pop. Ottimo per posizionare il profilo come fonte autorevole.", "source": ""}];
+    defaultIdeas.forEach((it, i) => {
+      it.id = 'seed-i-' + i;
+      it.updatedAt = new Date().toISOString();
+    });
+    boardSaveIdeas(defaultIdeas);
+  }
+}
+
+function boardInit() {
+  boardSeed();
+  boardRenderIdeas();
+  boardRenderCompetitors();
+  // Click outside modal closes it
+  document.getElementById('ideaModal').onclick = e => {
+    if (e.target.id === 'ideaModal') document.getElementById('ideaModal').classList.remove('show');
+  };
+  document.getElementById('competitorModal').onclick = e => {
+    if (e.target.id === 'competitorModal') document.getElementById('competitorModal').classList.remove('show');
+  };
+}
+
 async function init() {
   // Attiva tab calendario subito
   document.querySelectorAll('section[data-tab="calendario"]').forEach(s => s.classList.add('tab-active'));
@@ -3320,6 +3812,7 @@ async function init() {
     calSetupEvents();
     ytSetupEvents();
     calRender(); // render calendario IG subito (tab attiva di default)
+    boardInit();
 
     // Fetch YouTube video pubblicati
     try {
@@ -3348,7 +3841,7 @@ async function init() {
     const ctx = renderKPIs(daily, profile, validPosts);
     if (ctx) {
       CACHED.period = ctx.period;
-      renderWeeks(ctx.period);
+      renderWeeks(ctx.period, validPosts);
       renderReachChart(ctx.period);
       renderFollowerAnalysis(daily);
     }
