@@ -3223,6 +3223,7 @@ function tabSwitch(btn) {
 // CALENDARIO EDITORIALE MENSILE
 // ============================================================================
 const CAL_KEY = 'epf_calendar';
+const YT_CAL_KEY = 'epf_yt_calendar';
 let calCurrentDate = new Date();
 let calCurrentFilter = 'all'; // 'all' | 'ig' | 'yt'
 
@@ -3238,6 +3239,16 @@ function calSave(items) {
   // Quando Google è connesso, il save è gestito dal modal (gcalCreate/Update/Delete)
   // Questa funzione resta per il fallback localStorage
   if (!gcalSignedIn) localStorage.setItem(CAL_KEY, JSON.stringify(items));
+}
+
+function ytCalLoad() {
+  // Se Google Calendar è connesso, ritorna gli eventi pianificati YT
+  if (gcalSignedIn) return gcalGetYtPlanned();
+  // Fallback localStorage
+  try { return JSON.parse(localStorage.getItem(YT_CAL_KEY) || '[]'); } catch { return []; }
+}
+function ytCalSave(items) {
+  if (!gcalSignedIn) localStorage.setItem(YT_CAL_KEY, JSON.stringify(items));
 }
 function calShortTitle(caption) {
   if (!caption) return 'Post';
