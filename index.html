@@ -1485,6 +1485,16 @@ body {
     .nav-btn { padding: 9px !important; min-width: 40px; }
   }
 
+
+  /* Drop target visivo */
+  .cal-day-drop-target {
+    background: rgba(255,140,30,0.15) !important;
+    border: 2px dashed var(--accent) !important;
+    transform: scale(1.02);
+  }
+  .cal-post.plan { cursor: grab; }
+  .cal-post.plan:active { cursor: grabbing; }
+
 </style>
 </head>
 <body>
@@ -3359,17 +3369,22 @@ function calRender() {
     });
     igPlanned.forEach(p => {
       posts += `<div class="cal-post plan ${p.type}"
+        draggable="true"
+        data-evid="${p.id}" data-platform="ig" data-evtype="${p.type}" data-evtitle="${p.title.replace(/"/g,'&quot;')}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}"
         onclick="calEditPlanned(event,'${p.id}','ig')"
-        title="IG · ${p.time||''} ${p.title}">📸 ${p.time?p.time.slice(0,5)+' ':''}${p.title}</div>`;
+        title="IG · ${p.time||''} ${p.title} (trascina per spostare)">📸 ${p.time?p.time.slice(0,5)+' ':''}${p.title}</div>`;
     });
     ytPlanned.forEach(p => {
       posts += `<div class="cal-post plan" style="border:1.5px dashed #ff4444;color:#ff4444;background:transparent;"
+        draggable="true"
+        data-evid="${p.id}" data-platform="yt" data-evtype="${p.type}" data-evtitle="${p.title.replace(/"/g,'&quot;')}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}"
         onclick="calEditPlanned(event,'${p.id}','yt')"
-        title="YT · ${p.time||''} ${p.title}">🎬 ${p.time?p.time.slice(0,5)+' ':''}${p.title}</div>`;
+        title="YT · ${p.time||''} ${p.title} (trascina per spostare)">🎬 ${p.time?p.time.slice(0,5)+' ':''}${p.title}</div>`;
     });
 
     h += `<div class="cal-day${cls}" data-date="${ds}"
-      onclick="calDayClick(event,'${ds}')">
+      onclick="calDayClick(event,'${ds}')"
+      ondragover="calDragOver(event)" ondrop="calDrop(event)" ondragleave="calDragLeave(event)">
       <span class="cal-day-num">${day}</span>
       ${posts}
       <div class="cal-plus">+</div>
@@ -3409,16 +3424,23 @@ function calShowDetail(e, encoded) {
   document.getElementById('calDetail').classList.add('show');
 }
 
-function calEditPlanned(e, id) {
+function calEditPlanned(e, id, platform) {
   e.stopPropagation();
-  const item = calLoad().find(i => i.id === id);
-  if (!item) return;
+  platform = platform || 'ig';
+  const item = (platform === 'yt' ? ytCalLoad() : calLoad()).find(i => i.id === id);
+  if (!item) {
+    console.warn('calEditPlanned: evento non trovato', { id, platform });
+    return;
+  }
   document.getElementById('calEditId').value = id;
+  document.getElementById('calPlatform').value = platform;
+  calOnPlatformChange(); // aggiorna le opzioni del formato in base alla piattaforma
   document.getElementById('calDate').value = item.date;
   document.getElementById('calTime').value = item.time || '10:00';
   document.getElementById('calType').value = item.type;
   document.getElementById('calTitle').value = item.title;
   document.getElementById('calNotes').value = item.notes || '';
+  document.getElementById('calModal').dataset.platform = platform;
   document.getElementById('calDeleteBtn').style.display = 'inline-flex';
   document.getElementById('calModalTitle').textContent = 'Modifica post';
   document.getElementById('calModal').classList.add('show');
@@ -3510,18 +3532,42 @@ function calSetupEvents() {
   document.getElementById('calDeleteBtn').onclick = async () => {
     const platform = document.getElementById('calPlatform').value || 'ig';
     const id = document.getElementById('calEditId').value;
-    if (!id || !confirm('Eliminare questo post pianificato?')) return;
-    if (gcalSignedIn) {
-      await gcalDeleteEvent(id);
+    if (!id) { alert('ID evento mancante.'); return; }
+    if (!confirm('Eliminare questo post pianificato?')) return;
+
+    const btn = document.getElementById('calDeleteBtn');
+    btn.disabled = true;
+    btn.textContent = 'Eliminazione...';
+
+    try {
+      if (gcalSignedIn) {
+        // Verifica che l'evento esista nella cache locale
+        const exists = gcalEvents.some(e => e.id === id);
+        if (!exists) {
+          // L'evento non c'è nella cache — provo a ricaricare prima di tentare la delete
+          await gcalLoadEvents();
+        }
+        const ok = await gcalDeleteEvent(id);
+        if (!ok) {
+          btn.disabled = false;
+          btn.textContent = 'Elimina';
+          return; // tengo il modal aperto se errore
+        }
+      } else {
+        // Fallback localStorage
+        const loadFn = platform === 'yt' ? ytCalLoad : calLoad;
+        const saveFn = platform === 'yt' ? ytCalSave : calSave;
+        saveFn(loadFn().filter(i => i.id !== id));
+        calRender();
+      }
       document.getElementById('calModal').classList.remove('show');
-      return;
+    } catch(e) {
+      console.error('Delete error:', e);
+      alert('Errore: ' + (e?.message || 'sconosciuto'));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Elimina';
     }
-    const loadFn = platform === 'yt' ? ytCalLoad : calLoad;
-    const saveFn = platform === 'yt' ? ytCalSave : calSave;
-    const renderFn = platform === 'yt' ? ytRender : calRender;
-    saveFn(loadFn().filter(i => i.id !== id));
-    document.getElementById('calModal').classList.remove('show');
-    renderFn();
   };
 }
 
@@ -3589,6 +3635,75 @@ function gcalUpdateUI() {
   }
   // Aggiorno anche l'onboarding banner
   if (typeof updateOnboarding === 'function') updateOnboarding();
+}
+
+
+// === DRAG & DROP eventi pianificati ===
+let calDragData = null;
+
+document.addEventListener('dragstart', (e) => {
+  const post = e.target.closest('.cal-post.plan');
+  if (!post) return;
+  calDragData = {
+    id: post.dataset.evid,
+    platform: post.dataset.platform,
+    type: post.dataset.evtype,
+    title: post.dataset.evtitle,
+    notes: post.dataset.evnotes,
+    time: post.dataset.evtime
+  };
+  e.dataTransfer.effectAllowed = 'move';
+  // Aggiungo classe di feedback visivo
+  post.style.opacity = '0.4';
+});
+
+document.addEventListener('dragend', (e) => {
+  const post = e.target.closest('.cal-post.plan');
+  if (post) post.style.opacity = '';
+  calDragData = null;
+});
+
+function calDragOver(e) {
+  if (!calDragData) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('cal-day-drop-target');
+}
+
+function calDragLeave(e) {
+  e.currentTarget.classList.remove('cal-day-drop-target');
+}
+
+async function calDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('cal-day-drop-target');
+  if (!calDragData) return;
+  const newDate = e.currentTarget.dataset.date;
+  if (!newDate || newDate === undefined) return;
+  const d = calDragData; // copia locale prima dell'await
+  calDragData = null;
+
+  try {
+    if (gcalSignedIn) {
+      // Aggiorno l'evento su Google Calendar
+      const ok = await gcalUpdateEvent(d.id, d.platform, newDate, d.time, d.type, d.title, d.notes);
+      if (!ok) alert('Errore nello spostamento.');
+    } else {
+      // Fallback localStorage
+      const loadFn = d.platform === 'yt' ? ytCalLoad : calLoad;
+      const saveFn = d.platform === 'yt' ? ytCalSave : calSave;
+      const items = loadFn();
+      const idx = items.findIndex(i => i.id === d.id);
+      if (idx >= 0) {
+        items[idx].date = newDate;
+        saveFn(items);
+        calRender();
+      }
+    }
+  } catch (err) {
+    console.error('Drop error:', err);
+    alert('Errore: ' + err.message);
+  }
 }
 
 function gcalInit() {
@@ -3717,7 +3832,8 @@ async function gcalCreateEvent(platform, date, time, type, title, notes) {
 }
 
 async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes) {
-  if (!gcalSignedIn) return null;
+  if (!gcalSignedIn) { alert('Non sei connesso a Google Calendar.'); return false; }
+  if (!eventId) { alert('ID evento mancante.'); return false; }
   const startDate = date + 'T' + (time || '10:00') + ':00';
   const start = new Date(startDate);
   const end = new Date(start.getTime() + 30*60*1000);
@@ -3737,16 +3853,37 @@ async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes
       }
     });
     await gcalLoadEvents();
-    return resp.result;
-  } catch(e) { console.error('gcalUpdateEvent error:', e); return null; }
+    return true;
+  } catch(e) {
+    console.error('gcalUpdateEvent error:', e);
+    alert('Errore aggiornamento: ' + (e?.result?.error?.message || e?.message || 'sconosciuto'));
+    return false;
+  }
 }
 
 async function gcalDeleteEvent(eventId) {
-  if (!gcalSignedIn) return;
+  if (!gcalSignedIn) {
+    alert('Non sei connesso a Google Calendar.');
+    return false;
+  }
+  if (!eventId) {
+    alert('ID evento mancante.');
+    return false;
+  }
   try {
     await gapi.client.calendar.events.delete({ calendarId: GCAL_CALENDAR_ID, eventId });
     await gcalLoadEvents();
-  } catch(e) { console.error('gcalDeleteEvent error:', e); }
+    return true;
+  } catch(e) {
+    console.error('gcalDeleteEvent error:', e);
+    // Status 410 = Gone (già eliminato). Status 404 = Not Found.
+    if (e?.status === 410 || e?.status === 404) {
+      await gcalLoadEvents(); // refresh comunque
+      return true; // l'evento non c'è più, considerato successo
+    }
+    alert('Errore eliminazione: ' + (e?.result?.error?.message || e?.message || 'sconosciuto'));
+    return false;
+  }
 }
 
 // Converte un evento Google → formato interno per il render
@@ -3857,6 +3994,11 @@ async function init() {
   // API key c'è — mostro comunque l'onboarding se Google non connesso
   updateOnboarding();
   setStatus('', 'Caricamento dati…');
+  // CRITICAL: setup eventi PRIMA del fetch — così i bottoni funzionano anche se Windsor fallisce
+  calSetupEvents();
+  calRender();
+  gcalInit(); // Google Calendar init sempre, anche senza Windsor
+
   try {
     const [daily, posts, profile, followerDaily] = await Promise.all([
       fetchWindsor(apiKey, ['date','reach','views','accounts_engaged','likes','comments','saves','shares','total_interactions','follows_and_unfollows'], { date_preset: 'last_90d' }),
@@ -3871,11 +4013,9 @@ async function init() {
     daily.sort((a,b) => new Date(a.date) - new Date(b.date));
     CACHED = { daily, posts, profile };
     renderFreshness(daily);
-    // Calendario
+    // Calendario: assegno i post pubblicati e re-render
     calPublishedPosts = posts;
-    calSetupEvents();
-    calRender(); // render calendario IG subito (tab attiva di default)
-    gcalInit(); // Inizializzo Google Calendar (login + sync)
+    calRender();
 
     // Fetch YouTube video pubblicati
     try {
