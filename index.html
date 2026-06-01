@@ -3845,9 +3845,13 @@ function gcalLogout() {
 }
 
 async function gcalLoadEvents() {
-  if (!gcalSignedIn) return;
+  if (!gcalSignedIn) { console.log('[gcalLoadEvents] skipped: not signed in'); return; }
+  if (typeof gapi === 'undefined' || !gapi.client || !gapi.client.calendar) {
+    console.log('[gcalLoadEvents] skipped: gapi not ready');
+    return;
+  }
+  console.log('[gcalLoadEvents] loading from', GCAL_CALENDAR_ID);
   try {
-    // Carico eventi degli ultimi 60 giorni + futuri 180 giorni
     const timeMin = new Date(Date.now() - 60*24*3600*1000).toISOString();
     const timeMax = new Date(Date.now() + 180*24*3600*1000).toISOString();
     const resp = await gapi.client.calendar.events.list({
@@ -3858,6 +3862,7 @@ async function gcalLoadEvents() {
       orderBy: 'startTime'
     });
     gcalEvents = resp.result.items || [];
+    console.log('[gcalLoadEvents] loaded', gcalEvents.length, 'events');
     const countEl = document.getElementById('gcalEvtCount');
     if (countEl) countEl.textContent = gcalEvents.length;
     calRender(); ytRender();
@@ -3872,35 +3877,33 @@ async function gcalLoadEvents() {
 }
 
 async function gcalCreateEvent(platform, date, time, type, title, notes) {
-  if (!gcalSignedIn) { alert('Devi prima accedere a Google Calendar.'); return null; }
-  const startDate = date + 'T' + (time || '10:00') + ':00';
-  const endDate = date + 'T' + (time || '10:00') + ':00';
-  const start = new Date(startDate);
-  const end = new Date(start.getTime() + 30*60*1000); // 30 min event
-  // Prefix nel titolo: [IG] o [YT] + emoji formato
-  const formatEmoji = {IMAGE:'📊', CAROUSEL_ALBUM:'🎠', REELS:'🎬', STORY:'📱', VIDEO:'🎬', SHORT:'📱', LIVE:'🔴'};
-  const platformTag = platform === 'yt' ? '[YT]' : '[IG]';
-  const summary = `${platformTag} ${formatEmoji[type]||''} ${title}`;
-  const description = `Piattaforma: ${platform === 'yt' ? 'YouTube' : 'Instagram'}\nFormato: ${type}\n\n${notes||''}`;
-  try {
-    const resp = await gapi.client.calendar.events.insert({
-      calendarId: GCAL_CALENDAR_ID,
-      resource: {
-        summary,
-        description,
-        start: { dateTime: start.toISOString(), timeZone: 'Europe/Rome' },
-        end: { dateTime: end.toISOString(), timeZone: 'Europe/Rome' },
-        extendedProperties: { private: { platform, type, title, notes: notes||'' } }
-      }
-    });
-    await gcalLoadEvents();
-    return resp.result;
-  } catch(e) { console.error('gcalCreateEvent error:', e); alert('Errore creazione evento. Riprova.'); return null; }
-}
+  console.log('[gcalCreateEvent] start', { platform, date, time, type, title });
 
-async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes) {
-  if (!gcalSignedIn) { alert('Non sei connesso a Google Calendar.'); return false; }
-  if (!eventId) { alert('ID evento mancante.'); return false; }
+  // Diagnostica preliminare
+  if (typeof gapi === 'undefined' || !gapi.client) {
+    const msg = 'Google API non caricata. Ricarica la pagina e riprova.';
+    console.error(msg);
+    alert(msg);
+    return null;
+  }
+  if (!gapi.client.calendar) {
+    const msg = 'Calendar API non inizializzata. Ricarica la pagina e riprova.';
+    console.error(msg);
+    alert(msg);
+    return null;
+  }
+  if (!gcalSignedIn) {
+    alert('Non sei connesso a Google Calendar. Premi "Accedi a Google".');
+    return null;
+  }
+  const token = gapi.client.getToken();
+  if (!token || !token.access_token) {
+    console.error('Nessun access token attivo');
+    alert('Sessione Google scaduta. Premi "Accedi a Google" per riloggare.');
+    return null;
+  }
+
+  // Costruisco l'evento
   const startDate = date + 'T' + (time || '10:00') + ':00';
   const start = new Date(startDate);
   const end = new Date(start.getTime() + 30*60*1000);
@@ -3908,6 +3911,63 @@ async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes
   const platformTag = platform === 'yt' ? '[YT]' : '[IG]';
   const summary = `${platformTag} ${formatEmoji[type]||''} ${title}`;
   const description = `Piattaforma: ${platform === 'yt' ? 'YouTube' : 'Instagram'}\nFormato: ${type}\n\n${notes||''}`;
+
+  const resource = {
+    summary,
+    description,
+    start: { dateTime: start.toISOString(), timeZone: 'Europe/Rome' },
+    end: { dateTime: end.toISOString(), timeZone: 'Europe/Rome' },
+    extendedProperties: { private: { platform, type, title, notes: notes||'' } }
+  };
+
+  console.log('[gcalCreateEvent] sending', { calendarId: GCAL_CALENDAR_ID, resource });
+
+  try {
+    const resp = await gapi.client.calendar.events.insert({
+      calendarId: GCAL_CALENDAR_ID,
+      resource
+    });
+    console.log('[gcalCreateEvent] success', resp.result);
+    await gcalLoadEvents();
+    return resp.result;
+  } catch(e) {
+    console.error('[gcalCreateEvent] ERROR:', e);
+    // Estraggo il messaggio più chiaro possibile da Google
+    const status = e?.status || e?.result?.error?.code;
+    const errMsg = e?.result?.error?.message || e?.body || e?.message || JSON.stringify(e);
+
+    let userMsg = 'Errore: ' + errMsg;
+    if (status === 401) {
+      userMsg = 'Sessione Google scaduta. Premi "Accedi a Google" per riloggare.';
+      gcalSignedIn = false;
+      localStorage.removeItem('gcal_token');
+      gcalUpdateUI();
+    } else if (status === 403) {
+      userMsg = 'Permesso negato dal calendario. Verifica di essere loggato con l\'account giusto (progettoespertiprofeta@gmail.com).';
+    } else if (status === 404) {
+      userMsg = 'Calendario non trovato. Verifica di essere loggato con progettoespertiprofeta@gmail.com.';
+    }
+    alert(userMsg);
+    return null;
+  }
+}
+
+async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes) {
+  console.log('[gcalUpdateEvent] start', { eventId, platform, date, time, type });
+  if (typeof gapi === 'undefined' || !gapi.client || !gapi.client.calendar) {
+    alert('Google API non caricata. Ricarica la pagina.'); return false;
+  }
+  if (!gcalSignedIn) { alert('Non sei connesso a Google Calendar.'); return false; }
+  if (!eventId) { alert('ID evento mancante.'); return false; }
+
+  const startDate = date + 'T' + (time || '10:00') + ':00';
+  const start = new Date(startDate);
+  const end = new Date(start.getTime() + 30*60*1000);
+  const formatEmoji = {IMAGE:'📊', CAROUSEL_ALBUM:'🎠', REELS:'🎬', STORY:'📱', VIDEO:'🎬', SHORT:'📱', LIVE:'🔴'};
+  const platformTag = platform === 'yt' ? '[YT]' : '[IG]';
+  const summary = `${platformTag} ${formatEmoji[type]||''} ${title}`;
+  const description = `Piattaforma: ${platform === 'yt' ? 'YouTube' : 'Instagram'}\nFormato: ${type}\n\n${notes||''}`;
+
   try {
     const resp = await gapi.client.calendar.events.update({
       calendarId: GCAL_CALENDAR_ID,
@@ -3919,36 +3979,58 @@ async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes
         extendedProperties: { private: { platform, type, title, notes: notes||'' } }
       }
     });
+    console.log('[gcalUpdateEvent] success');
     await gcalLoadEvents();
     return true;
   } catch(e) {
-    console.error('gcalUpdateEvent error:', e);
-    alert('Errore aggiornamento: ' + (e?.result?.error?.message || e?.message || 'sconosciuto'));
+    console.error('[gcalUpdateEvent] ERROR:', e);
+    const status = e?.status || e?.result?.error?.code;
+    const errMsg = e?.result?.error?.message || e?.message || JSON.stringify(e);
+    let userMsg = 'Errore aggiornamento: ' + errMsg;
+    if (status === 401) {
+      userMsg = 'Sessione Google scaduta. Premi "Accedi a Google" per riloggare.';
+      gcalSignedIn = false;
+      localStorage.removeItem('gcal_token');
+      gcalUpdateUI();
+    } else if (status === 403 || status === 404) {
+      userMsg = 'Permesso negato o evento/calendario non trovato. Verifica l\'account Google.';
+    }
+    alert(userMsg);
     return false;
   }
 }
 
 async function gcalDeleteEvent(eventId) {
-  if (!gcalSignedIn) {
-    alert('Non sei connesso a Google Calendar.');
-    return false;
+  console.log('[gcalDeleteEvent] start', { eventId });
+  if (typeof gapi === 'undefined' || !gapi.client || !gapi.client.calendar) {
+    alert('Google API non caricata. Ricarica la pagina.'); return false;
   }
-  if (!eventId) {
-    alert('ID evento mancante.');
-    return false;
-  }
+  if (!gcalSignedIn) { alert('Non sei connesso a Google Calendar.'); return false; }
+  if (!eventId) { alert('ID evento mancante.'); return false; }
   try {
     await gapi.client.calendar.events.delete({ calendarId: GCAL_CALENDAR_ID, eventId });
+    console.log('[gcalDeleteEvent] success');
     await gcalLoadEvents();
     return true;
   } catch(e) {
-    console.error('gcalDeleteEvent error:', e);
-    // Status 410 = Gone (già eliminato). Status 404 = Not Found.
-    if (e?.status === 410 || e?.status === 404) {
-      await gcalLoadEvents(); // refresh comunque
-      return true; // l'evento non c'è più, considerato successo
+    console.error('[gcalDeleteEvent] ERROR:', e);
+    const status = e?.status || e?.result?.error?.code;
+    if (status === 410 || status === 404) {
+      // Già eliminato — considerato successo
+      await gcalLoadEvents();
+      return true;
     }
-    alert('Errore eliminazione: ' + (e?.result?.error?.message || e?.message || 'sconosciuto'));
+    const errMsg = e?.result?.error?.message || e?.message || JSON.stringify(e);
+    let userMsg = 'Errore eliminazione: ' + errMsg;
+    if (status === 401) {
+      userMsg = 'Sessione Google scaduta. Premi "Accedi a Google" per riloggare.';
+      gcalSignedIn = false;
+      localStorage.removeItem('gcal_token');
+      gcalUpdateUI();
+    } else if (status === 403) {
+      userMsg = 'Permesso negato. Verifica di essere loggato con progettoespertiprofeta@gmail.com.';
+    }
+    alert(userMsg);
     return false;
   }
 }
