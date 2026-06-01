@@ -3707,8 +3707,24 @@ async function calDrop(e) {
 }
 
 function gcalInit() {
+  // OTTIMIZZAZIONE: se c'è un token valido in localStorage, mostra subito l'UI "connesso"
+  // anche se gli script Google non sono ancora caricati. Migliora UX al refresh.
+  const cachedToken = localStorage.getItem('gcal_token');
+  const cachedExpires = parseInt(localStorage.getItem('gcal_expires') || '0');
+  if (cachedToken && Date.now() < cachedExpires - 5*60*1000 && !gcalSignedIn) {
+    gcalSignedIn = true;
+    gcalUpdateUI();
+  }
+
   // Aspetta che gli script Google siano caricati
   if (typeof google === 'undefined' || typeof gapi === 'undefined') {
+    // Limito a 50 tentativi (10 secondi) per non fare loop infinito
+    if (!window.__gcalInitAttempts) window.__gcalInitAttempts = 0;
+    window.__gcalInitAttempts++;
+    if (window.__gcalInitAttempts > 50) {
+      console.warn('Google scripts non caricati dopo 10s. Verifica connessione o blocco script.');
+      return;
+    }
     setTimeout(gcalInit, 200);
     return;
   }
@@ -3726,23 +3742,40 @@ function gcalInit() {
       client_id: GCAL_CLIENT_ID,
       scope: GCAL_SCOPES,
       callback: (resp) => {
-        if (resp.error) { console.error('Auth error:', resp); return; }
+        if (resp.error) {
+          // Errore "silent" comune: l'utente non ha sessione Google attiva nel browser.
+          // In quel caso il banner di login resta visibile, l'utente cliccherà.
+          if (resp.error === 'interaction_required' || resp.error === 'login_required' || resp.error === 'consent_required') {
+            console.log('Silent auth richiede interazione utente:', resp.error);
+            gcalUpdateUI();
+            return;
+          }
+          console.error('Auth error:', resp);
+          return;
+        }
         gcalSignedIn = true;
-        // Salvo il token in sessionStorage per ricordare il login
-        sessionStorage.setItem('gcal_token', resp.access_token);
-        sessionStorage.setItem('gcal_expires', Date.now() + (resp.expires_in * 1000));
+        const expiresAt = Date.now() + (resp.expires_in * 1000);
+        // Salvo in localStorage (sopravvive a refresh / chiusura tab)
+        localStorage.setItem('gcal_token', resp.access_token);
+        localStorage.setItem('gcal_expires', String(expiresAt));
+        localStorage.setItem('gcal_was_signed_in', '1'); // flag per silent re-auth futuro
+        gapi.client.setToken({ access_token: resp.access_token });
         gcalUpdateUI();
         gcalLoadEvents();
-        // Refresh automatico ogni 60s
+        // Refresh eventi ogni 60s
         if (!window.gcalRefreshInterval) {
           window.gcalRefreshInterval = setInterval(gcalLoadEvents, 60000);
         }
+        // Programma il silent refresh del token prima della sua scadenza
+        gcalScheduleSilentRefresh(expiresAt);
       }
     });
     // Auto-restore se c'è un token valido
-    const savedToken = sessionStorage.getItem('gcal_token');
-    const expires = parseInt(sessionStorage.getItem('gcal_expires') || '0');
-    if (savedToken && Date.now() < expires) {
+    const savedToken = localStorage.getItem('gcal_token');
+    const expires = parseInt(localStorage.getItem('gcal_expires') || '0');
+    // Cinque minuti di buffer per evitare token che scadono in mezzo a una chiamata
+    const stillValid = savedToken && (Date.now() < expires - 5*60*1000);
+    if (stillValid) {
       gapi.client.setToken({ access_token: savedToken });
       gcalSignedIn = true;
       gcalUpdateUI();
@@ -3750,10 +3783,43 @@ function gcalInit() {
       if (!window.gcalRefreshInterval) {
         window.gcalRefreshInterval = setInterval(gcalLoadEvents, 60000);
       }
+      // Programmo il refresh silenzioso del token 1 minuto prima della scadenza
+      gcalScheduleSilentRefresh(expires);
+    } else if (localStorage.getItem('gcal_was_signed_in') === '1') {
+      // L'utente si era loggato in passato — tenta silent auth (no popup)
+      gcalUpdateUI();
+      setTimeout(() => gcalSilentRefresh(), 500);
     } else {
+      // Primo accesso — mostra il banner di login
       gcalUpdateUI();
     }
   } catch(e) { console.error('Token client init error:', e); gcalUpdateUI(); }
+}
+
+
+// Silent refresh: richiede un nuovo access token senza popup (se l'utente
+// è ancora loggato a Google nel browser). Per casi in cui il token è scaduto.
+function gcalSilentRefresh() {
+  if (!gcalTokenClient) return;
+  try {
+    // prompt: '' = silent — niente popup, niente richiesta di consenso.
+    // Funziona se l'utente è già loggato a Google nel browser.
+    gcalTokenClient.requestAccessToken({ prompt: '' });
+  } catch (e) {
+    console.warn('Silent refresh fallito:', e);
+  }
+}
+
+// Programma un silent refresh ~1 minuto prima che il token scada
+function gcalScheduleSilentRefresh(expiresAt) {
+  if (window.gcalSilentRefreshTimer) clearTimeout(window.gcalSilentRefreshTimer);
+  const msUntilRefresh = expiresAt - Date.now() - 60 * 1000; // 1 min prima
+  if (msUntilRefresh > 0) {
+    window.gcalSilentRefreshTimer = setTimeout(() => {
+      console.log('Silent refresh del token Google...');
+      gcalSilentRefresh();
+    }, msUntilRefresh);
+  }
 }
 
 function gcalLogin() {
@@ -3767,13 +3833,15 @@ function gcalLogout() {
     google.accounts.oauth2.revoke(token.access_token, () => {});
     gapi.client.setToken(null);
   }
-  sessionStorage.removeItem('gcal_token');
-  sessionStorage.removeItem('gcal_expires');
+  localStorage.removeItem('gcal_token');
+  localStorage.removeItem('gcal_expires');
+  localStorage.removeItem('gcal_was_signed_in');
   gcalSignedIn = false;
   gcalEvents = [];
   if (window.gcalRefreshInterval) { clearInterval(window.gcalRefreshInterval); window.gcalRefreshInterval = null; }
+  if (window.gcalSilentRefreshTimer) { clearTimeout(window.gcalSilentRefreshTimer); window.gcalSilentRefreshTimer = null; }
   gcalUpdateUI();
-  calRender(); ytRender();
+  calRender();
 }
 
 async function gcalLoadEvents() {
@@ -3795,11 +3863,10 @@ async function gcalLoadEvents() {
     calRender(); ytRender();
   } catch(e) {
     console.error('gcalLoadEvents error:', e);
-    if (e.status === 401) {
-      // Token scaduto
-      gcalSignedIn = false;
-      sessionStorage.removeItem('gcal_token');
-      gcalUpdateUI();
+    if (e?.status === 401 || e?.result?.error?.code === 401) {
+      // Token scaduto → tento silent refresh PRIMA di sloggare l'utente
+      console.log('Token scaduto, tento silent refresh...');
+      gcalSilentRefresh();
     }
   }
 }
