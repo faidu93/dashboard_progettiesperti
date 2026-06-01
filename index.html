@@ -10,6 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
 <style>
 :root {
   --bg: #0a0c12;
@@ -815,45 +817,6 @@ body {
   .freshness-warn { color: var(--accent-bright); font-size: 10.5px; }
 
 
-  /* ============ IDEE DI CONTENUTO ============ */
-  .ideas-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .idea-card {
-    background: var(--bg-elev); border: 1px solid var(--line);
-    border-radius: 10px; padding: 16px 18px;
-    border-left: 3px solid var(--accent);
-    display: flex; flex-direction: column; gap: 8px;
-    transition: border-color 0.15s, transform 0.12s;
-  }
-  .idea-card:hover { border-color: var(--line-strong); transform: translateY(-2px); }
-  .idea-card.hot { border-left-color: var(--neg); }
-  .idea-card.evergreen { border-left-color: var(--info); }
-  .idea-card.asta { border-left-color: var(--accent-bright); }
-  .idea-head { display: flex; align-items: center; gap: 10px; }
-  .idea-num {
-    font-family: var(--font-mono); font-size: 12px; font-weight: 700;
-    color: var(--bg); background: var(--accent);
-    width: 24px; height: 24px; border-radius: 6px;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  .idea-card.hot .idea-num { background: var(--neg); }
-  .idea-card.evergreen .idea-num { background: var(--info); }
-  .idea-card.asta .idea-num { background: var(--accent-bright); }
-  .idea-title { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.3; }
-  .idea-tag {
-    font-family: var(--font-mono); font-size: 9px; padding: 3px 7px; border-radius: 4px;
-    text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;
-    margin-left: auto; flex-shrink: 0;
-  }
-  .idea-tag.hot { background: rgba(239,90,90,0.15); color: var(--neg); }
-  .idea-tag.evergreen { background: rgba(90,174,240,0.15); color: var(--info); }
-  .idea-tag.asta { background: rgba(255,165,60,0.15); color: var(--accent-bright); }
-  .idea-tag.format { background: rgba(54,201,118,0.15); color: var(--pos); }
-  .idea-body { font-size: 12px; color: var(--ink-soft); line-height: 1.55; }
-  .idea-body strong { color: var(--ink); font-weight: 600; }
-  .idea-meta { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute); display: flex; gap: 12px; flex-wrap: wrap; margin-top: 2px; }
-  .idea-meta span { display: inline-flex; align-items: center; gap: 4px; }
-
-
 
   /* ============ CALENDARIO EDITORIALE ============ */
   .cal-nav {
@@ -1196,98 +1159,330 @@ body {
   @media (max-width: 768px) { .trends-grid { grid-template-columns: 1fr; } }
 
 
-  /* ============ BACHECA + COMPETITOR ============ */
-  .board-tabs { display: flex; gap: 6px; margin-bottom: 16px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
-  .board-tab {
-    background: transparent; border: 1px solid var(--line); color: var(--ink-soft);
-    padding: 8px 14px; border-radius: 7px; cursor: pointer;
-    font-family: var(--font-mono); font-size: 12px; font-weight: 600;
-    transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+  /* ============ FILTRO CALENDARIO IG/YT ============ */
+  .cal-filter-bar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 14px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
   }
-  .board-tab:hover { background: var(--bg-elev-2); color: var(--ink); }
-  .board-tab.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-  .board-count {
-    background: rgba(0,0,0,0.25); padding: 1px 7px; border-radius: 10px;
-    font-size: 10px; font-weight: 700;
+  .cal-filter-label {
+    font-family: var(--font-mono); font-size: 11px; color: var(--ink-mute);
+    font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    margin-right: 4px;
   }
-  .board-tab:not(.active) .board-count { background: var(--bg-elev-2); color: var(--ink-mute); }
-  .board-pane { display: none; }
-  .board-pane.active { display: block; }
-
-  .board-toolbar {
-    display: flex; gap: 12px; align-items: center; justify-content: space-between;
-    margin-bottom: 14px; flex-wrap: wrap;
-  }
-
-  .board-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 12px;
-  }
-  .board-empty {
-    grid-column: 1/-1; text-align: center; padding: 40px 20px;
-    color: var(--ink-mute); font-size: 13px; background: var(--bg-elev-2);
-    border-radius: 10px; border: 1px dashed var(--line);
-  }
-  .idea-tile {
+  .cal-filter {
     background: var(--bg-elev-2); border: 1px solid var(--line);
-    border-left: 3px solid var(--accent); border-radius: 8px;
-    padding: 12px 14px; cursor: pointer;
-    display: flex; flex-direction: column; gap: 8px;
-    transition: border-color 0.15s, transform 0.12s;
+    color: var(--ink-soft); padding: 7px 12px; border-radius: 6px;
+    cursor: pointer; font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+    transition: all 0.15s; min-height: 36px;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
   }
-  .idea-tile:hover { border-color: var(--line-strong); transform: translateY(-2px); }
-  .idea-tile.s-idea { border-left-color: var(--accent); }
-  .idea-tile.s-draft { border-left-color: var(--info); }
-  .idea-tile.s-planned { border-left-color: var(--accent-bright); }
-  .idea-tile.s-published { border-left-color: var(--pos); opacity: 0.7; }
-  .idea-tile-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .idea-tile-status {
-    font-family: var(--font-mono); font-size: 9px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 6px;
-    border-radius: 3px;
-  }
-  .idea-tile.s-idea .idea-tile-status { background: rgba(255,140,30,0.15); color: var(--accent-bright); }
-  .idea-tile.s-draft .idea-tile-status { background: rgba(90,174,240,0.15); color: var(--info); }
-  .idea-tile.s-planned .idea-tile-status { background: rgba(255,140,30,0.25); color: var(--accent); }
-  .idea-tile.s-published .idea-tile-status { background: rgba(54,201,118,0.15); color: var(--pos); }
-  .idea-tile-type {
-    font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute);
-    padding: 2px 6px; background: var(--bg-elev); border-radius: 3px;
-  }
-  .idea-tile-title { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.35; }
-  .idea-tile-notes { font-size: 11.5px; color: var(--ink-soft); line-height: 1.45; max-height: 60px; overflow: hidden; }
-  .idea-tile-source { font-size: 10.5px; color: var(--ink-mute); font-family: var(--font-mono); font-style: italic; }
-  .idea-tile-source .material-symbols-rounded { font-size: 12px; vertical-align: -2px; }
+  .cal-filter:hover { color: var(--ink); border-color: var(--line-strong); }
+  .cal-filter.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 
-  .competitor-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 10px;
-  }
-  .competitor-tile {
-    background: var(--bg-elev-2); border: 1px solid var(--line); border-radius: 8px;
-    padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;
-    transition: border-color 0.15s, transform 0.12s;
-  }
-  .competitor-tile:hover { border-color: var(--accent); transform: translateY(-2px); }
-  .competitor-tile-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .competitor-username { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--ink); }
-  .competitor-username::before { content: '@'; color: var(--ink-mute); }
-  .competitor-note { font-size: 11px; color: var(--ink-soft); line-height: 1.4; min-height: 16px; }
-  .competitor-actions { display: flex; gap: 6px; margin-top: 4px; }
-  .competitor-actions a, .competitor-actions button {
-    flex: 1; padding: 6px 8px; font-size: 11px; font-family: var(--font-mono); font-weight: 600;
-    border-radius: 5px; border: 1px solid var(--line); cursor: pointer;
-    background: var(--bg-elev); color: var(--ink-soft); text-decoration: none;
-    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-    transition: all 0.15s;
-  }
-  .competitor-actions a:hover { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-  .competitor-actions button:hover { color: var(--ink); border-color: var(--line-strong); }
 
+  /* ============ ONBOARDING BANNER ============ */
+  #onboardingBanner code { color: var(--ink); }
   @media (max-width: 640px) {
-    .board-tabs { gap: 4px; }
-    .board-tab { padding: 7px 10px; font-size: 11px; }
-    .board-grid, .competitor-grid { grid-template-columns: 1fr; }
+    #onboardingBanner { padding: 16px 14px; }
+    #onboardingBanner > div:last-child {
+      grid-template-columns: 1fr !important;
+      gap: 10px !important;
+    }
+    #step1Card, #step2Card { padding: 12px 14px !important; }
+  }
+
+
+
+  /* ============================================================
+     MOBILE OVERRIDES — fix completo per uso da telefono
+     Touch target ≥44px, no zoom iOS, modal scrollabili, no overflow
+     ============================================================ */
+  @media (max-width: 768px) {
+    /* === TOUCH TARGETS: tutti i bottoni interattivi ≥44px === */
+    .cal-btn, .nav-btn, .btn-primary, .tab-btn, .cal-filter,
+    .board-tab, .competitor-edit-icon, button.btn,
+    #onboardingLoginBtn, #onboardingKeyBtn,
+    #gcalLoginBtn, #gcalLogoutBtn,
+    .modal-actions button {
+      min-height: 44px !important;
+      padding-top: 11px !important;
+      padding-bottom: 11px !important;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* === FONT INPUT ≥16px per evitare zoom iOS === */
+    .modal input, .modal select, .modal textarea,
+    .cal-field input, .cal-field select, .cal-field textarea,
+    input[type="text"], input[type="date"], input[type="time"], 
+    input[type="email"], input[type="password"],
+    select, textarea {
+      font-size: 16px !important;
+      min-height: 44px;
+      padding: 11px 12px !important;
+    }
+    textarea { min-height: 80px !important; }
+
+    /* === GRID: riduco minmax ovunque sopra 220px === */
+    .board-grid, .competitor-grid,
+    [style*="grid-template-columns: repeat(auto-fill"],
+    [style*="grid-template-columns: repeat(auto-fit"] {
+      grid-template-columns: 1fr !important;
+    }
+    
+    /* === MODAL: scrollabili + safe area === */
+    .modal-bg, .cal-modal-bg, .cal-detail-bg {
+      padding: 12px !important;
+      align-items: flex-start !important;
+      padding-top: max(12px, env(safe-area-inset-top)) !important;
+    }
+    .modal, .cal-modal, .cal-detail {
+      max-width: 100% !important;
+      max-height: 90vh !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+      padding: 22px 18px !important;
+    }
+    .modal h3, .cal-modal h3 { font-size: 17px !important; }
+    
+    /* === BANNER ONBOARDING: stack verticale === */
+    #onboardingBanner { padding: 16px 14px !important; }
+    #onboardingBanner > div:last-child {
+      grid-template-columns: 1fr !important;
+      gap: 12px !important;
+    }
+    #step1Card, #step2Card { padding: 14px !important; }
+    
+    /* === GOOGLE CAL LOGIN BAR: wrap leggibile === */
+    #gcalBar {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 10px !important;
+      padding: 14px !important;
+    }
+    #gcalBar > span:first-of-type { display: none !important; } /* icona cloud */
+    #gcalStatus { text-align: left; font-size: 12.5px !important; line-height: 1.5; }
+    #gcalLoginBtn, #gcalLogoutBtn { width: 100% !important; justify-content: center !important; }
+    
+    /* === MAPPA NICCHIA: grid responsive === */
+    .map-row {
+      grid-template-columns: 110px 1fr 50px !important;
+      gap: 8px !important;
+      font-size: 11.5px !important;
+    }
+    
+    /* === HEATMAP: scroll touch === */
+    .heatmap-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .heatmap { min-width: 380px; }
+    
+    /* === CALENDARIO: filter bar wrap === */
+    .cal-filter-bar { 
+      gap: 6px !important; 
+      padding-bottom: 10px !important; 
+      margin-bottom: 12px !important;
+    }
+    .cal-filter-label { 
+      display: block; 
+      width: 100%; 
+      margin-bottom: 4px;
+    }
+    .cal-filter { 
+      flex: 1; 
+      justify-content: center; 
+      font-size: 11.5px !important; 
+      padding: 9px 10px !important;
+    }
+    
+    /* === CAL NAV: bottoni in colonna se serve === */
+    .cal-nav { gap: 8px !important; }
+    .cal-nav-btns { width: 100%; justify-content: flex-end; flex-wrap: wrap; gap: 6px !important; }
+    .cal-nav-title { width: 100%; }
+    
+    /* === Modal pianifica: bottoni in colonna su mobile piccolo === */
+    .cal-modal-actions {
+      flex-wrap: wrap !important;
+      gap: 8px !important;
+    }
+    .cal-modal-actions .cal-btn {
+      flex: 1 !important;
+      min-width: calc(50% - 4px);
+      justify-content: center !important;
+    }
+    
+    /* === Footer mobile === */
+    .footer { 
+      flex-direction: column !important; 
+      align-items: flex-start !important; 
+      gap: 10px !important;
+      font-size: 11px !important;
+    }
+    
+    /* === Tab nav: garantisco non vada in overflow === */
+    .tab-nav {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .tab-nav::-webkit-scrollbar { display: none; }
+    .tab-btn { flex-shrink: 0; }
+    
+    /* === Container: massima larghezza utilizzabile === */
+    .container { max-width: 100% !important; }
+  }
+  
+  @media (max-width: 480px) {
+    /* Versione XS */
+    #step1Card, #step2Card { padding: 12px !important; }
+    #onboardingBanner strong { font-size: 14px !important; }
+    
+    /* Cal nav bottone Pianifica: solo icona se serve */
+    .cal-nav-btns .cal-btn { padding: 8px 10px !important; }
+    
+    /* KPI band 1 colonna su XS */
+    .kpi-band { grid-template-columns: 1fr !important; gap: 10px !important; }
+    .kpi { padding: 14px !important; }
+    
+    /* Hero meta: stack */
+    .hero-meta { flex-direction: column !important; align-items: flex-start !important; gap: 6px !important; }
+    
+    /* Tab nav: testo nascosto */
+    .tab-label { display: none !important; }
+    .tab-btn { min-width: 44px; padding: 11px 12px !important; }
+    
+    /* Mappa nicchia ulteriore riduzione */
+    .map-row { 
+      grid-template-columns: 90px 1fr 44px !important;
+      font-size: 11px !important;
+    }
+    
+    /* Modal: full screen */
+    .modal-bg, .cal-modal-bg, .cal-detail-bg {
+      padding: 0 !important;
+      padding-top: env(safe-area-inset-top) !important;
+    }
+    .modal, .cal-modal, .cal-detail {
+      max-width: 100% !important;
+      max-height: 100vh !important;
+      min-height: 100vh;
+      border-radius: 0 !important;
+      padding: 20px 16px !important;
+    }
+  }
+  
+  @media (max-width: 360px) {
+    /* iPhone SE / molto piccoli */
+    .container { padding: 16px 10px !important; }
+    .hero-eyebrow, .hero-meta { font-size: 10.5px !important; }
+    .kpi-value { font-size: 28px !important; }
+    .cal-day { min-height: 50px; padding: 4px !important; }
+    .cal-day-num { font-size: 10px !important; }
+    .cal-post { font-size: 9px !important; padding: 2px 4px !important; }
+  }
+
+
+  /* === HERO HEADER MOBILE === */
+  @media (max-width: 768px) {
+    .hero {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 14px !important;
+      padding: 18px 14px !important;
+    }
+    .hero-left {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .hero-logo {
+      width: 44px !important;
+      height: 44px !important;
+    }
+    .hero-title-wrap { min-width: 0; }
+    .hero-title {
+      font-size: 17px !important;
+      line-height: 1.25 !important;
+    }
+    .hero-eyebrow {
+      font-size: 10px !important;
+    }
+    .hero-actions {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 8px !important;
+      width: 100%;
+    }
+    .hero-actions .status-badge,
+    .hero-actions > div,
+    .hero-actions > button {
+      width: 100% !important;
+      justify-content: flex-start !important;
+      font-size: 12px !important;
+      text-align: left;
+    }
+    .status-badge {
+      padding: 9px 12px !important;
+      line-height: 1.4;
+      white-space: normal !important;
+      word-break: break-word;
+    }
+  }
+  @media (max-width: 480px) {
+    .hero-title { font-size: 16px !important; }
+    .hero-eyebrow { font-size: 9.5px !important; letter-spacing: 0.05em !important; }
+  }
+
+
+  /* === NAVBAR & HERO MOBILE === */
+  @media (max-width: 768px) {
+    .nav { padding: 0 !important; }
+    .nav-inner {
+      padding: 10px 14px !important;
+      gap: 10px !important;
+      flex-wrap: nowrap !important;
+    }
+    .brand { gap: 8px !important; min-width: 0; flex-shrink: 1; }
+    .brand-logo { width: 36px !important; height: 36px !important; flex-shrink: 0; }
+    .brand-name { font-size: 13px !important; line-height: 1.2 !important; }
+    .brand-tag { font-size: 10px !important; }
+    .nav-cluster {
+      gap: 6px !important;
+      flex-shrink: 0;
+      align-items: center;
+    }
+    .nav-status {
+      font-size: 10.5px !important;
+      padding: 5px 8px !important;
+      max-width: 140px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .nav-btn {
+      padding: 9px 11px !important;
+      font-size: 11.5px !important;
+      min-height: 40px !important;
+      gap: 4px !important;
+    }
+    .nav-btn .material-symbols-rounded { font-size: 16px; }
+
+    /* Hero meta: stack verticale */
+    .hero { padding: 16px 14px !important; margin-bottom: 24px !important; }
+    .hero-meta {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 6px !important;
+      font-size: 12px !important;
+    }
+    .hero-meta span { gap: 6px !important; }
+    .freshness { font-size: 11px !important; padding: 7px 11px !important; }
+  }
+  @media (max-width: 480px) {
+    /* Su iPhone piccolo, nascondo il brand-tag */
+    .brand-tag { display: none !important; }
+    .nav-status { max-width: 100px; font-size: 10px !important; }
+    .nav-btn span:not(.material-symbols-rounded) { display: none; } /* solo icona */
+    .nav-btn { padding: 9px !important; min-width: 40px; }
   }
 
 </style>
@@ -1312,23 +1507,42 @@ body {
 
 <div class="container">
 
-  <!-- Banner API key mancante -->
-  <div id="noKeyBanner" style="display:none; align-items:center; gap:14px; padding:14px 18px;
-    background:rgba(255,140,30,0.10); border:1px solid rgba(255,140,30,0.35);
-    border-radius:10px; margin-bottom:20px; flex-wrap:wrap;">
-    <span class="material-symbols-rounded" style="color:var(--accent);font-size:22px;">lock</span>
-    <span style="flex:1; font-size:14px; color:var(--ink);">
-      <strong>API key non configurata.</strong>
-      Inserisci la tua API key Windsor.ai per visualizzare i dati del profilo.
-    </span>
-    <button onclick="document.getElementById('modal').classList.add('show')"
-      style="background:var(--accent);border:none;color:var(--bg);padding:8px 16px;
-      border-radius:7px;cursor:pointer;font-family:var(--font-mono);font-size:12px;
-      font-weight:700;display:inline-flex;align-items:center;gap:6px;
-      touch-action:manipulation;">
-      <span class="material-symbols-rounded" style="font-size:16px;">settings</span>
-      Configura ora
-    </button>
+  <!-- Banner onboarding 2-step -->
+  <div id="onboardingBanner" style="display:none; padding:18px 20px;
+    background:linear-gradient(135deg,rgba(255,140,30,0.10),rgba(90,174,240,0.06));
+    border:1px solid rgba(255,140,30,0.35); border-radius:12px; margin-bottom:22px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <span class="material-symbols-rounded" style="color:var(--accent);font-size:24px;">rocket_launch</span>
+      <strong style="font-size:15px;color:var(--ink);">Benvenuto · Configura la dashboard in 2 step</strong>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div id="step1Card" style="background:var(--bg-elev-2);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="background:var(--accent);color:var(--bg);width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:13px;font-weight:700;">1</span>
+          <strong style="font-size:13.5px;color:var(--ink);">Accedi a Google</strong>
+          <span id="step1Status" style="margin-left:auto;font-size:11px;font-family:var(--font-mono);color:var(--ink-mute);"></span>
+        </div>
+        <div style="font-size:12.5px;color:var(--ink-soft);line-height:1.5;">
+          Usa l'account Google del progetto (<code style="background:var(--bg-elev);padding:2px 6px;border-radius:3px;font-size:11.5px;">progettoespertiprofeta@gmail.com</code>) per sincronizzare il calendario con il team.
+        </div>
+        <button id="onboardingLoginBtn" onclick="gcalLogin()" style="background:var(--accent);border:none;color:var(--bg);padding:9px 14px;border-radius:6px;cursor:pointer;font-family:var(--font-mono);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;touch-action:manipulation;min-height:38px;">
+          <span class="material-symbols-rounded" style="font-size:16px;">login</span>Accedi a Google
+        </button>
+      </div>
+      <div id="step2Card" style="background:var(--bg-elev-2);border:1px solid var(--line);border-left:3px solid var(--info);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;opacity:0.6;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="background:var(--info);color:var(--bg);width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:13px;font-weight:700;">2</span>
+          <strong style="font-size:13.5px;color:var(--ink);">Inserisci API key Windsor</strong>
+          <span id="step2Status" style="margin-left:auto;font-size:11px;font-family:var(--font-mono);color:var(--ink-mute);"></span>
+        </div>
+        <div style="font-size:12.5px;color:var(--ink-soft);line-height:1.5;">
+          La tua API key Windsor.ai serve per leggere i dati di Instagram e YouTube. <strong>Chiedila in privato</strong> a Lapo &mdash; non condividerla su canali pubblici.
+        </div>
+        <button id="onboardingKeyBtn" onclick="document.getElementById('modal').classList.add('show')" style="background:var(--info);border:none;color:var(--bg);padding:9px 14px;border-radius:6px;cursor:pointer;font-family:var(--font-mono);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;touch-action:manipulation;min-height:38px;">
+          <span class="material-symbols-rounded" style="font-size:16px;">key</span>Inserisci API key
+        </button>
+      </div>
+    </div>
   </div>
 
   <section class="hero">
@@ -1860,6 +2074,13 @@ body {
     <div class="cal-modal">
       <h3 id="calModalTitle">Pianifica un post</h3>
       <input type="hidden" id="calEditId">
+      <div class="cal-field">
+        <label>Social</label>
+        <select id="calPlatform" onchange="calOnPlatformChange()">
+          <option value="ig">📸 Instagram</option>
+          <option value="yt">🎬 YouTube</option>
+        </select>
+      </div>
       <div class="cal-modal-row">
         <div class="cal-field">
           <label>Data</label>
@@ -1914,11 +2135,25 @@ body {
     </div>
   </div>
 
-  <!-- CALENDARIO INSTAGRAM -->
+  <!-- GOOGLE CALENDAR LOGIN BAR -->
+  <section class="section" data-tab="calendario" style="margin-bottom:18px;">
+    <div class="panel" id="gcalBar" style="display:flex;align-items:center;gap:14px;padding:14px 18px;flex-wrap:wrap;">
+      <span class="material-symbols-rounded" style="color:var(--accent);font-size:22px;">cloud_sync</span>
+      <span id="gcalStatus" style="flex:1;font-size:13px;color:var(--ink-soft);">Caricamento Google Calendar…</span>
+      <button id="gcalLoginBtn" onclick="gcalLogin()" style="display:none;background:var(--accent);border:none;color:var(--bg);padding:8px 16px;border-radius:7px;cursor:pointer;font-family:var(--font-mono);font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;touch-action:manipulation;">
+        <span class="material-symbols-rounded" style="font-size:16px;">login</span>Accedi a Google
+      </button>
+      <button id="gcalLogoutBtn" onclick="gcalLogout()" style="display:none;background:var(--bg-elev-2);border:1px solid var(--line);color:var(--ink-soft);padding:7px 14px;border-radius:6px;cursor:pointer;font-family:var(--font-mono);font-size:11.5px;font-weight:600;">
+        Disconnetti
+      </button>
+    </div>
+  </section>
+
+  <!-- CALENDARIO UNIFICATO (Google Calendar) -->
   <section class="section" data-tab="calendario">
     <div class="section-head">
-      <div><div class="section-eyebrow">📸 Instagram</div><div class="section-title">Calendario Instagram</div></div>
-      <div class="section-meta">Windsor.ai + pianificati</div>
+      <div><div class="section-eyebrow">📅 Pianificazione</div><div class="section-title">Calendario editoriale</div></div>
+      <div class="section-meta">Instagram + YouTube · sync Google</div>
     </div>
     <div class="panel">
       <div class="cal-nav">
@@ -1932,216 +2167,28 @@ body {
           </button>
         </div>
       </div>
+      <div class="cal-filter-bar">
+        <span class="cal-filter-label">Filtra:</span>
+        <button class="cal-filter active" data-filter="all" onclick="calSetFilter(this)">Tutti</button>
+        <button class="cal-filter" data-filter="ig" onclick="calSetFilter(this)">📸 Instagram</button>
+        <button class="cal-filter" data-filter="yt" onclick="calSetFilter(this)">🎬 YouTube</button>
+      </div>
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-legend">
-        <span><i class="cl-img"></i>IMAGE</span>
-        <span><i class="cl-car"></i>CAROSELLO</span>
-        <span><i class="cl-reel"></i>REEL</span>
-        <span><i class="cl-story"></i>STORY</span>
-        <span><i class="cl-plan"></i>Pianificato</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- CALENDARIO YOUTUBE -->
-  <section class="section" data-tab="calendario">
-    <div class="section-head">
-      <div><div class="section-eyebrow">🎬 YouTube</div><div class="section-title">Calendario YouTube</div></div>
-      <div class="section-meta live">Windsor.ai + pianificati</div>
-    </div>
-    <div class="panel">
-      <div class="cal-nav">
-        <div class="cal-nav-title" id="ytMonthTitle">—</div>
-        <div class="cal-nav-btns">
-          <button class="cal-btn" id="ytPrev"><span class="material-symbols-rounded">chevron_left</span></button>
-          <button class="cal-btn" id="ytToday">Oggi</button>
-          <button class="cal-btn" id="ytNext"><span class="material-symbols-rounded">chevron_right</span></button>
-          <button class="cal-btn primary" id="ytAddBtn">
-            <span class="material-symbols-rounded">add</span>Pianifica
-          </button>
-        </div>
-      </div>
-      <div class="cal-grid" id="ytGrid"></div>
-      <div class="cal-legend">
-        <span><i style="background:rgba(255,0,0,0.45);width:10px;height:10px;border-radius:2px;display:inline-block;"></i>VIDEO</span>
-        <span><i style="background:rgba(90,174,240,0.45);width:10px;height:10px;border-radius:2px;display:inline-block;"></i>SHORT</span>
-        <span><i style="background:rgba(54,201,118,0.45);width:10px;height:10px;border-radius:2px;display:inline-block;"></i>LIVE</span>
-        <span><i class="cl-plan"></i>Pianificato</span>
+        <span style="font-weight:700;color:var(--ink);">Pubblicati (Windsor):</span>
+        <span><i class="cl-img"></i>IG IMAGE</span>
+        <span><i class="cl-car"></i>IG CAROSELLO</span>
+        <span><i class="cl-reel"></i>IG REEL</span>
+        <span><i style="background:rgba(255,0,0,0.45);width:10px;height:10px;border-radius:2px;display:inline-block;"></i>YT VIDEO</span>
+        <br>
+        <span style="font-weight:700;color:var(--ink);">Pianificati (Google Calendar):</span>
+        <span><i class="cl-plan"></i>bordo tratteggiato</span>
       </div>
     </div>
   </section>
 
 
-  <!-- BACHECA IDEE + COMPETITOR -->
-  <section class="section" data-tab="calendario">
-    <div class="section-head">
-      <div><div class="section-eyebrow">💡 Bacheca</div><div class="section-title">Idee & competitor</div></div>
-      <div class="section-meta">Salva idee al volo · monitora i top profili</div>
-    </div>
 
-    <div class="panel">
-      <div class="board-tabs">
-        <button class="board-tab active" data-board="ideas" onclick="boardSwitch(this)">📝 Bacheca idee <span class="board-count" id="boardIdeasCount">0</span></button>
-        <button class="board-tab" data-board="competitors" onclick="boardSwitch(this)">👀 Competitor</button>
-      </div>
-
-      <!-- BACHECA IDEE -->
-      <div class="board-pane active" id="board-ideas">
-        <div class="board-toolbar">
-          <button class="cal-btn primary" onclick="boardOpenIdea(null)"><span class="material-symbols-rounded">add</span>Nuova idea</button>
-          <div style="font-size:11px;color:var(--ink-mute);font-family:var(--font-mono);">Scrivi idee al volo · clicca <strong>Pianifica</strong> per spostarle nel calendario</div>
-        </div>
-        <div class="board-grid" id="boardGrid">
-          <div class="board-empty">Nessuna idea ancora. Cliccaci sopra <strong>Nuova idea</strong> per iniziare.</div>
-        </div>
-      </div>
-
-      <!-- COMPETITOR -->
-      <div class="board-pane" id="board-competitors">
-        <div class="board-toolbar">
-          <button class="cal-btn primary" onclick="competitorOpen(null)"><span class="material-symbols-rounded">add</span>Aggiungi profilo</button>
-          <div style="font-size:11px;color:var(--ink-mute);font-family:var(--font-mono);">Apri su Instagram, vedi cosa pubblicano, torna qui e salva l'idea</div>
-        </div>
-        <div class="competitor-grid" id="competitorGrid"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- MODAL IDEA -->
-  <div class="cal-modal-bg" id="ideaModal">
-    <div class="cal-modal">
-      <h3 id="ideaModalTitle">Nuova idea</h3>
-      <input type="hidden" id="ideaEditId">
-      <div class="cal-field">
-        <label>Titolo / Concept</label>
-        <input type="text" id="ideaTitle" placeholder="Es: TOP 10 colpi mercato sotto i 10 crediti">
-      </div>
-      <div class="cal-field">
-        <label>Formato</label>
-        <select id="ideaType">
-          <option value="IMAGE">📊 IMAGE</option>
-          <option value="CAROUSEL_ALBUM">🎠 CAROSELLO</option>
-          <option value="REELS">🎬 REEL</option>
-          <option value="STORY">📱 STORY</option>
-        </select>
-      </div>
-      <div class="cal-field">
-        <label>Note (opzionali)</label>
-        <textarea id="ideaNotes" placeholder="Copy, riferimenti, link al competitor da cui hai preso spunto…"></textarea>
-      </div>
-      <div class="cal-field">
-        <label>Fonte ispirazione (opzionale)</label>
-        <input type="text" id="ideaSource" placeholder="Es: @laboratoriocalcistico — top 11 della stagione">
-      </div>
-      <div class="cal-modal-actions">
-        <button class="cal-btn" id="ideaDeleteBtn" style="color:var(--neg);display:none;" onclick="boardDeleteIdea()">Elimina</button>
-        <button class="cal-btn" onclick="document.getElementById('ideaModal').classList.remove('show')">Annulla</button>
-        <button class="cal-btn" onclick="boardPromoteIdea()" id="ideaPromoteBtn" style="display:none;"><span class="material-symbols-rounded">event</span>Pianifica nel calendario</button>
-        <button class="cal-btn primary" onclick="boardSaveIdea()"><span class="material-symbols-rounded">save</span>Salva</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL COMPETITOR -->
-  <div class="cal-modal-bg" id="competitorModal">
-    <div class="cal-modal" style="max-width:380px;">
-      <h3 id="competitorModalTitle">Aggiungi profilo</h3>
-      <input type="hidden" id="compEditId">
-      <div class="cal-field">
-        <label>Username Instagram (senza @)</label>
-        <input type="text" id="compUsername" placeholder="Es: laboratoriocalcistico">
-      </div>
-      <div class="cal-field">
-        <label>Note (opzionali)</label>
-        <input type="text" id="compNote" placeholder="Es: Top-list tecniche, 16k follower">
-      </div>
-      <div class="cal-modal-actions">
-        <button class="cal-btn" id="compDeleteBtn" style="color:var(--neg);display:none;" onclick="boardDeleteCompetitor()">Elimina</button>
-        <button class="cal-btn" onclick="document.getElementById('competitorModal').classList.remove('show')">Annulla</button>
-        <button class="cal-btn primary" onclick="boardSaveCompetitor()"><span class="material-symbols-rounded">save</span>Salva</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- IDEE DI CONTENUTO (Modifica #3) -->
-  <section class="section" data-tab="calendario">
-    <div class="section-head">
-      <div><div class="section-eyebrow">💡 Pipeline</div><div class="section-title">Idee di contenuto</div></div>
-      <div class="section-meta">10 idee · agg. fine campionato + aste</div>
-    </div>
-    <div class="ideas-grid">
-
-      <div class="idea-card format">
-        <div class="idea-head"><span class="idea-num">1</span><span class="idea-title">TOP 10 della stagione 2025/26</span><span class="idea-tag format">tuo format</span></div>
-        <div class="idea-body">La classifica dei <strong>10 migliori per fantamedia dell'intera stagione</strong>. Sfrutta il tuo format vincente (TOP-LIST tecnica, PI 1,3×+) nel momento di massima nostalgia post-campionato.</div>
-        <div class="idea-meta"><span>📊 IMAGE</span><span>🎯 Gio 10-14</span></div>
-      </div>
-
-      <div class="idea-card hot">
-        <div class="idea-head"><span class="idea-num">2</span><span class="idea-title">I verdetti del Fanta: chi ha fatto vincere le leghe</span><span class="idea-tag hot">attualità</span></div>
-        <div class="idea-body">Inter campione, <strong>corsa Champions e salvezza decise il 24/05</strong>. Carosello sui giocatori che hanno deciso le leghe fantacalcio quest'anno. Cavalca l'ultima giornata.</div>
-        <div class="idea-meta"><span>🎠 CAROSELLO</span><span>🔥 entro 25/05</span></div>
-      </div>
-
-      <div class="idea-card hot">
-        <div class="idea-head"><span class="idea-num">3</span><span class="idea-title">Le sorprese e le delusioni dell'anno</span><span class="idea-tag hot">attualità</span></div>
-        <div class="idea-body">TOP 5 <strong>rivelazioni</strong> (chi è stato pagato 1 e ha reso 10) vs TOP 5 <strong>flop</strong> (big che hanno deluso). Format a doppia classifica: alta condivisibilità nei gruppi.</div>
-        <div class="idea-meta"><span>📊 IMAGE</span><span>🎯 Mar 10-14</span></div>
-      </div>
-
-      <div class="idea-card asta">
-        <div class="idea-head"><span class="idea-num">4</span><span class="idea-title">I 10 nomi da segnare per l'asta 2026/27</span><span class="idea-tag asta">pre-asta</span></div>
-        <div class="idea-body">Anticipa il <strong>picco aste di agosto</strong>: i giovani e i giocatori in rampa di lancio da tenere d'occhio. Crea attesa e posiziona il profilo come riferimento prima della stagione calda.</div>
-        <div class="idea-meta"><span>📊 IMAGE</span><span>📅 da giugno</span></div>
-      </div>
-
-      <div class="idea-card asta">
-        <div class="idea-head"><span class="idea-num">5</span><span class="idea-title">Quanto vale davvero? Listone prezzi consigliati</span><span class="idea-tag asta">pre-asta</span></div>
-        <div class="idea-body">Il contenuto <strong>più cercato prima dell'asta</strong>: per ogni reparto, quanto spendere sui top. Format ricorrente settimanale da luglio. È il bridge perfetto al follow ("torna ogni settimana").</div>
-        <div class="idea-meta"><span>🎠 CAROSELLO</span><span>📅 luglio-ago</span></div>
-      </div>
-
-      <div class="idea-card evergreen">
-        <div class="idea-head"><span class="idea-num">6</span><span class="idea-title">Il parere dei 20 Esperti: 1 domanda, 20 risposte</span><span class="idea-tag evergreen">identità</span></div>
-        <div class="idea-body">Attiva finalmente il claim della bio. <strong>Una domanda secca</strong> (es. "miglior acquisto sotto i 15 crediti?"), 20 risposte brevi dai tuoi esperti. Differenziante che nessun competitor ha.</div>
-        <div class="idea-meta"><span>🎠 CAROSELLO</span><span>♻️ ricorrente</span></div>
-      </div>
-
-      <div class="idea-card format">
-        <div class="idea-head"><span class="idea-num">7</span><span class="idea-title">TOP 10 modificatore difesa: la rosa perfetta</span><span class="idea-tag format">tuo format</span></div>
-        <div class="idea-body">Il tuo post sul modificatore ha fatto <strong>2,15× di reach</strong>. Replica il format per la stagione finita: i 10 difensori che hanno garantito il bonus modificatore più alto.</div>
-        <div class="idea-meta"><span>📊 IMAGE</span><span>🎯 Gio 10-14</span></div>
-      </div>
-
-      <div class="idea-card evergreen">
-        <div class="idea-head"><span class="idea-num">8</span><span class="idea-title">Reel: 3 errori d'asta che ti fanno perdere la lega</span><span class="idea-tag evergreen">test format</span></div>
-        <div class="idea-body">Testa il <strong>Reel educativo</strong> (il tuo formato meno sfruttato): errori comuni all'asta, ritmo veloce, hook nei primi 2 secondi. Format che gira bene nella nicchia e attira nuovi follower.</div>
-        <div class="idea-meta"><span>🎬 REEL</span><span>🧪 da testare</span></div>
-      </div>
-
-      <div class="idea-card hot">
-        <div class="idea-head"><span class="idea-num">9</span><span class="idea-title">La squadra ideale della stagione (modulo Mantra)</span><span class="idea-tag hot">attualità</span></div>
-        <div class="idea-body">L'<strong>11 titolare dei più redditizi</strong> al fanta, schierato per ruolo Mantra. Cavalca il fine stagione e sfida i follower a dire chi manca. Alto potenziale di commenti.</div>
-        <div class="idea-meta"><span>📊 IMAGE</span><span>🎯 Mar/Gio</span></div>
-      </div>
-
-      <div class="idea-card asta">
-        <div class="idea-head"><span class="idea-num">10</span><span class="idea-title">Collab con un profilo 5-15k della nicchia</span><span class="idea-tag asta">crescita</span></div>
-        <div class="idea-body">Un <strong>post collaborativo</strong> (es. con laboratoriocalcistico 16k o euroleghefc 14k) su un tema d'asta. La collab espone il profilo a un'audience affine: è la leva #1 per crescere prima di agosto.</div>
-        <div class="idea-meta"><span>🤝 COLLAB</span><span>📅 giugno-lug</span></div>
-      </div>
-
-    </div>
-    <div class="glossary">
-      <div class="glossary-title"><span class="material-symbols-rounded">help</span>Come usare queste idee</div>
-      <dl>
-        <dt>🟢 Tuo format</dt><dd> = riprende i pattern che già ti danno PI alto (TOP-LIST tecnica). Rischio basso, resa prevedibile.</dd>
-        <dt>🔴 Attualità</dt><dd> = da pubblicare subito mentre il tema è caldo (fine campionato, verdetti). Finestra breve, alta condivisibilità.</dd>
-        <dt>🟠 Pre-asta / crescita</dt><dd> = costruiscono il posizionamento verso il picco aste di agosto, il momento di massima domanda dell'anno.</dd>
-        <dt>🔵 Identità / test</dt><dd> = attivano il claim "20 Esperti" o testano formati nuovi (Reel) per ampliare il pubblico.</dd>
-      </dl>
-    </div>
-  </section>
 
   <footer class="footer">
     <div class="footer-brand">
@@ -2187,7 +2234,7 @@ body {
 <div class="modal-bg" id="modal">
   <div class="modal">
     <h3>Configura Windsor.ai</h3>
-    <p>Inserisci la tua API key personale di Windsor.ai. Resterà salvata solo nel <em>localStorage</em> del tuo browser.</p>
+    <p>Inserisci la <strong>API key Windsor.ai del progetto</strong>. Chiedila in privato a Lapo &mdash; non viene mai condivisa pubblicamente. Resterà salvata solo nel <em>localStorage</em> del tuo browser, da inserire una volta per dispositivo.</p>
     <label for="apiKey">API key</label>
     <input type="password" id="apiKey" placeholder="Incolla qui la tua key..." autocomplete="off">
     <div class="modal-hint"><strong>Come ottenerla:</strong> Windsor.ai → Account → API access → copia il token.</div>
@@ -3177,13 +3224,20 @@ function tabSwitch(btn) {
 // ============================================================================
 const CAL_KEY = 'epf_calendar';
 let calCurrentDate = new Date();
+let calCurrentFilter = 'all'; // 'all' | 'ig' | 'yt'
+
 let calPublishedPosts = [];
 
 function calLoad() {
+  // Se Google Calendar è connesso, ritorna gli eventi pianificati IG
+  if (gcalSignedIn) return gcalGetIgPlanned();
+  // Fallback localStorage (offline)
   try { return JSON.parse(localStorage.getItem(CAL_KEY) || '[]'); } catch { return []; }
 }
 function calSave(items) {
-  localStorage.setItem(CAL_KEY, JSON.stringify(items));
+  // Quando Google è connesso, il save è gestito dal modal (gcalCreate/Update/Delete)
+  // Questa funzione resta per il fallback localStorage
+  if (!gcalSignedIn) localStorage.setItem(CAL_KEY, JSON.stringify(items));
 }
 function calShortTitle(caption) {
   if (!caption) return 'Post';
@@ -3195,6 +3249,28 @@ function calDateStr(date) {
     String(date.getMonth()+1).padStart(2,'0') + '-' +
     String(date.getDate()).padStart(2,'0');
 }
+
+
+function calSetFilter(btn) {
+  document.querySelectorAll('.cal-filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  calCurrentFilter = btn.dataset.filter;
+  calRender();
+}
+
+
+function calOnPlatformChange() {
+  const platform = document.getElementById('calPlatform').value;
+  const typeSelect = document.getElementById('calType');
+  if (platform === 'yt') {
+    typeSelect.innerHTML = '<option value="VIDEO">🎬 VIDEO</option><option value="SHORT">📱 SHORT</option><option value="LIVE">🔴 LIVE</option>';
+  } else {
+    typeSelect.innerHTML = '<option value="IMAGE">📊 IMAGE</option><option value="CAROUSEL_ALBUM">🎠 CAROSELLO</option><option value="REELS">🎬 REEL</option><option value="STORY">📱 STORY</option>';
+  }
+}
+
+// ytRender è alias di calRender (rendering unificato)
+function ytRender() { calRender(); }
 
 function calRender() {
   const grid = document.getElementById('calGrid');
@@ -3234,17 +3310,24 @@ function calRender() {
     if (isToday) cls += ' today';
     if (isWeekend) cls += ' weekend-day';
 
-    // Post pubblicati in questo giorno
-    const pub = calPublishedPosts.filter(p => {
+    // Post Instagram pubblicati (Windsor)
+    const igPub = (calCurrentFilter === 'yt') ? [] : calPublishedPosts.filter(p => {
       const pd = new Date(p.timestamp);
       return calDateStr(pd) === ds;
     });
-
-    // Post pianificati in questo giorno
-    const plan = planned.filter(p => p.date === ds);
+    // Video YouTube pubblicati (Windsor)
+    const ytPub = (calCurrentFilter === 'ig') ? [] : (window.ytPublishedVideos || []).filter(v => v.date === ds);
+    // Post pianificati Google Calendar (filtrati per IG/YT)
+    let igPlanned = [], ytPlanned = [];
+    if (calCurrentFilter !== 'yt') {
+      igPlanned = (gcalSignedIn ? gcalGetIgPlanned() : (JSON.parse(localStorage.getItem(CAL_KEY)||'[]'))).filter(p => p.date === ds);
+    }
+    if (calCurrentFilter !== 'ig') {
+      ytPlanned = (gcalSignedIn ? gcalGetYtPlanned() : (JSON.parse(localStorage.getItem(YT_CAL_KEY)||'[]'))).filter(p => p.date === ds);
+    }
 
     let posts = '';
-    pub.forEach(p => {
+    igPub.forEach(p => {
       const t = calShortTitle(p.media_caption);
       const reach = p.media_reach ? ' · ' + numIt(p.media_reach) : '';
       const encoded = encodeURIComponent(JSON.stringify({
@@ -3256,12 +3339,22 @@ function calRender() {
       }));
       posts += `<div class="cal-post pub ${p.media_type}"
         onclick="calShowDetail(event,'${encoded}')"
-        title="${t}${reach}">📌 ${t}</div>`;
+        title="IG · ${t}${reach}">📸 ${t}</div>`;
     });
-    plan.forEach(p => {
+    ytPub.forEach(v => {
+      const shortT = v.title.length > 25 ? v.title.slice(0,25)+'…' : v.title;
+      posts += `<div class="cal-post pub" style="background:rgba(255,0,0,0.2);color:#ff6666;"
+        title="YT · ${v.title} · ${v.views} views">🎬 ${shortT}</div>`;
+    });
+    igPlanned.forEach(p => {
       posts += `<div class="cal-post plan ${p.type}"
-        onclick="calEditPlanned(event,'${p.id}')"
-        title="${p.time||''} ${p.title}">${p.time?p.time.slice(0,5)+' ':''}${p.title}</div>`;
+        onclick="calEditPlanned(event,'${p.id}','ig')"
+        title="IG · ${p.time||''} ${p.title}">📸 ${p.time?p.time.slice(0,5)+' ':''}${p.title}</div>`;
+    });
+    ytPlanned.forEach(p => {
+      posts += `<div class="cal-post plan" style="border:1.5px dashed #ff4444;color:#ff4444;background:transparent;"
+        onclick="calEditPlanned(event,'${p.id}','yt')"
+        title="YT · ${p.time||''} ${p.title}">🎬 ${p.time?p.time.slice(0,5)+' ':''}${p.title}</div>`;
     });
 
     h += `<div class="cal-day${cls}" data-date="${ds}"
@@ -3356,8 +3449,8 @@ function calSetupEvents() {
   document.getElementById('calDetail').onclick = e => {
     if (e.target.id === 'calDetail') document.getElementById('calDetail').classList.remove('show');
   };
-  document.getElementById('calSaveBtn').onclick = () => {
-    const platform = document.getElementById('calModal').dataset.platform || 'ig';
+  document.getElementById('calSaveBtn').onclick = async () => {
+    const platform = document.getElementById('calPlatform').value || 'ig';
     const id = document.getElementById('calEditId').value;
     const date = document.getElementById('calDate').value;
     const time = document.getElementById('calTime').value;
@@ -3365,6 +3458,22 @@ function calSetupEvents() {
     const title = document.getElementById('calTitle').value.trim();
     const notes = document.getElementById('calNotes').value.trim();
     if (!date || !title) { alert('Inserisci almeno data e titolo.'); return; }
+    // Se Google connesso, scrive direttamente su Google Calendar
+    if (gcalSignedIn) {
+      if (id) { await gcalUpdateEvent(id, platform, date, time, type, title, notes); }
+      else { await gcalCreateEvent(platform, date, time, type, title, notes); }
+      // Hook bacheca idee
+      const fromIdea = document.getElementById('calModal').dataset.fromIdea;
+      if (fromIdea) {
+        const ideas = boardLoadIdeas().filter(i => i.id !== fromIdea);
+        boardSaveIdeas(ideas);
+        delete document.getElementById('calModal').dataset.fromIdea;
+        if (typeof boardRenderIdeas === 'function') boardRenderIdeas();
+      }
+      document.getElementById('calModal').classList.remove('show');
+      return;
+    }
+    // Fallback localStorage (Google non connesso)
     const loadFn = platform === 'yt' ? ytCalLoad : calLoad;
     const saveFn = platform === 'yt' ? ytCalSave : calSave;
     const renderFn = platform === 'yt' ? ytRender : calRender;
@@ -3387,10 +3496,15 @@ function calSetupEvents() {
     document.getElementById('calModal').classList.remove('show');
     renderFn();
   };
-  document.getElementById('calDeleteBtn').onclick = () => {
-    const platform = document.getElementById('calModal').dataset.platform || 'ig';
+  document.getElementById('calDeleteBtn').onclick = async () => {
+    const platform = document.getElementById('calPlatform').value || 'ig';
     const id = document.getElementById('calEditId').value;
     if (!id || !confirm('Eliminare questo post pianificato?')) return;
+    if (gcalSignedIn) {
+      await gcalDeleteEvent(id);
+      document.getElementById('calModal').classList.remove('show');
+      return;
+    }
     const loadFn = platform === 'yt' ? ytCalLoad : calLoad;
     const saveFn = platform === 'yt' ? ytCalSave : calSave;
     const renderFn = platform === 'yt' ? ytRender : calRender;
@@ -3400,114 +3514,6 @@ function calSetupEvents() {
   };
 }
 
-
-// ============================================================================
-// CALENDARIO YOUTUBE (solo pianificati, no Windsor per ora)
-// ============================================================================
-const YT_CAL_KEY = 'epf_yt_calendar';
-let ytCurrentDate = new Date();
-
-function ytCalLoad() {
-  try { return JSON.parse(localStorage.getItem(YT_CAL_KEY) || '[]'); } catch { return []; }
-}
-function ytCalSave(items) { localStorage.setItem(YT_CAL_KEY, JSON.stringify(items)); }
-
-function ytRender() {
-  const grid = document.getElementById('ytGrid');
-  const titleEl = document.getElementById('ytMonthTitle');
-  if (!grid) return;
-  const MONTHS = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
-    'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-  const DOW = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
-  const y = ytCurrentDate.getFullYear();
-  const m = ytCurrentDate.getMonth();
-  titleEl.textContent = MONTHS[m] + ' ' + y;
-  const today = new Date(); today.setHours(0,0,0,0);
-  const firstDay = new Date(y, m, 1);
-  const lastDay = new Date(y, m+1, 0);
-  const startDow = (firstDay.getDay() + 6) % 7;
-  const planned = ytCalLoad();
-  let h = DOW.map((d,i) => `<div class="cal-dow${i>=5?' weekend':''}">${d}</div>`).join('');
-  for (let i = 0; i < startDow; i++) {
-    const d = new Date(y, m, 1-(startDow-i));
-    h += `<div class="cal-day other-month"><span class="cal-day-num">${d.getDate()}</span></div>`;
-  }
-  for (let day = 1; day <= lastDay.getDate(); day++) {
-    const date = new Date(y, m, day);
-    const ds = calDateStr(date);
-    const isToday = date.getTime() === today.getTime();
-    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-    let cls = isToday ? ' today' : '';
-    if (isWeekend) cls += ' weekend-day';
-    const plan = planned.filter(p => p.date === ds);
-    let posts = '';
-    const typeColors = { VIDEO: 'rgba(255,0,0,0.15)', SHORT: 'rgba(90,174,240,0.15)', LIVE: 'rgba(54,201,118,0.15)' };
-    const typeFg = { VIDEO: '#ff4444', SHORT: '#5aaef0', LIVE: '#36c976' };
-    // Video pubblicati da Windsor
-    const ytPub = (window.ytPublishedVideos || []).filter(v => v.date === ds);
-    ytPub.forEach(v => {
-      const shortT = v.title.length > 25 ? v.title.slice(0,25)+'…' : v.title;
-      posts += `<div class="cal-post pub" style="background:rgba(255,0,0,0.2);color:#ff6666;"
-        title="${v.title} · ${v.views} views · ${v.likes} likes">▶ ${shortT}</div>`;
-    });
-
-    plan.forEach(p => {
-      const bg = typeColors[p.type] || 'rgba(255,255,255,0.05)';
-      const fg = typeFg[p.type] || 'var(--ink-soft)';
-      posts += `<div class="cal-post plan" style="border-color:${fg};color:${fg};background:${bg};"
-        onclick="ytEditPlanned(event,'${p.id}')"
-        title="${p.time||''} ${p.title}">${p.time?p.time.slice(0,5)+' ':''}${p.title}</div>`;
-    });
-    h += `<div class="cal-day${cls}" data-date="${ds}" onclick="ytDayClick(event,'${ds}')">
-      <span class="cal-day-num">${day}</span>${posts}<div class="cal-plus">+</div></div>`;
-  }
-  const used = startDow + lastDay.getDate();
-  const tail = (7 - (used % 7)) % 7;
-  for (let i = 1; i <= tail; i++) {
-    h += `<div class="cal-day other-month"><span class="cal-day-num">${i}</span></div>`;
-  }
-  grid.innerHTML = h;
-}
-
-function ytDayClick(e, ds) {
-  if (e.target.closest('.cal-post')) return;
-  ytOpenModal(ds);
-}
-function ytEditPlanned(e, id) {
-  e.stopPropagation();
-  const item = ytCalLoad().find(i => i.id === id);
-  if (!item) return;
-  document.getElementById('calEditId').value = id;
-  document.getElementById('calDate').value = item.date;
-  document.getElementById('calTime').value = item.time || '10:00';
-  document.getElementById('calType').innerHTML = '<option value="VIDEO">🎬 VIDEO</option><option value="SHORT">📱 SHORT</option><option value="LIVE">🔴 LIVE</option>';
-  document.getElementById('calType').value = item.type;
-  document.getElementById('calTitle').value = item.title;
-  document.getElementById('calNotes').value = item.notes || '';
-  document.getElementById('calDeleteBtn').style.display = 'inline-flex';
-  document.getElementById('calModalTitle').textContent = 'Modifica post YouTube';
-  document.getElementById('calModal').dataset.platform = 'yt';
-  document.getElementById('calModal').classList.add('show');
-}
-function ytOpenModal(ds) {
-  document.getElementById('calEditId').value = '';
-  document.getElementById('calDate').value = ds || calDateStr(new Date());
-  document.getElementById('calTime').value = '10:00';
-  document.getElementById('calType').innerHTML = '<option value="VIDEO">🎬 VIDEO</option><option value="SHORT">📱 SHORT</option><option value="LIVE">🔴 LIVE</option>';
-  document.getElementById('calType').value = 'VIDEO';
-  document.getElementById('calTitle').value = '';
-  document.getElementById('calNotes').value = '';
-  document.getElementById('calDeleteBtn').style.display = 'none';
-  document.getElementById('calModalTitle').textContent = 'Pianifica post YouTube';
-  document.getElementById('calModal').dataset.platform = 'yt';
-  document.getElementById('calModal').classList.add('show');
-}
-function ytSetupEvents() {
-  document.getElementById('ytPrev').onclick = () => { ytCurrentDate = new Date(ytCurrentDate.getFullYear(), ytCurrentDate.getMonth()-1,1); ytRender(); };
-  document.getElementById('ytNext').onclick = () => { ytCurrentDate = new Date(ytCurrentDate.getFullYear(), ytCurrentDate.getMonth()+1,1); ytRender(); };
-  document.getElementById('ytToday').onclick = () => { ytCurrentDate = new Date(); ytRender(); };
-  document.getElementById('ytAddBtn').onclick = () => ytOpenModal(null);
-}
 
 // ============================================================================
 // FOLLOWER ANALYSIS — chart + KPI
@@ -3546,238 +3552,284 @@ function renderFollowerAnalysis(daily) {
 
 
 // ============================================================================
-// BACHECA IDEE + COMPETITOR
+// GOOGLE CALENDAR INTEGRATION
 // ============================================================================
-const BOARD_IDEAS_KEY = 'epf_board_ideas';
-const BOARD_COMP_KEY = 'epf_board_competitors';
+const GCAL_CLIENT_ID = '875353468796-v9nc0d2v9nf55ebnji97n4gh4bpdteld.apps.googleusercontent.com';
+const GCAL_CALENDAR_ID = 'progettoespertiprofeta@gmail.com';
+const GCAL_SCOPES = 'https://www.googleapis.com/auth/calendar.events';
 
-function boardLoadIdeas() {
-  try { return JSON.parse(localStorage.getItem(BOARD_IDEAS_KEY) || '[]'); } catch { return []; }
+let gcalTokenClient = null;
+let gcalSignedIn = false;
+let gcalEvents = []; // cache eventi Google
+
+function gcalUpdateUI() {
+  const status = document.getElementById('gcalStatus');
+  const loginBtn = document.getElementById('gcalLoginBtn');
+  const logoutBtn = document.getElementById('gcalLogoutBtn');
+  if (!status) return;
+  if (gcalSignedIn) {
+    status.innerHTML = '<strong style="color:var(--pos);">✓ Connesso a Google Calendar</strong> · sync automatico ogni 60s · <span id="gcalEvtCount">' + gcalEvents.length + '</span> eventi caricati';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-flex';
+  } else {
+    status.innerHTML = '<strong>Google Calendar non connesso</strong> · accedi per sincronizzare post pianificati tra dispositivi e team';
+    loginBtn.style.display = 'inline-flex';
+    logoutBtn.style.display = 'none';
+  }
+  // Aggiorno anche l'onboarding banner
+  if (typeof updateOnboarding === 'function') updateOnboarding();
 }
-function boardSaveIdeas(items) { localStorage.setItem(BOARD_IDEAS_KEY, JSON.stringify(items)); }
-function boardLoadCompetitors() {
-  try { return JSON.parse(localStorage.getItem(BOARD_COMP_KEY) || '[]'); } catch { return []; }
-}
-function boardSaveCompetitors(items) { localStorage.setItem(BOARD_COMP_KEY, JSON.stringify(items)); }
 
-function boardSwitch(btn) {
-  const pane = btn.dataset.board;
-  document.querySelectorAll('.board-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.board-pane').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('board-' + pane).classList.add('active');
-  if (pane === 'competitors') boardRenderCompetitors();
-  else boardRenderIdeas();
-}
-
-
-function boardRenderIdeas() {
-  const grid = document.getElementById('boardGrid');
-  if (!grid) return;
-  const items = boardLoadIdeas();
-  document.getElementById('boardIdeasCount').textContent = items.length;
-  if (items.length === 0) {
-    grid.innerHTML = '<div class="board-empty">Nessuna idea ancora. Clicca <strong>Nuova idea</strong> per iniziare.</div>';
+function gcalInit() {
+  // Aspetta che gli script Google siano caricati
+  if (typeof google === 'undefined' || typeof gapi === 'undefined') {
+    setTimeout(gcalInit, 200);
     return;
   }
-  // Ordine: più recenti in cima
-  items.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
-  const typeLabels = { IMAGE: '📊 IMAGE', CAROUSEL_ALBUM: '🎠 CAROSELLO', REELS: '🎬 REEL', STORY: '📱 STORY' };
-  grid.innerHTML = items.map(it => `
-    <div class="idea-tile" onclick="boardOpenIdea('${it.id}')">
-      <div class="idea-tile-head">
-        <span class="idea-tile-type">${typeLabels[it.type] || it.type}</span>
-      </div>
-      <div class="idea-tile-title">${escapeHtml(it.title)}</div>
-      ${it.notes ? `<div class="idea-tile-notes">${escapeHtml(it.notes)}</div>` : ''}
-      ${it.source ? `<div class="idea-tile-source"><span class="material-symbols-rounded">bookmark</span> ${escapeHtml(it.source)}</div>` : ''}
-    </div>
-  `).join('');
-}
-
-function escapeHtml(s) {
-  return (s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-}
-
-function boardOpenIdea(id) {
-  const items = boardLoadIdeas();
-  const item = id ? items.find(i => i.id === id) : null;
-  document.getElementById('ideaEditId').value = id || '';
-  document.getElementById('ideaTitle').value = item?.title || '';
-  document.getElementById('ideaType').value = item?.type || 'IMAGE';
-  document.getElementById('ideaNotes').value = item?.notes || '';
-  document.getElementById('ideaSource').value = item?.source || '';
-  document.getElementById('ideaDeleteBtn').style.display = id ? 'inline-flex' : 'none';
-  document.getElementById('ideaPromoteBtn').style.display = id ? 'inline-flex' : 'none';
-  document.getElementById('ideaModalTitle').textContent = id ? 'Modifica idea' : 'Nuova idea';
-  document.getElementById('ideaModal').classList.add('show');
-}
-
-function boardSaveIdea() {
-  const id = document.getElementById('ideaEditId').value;
-  const title = document.getElementById('ideaTitle').value.trim();
-  if (!title) { alert('Inserisci almeno il titolo.'); return; }
-  const item = {
-    id: id || Date.now().toString(),
-    title,
-    type: document.getElementById('ideaType').value,
-    notes: document.getElementById('ideaNotes').value.trim(),
-    source: document.getElementById('ideaSource').value.trim(),
-    updatedAt: new Date().toISOString()
-  };
-  const items = boardLoadIdeas();
-  const idx = items.findIndex(i => i.id === item.id);
-  if (idx >= 0) items[idx] = item; else items.unshift(item);
-  boardSaveIdeas(items);
-  document.getElementById('ideaModal').classList.remove('show');
-  boardRenderIdeas();
-}
-
-function boardDeleteIdea() {
-  const id = document.getElementById('ideaEditId').value;
-  if (!id || !confirm('Eliminare questa idea?')) return;
-  boardSaveIdeas(boardLoadIdeas().filter(i => i.id !== id));
-  document.getElementById('ideaModal').classList.remove('show');
-  boardRenderIdeas();
-}
-
-function boardPromoteIdea() {
-  // Trasferisce l'idea nel calendario IG come post pianificato
-  const id = document.getElementById('ideaEditId').value;
-  const item = boardLoadIdeas().find(i => i.id === id);
-  if (!item) return;
-  // Apro il modal calendario pre-compilato
-  const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
-  document.getElementById('ideaModal').classList.remove('show');
-  document.getElementById('calEditId').value = '';
-  document.getElementById('calDate').value = todayStr;
-  document.getElementById('calTime').value = '10:00';
-  document.getElementById('calType').innerHTML = '<option value="IMAGE">📊 IMAGE</option><option value="CAROUSEL_ALBUM">🎠 CAROSELLO</option><option value="REELS">🎬 REEL</option><option value="STORY">📱 STORY</option>';
-  document.getElementById('calType').value = item.type;
-  document.getElementById('calTitle').value = item.title;
-  document.getElementById('calNotes').value = item.notes || '';
-  document.getElementById('calDeleteBtn').style.display = 'none';
-  document.getElementById('calModalTitle').textContent = 'Pianifica da idea';
-  document.getElementById('calModal').dataset.platform = 'ig';
-  document.getElementById('calModal').dataset.fromIdea = id;
-  document.getElementById('calModal').classList.add('show');
-  // Aggiorno lo stato dell'idea a "pianificata" dopo che l'utente salva
-  // (gestito nell'evento di calSave qui sotto)
-}
-
-function boardRenderCompetitors() {
-  const grid = document.getElementById('competitorGrid');
-  if (!grid) return;
-  const items = boardLoadCompetitors();
-  if (items.length === 0) {
-    grid.innerHTML = '<div class="board-empty">Nessun profilo monitorato. Clicca <strong>Aggiungi profilo</strong> per iniziare.</div>';
-    return;
-  }
-  grid.innerHTML = items.map(c => `
-    <div class="competitor-tile">
-      <div class="competitor-tile-head">
-        <div class="competitor-username">${escapeHtml(c.username)}</div>
-      </div>
-      <div class="competitor-note">${escapeHtml(c.note || '')}</div>
-      <div class="competitor-actions">
-        <a href="https://www.instagram.com/${encodeURIComponent(c.username)}/" target="_blank" rel="noopener">
-          <span class="material-symbols-rounded" style="font-size:14px;">open_in_new</span>Apri
-        </a>
-        <button onclick="boardQuickIdea('${c.username.replace(/'/g, '')}')">
-          <span class="material-symbols-rounded" style="font-size:14px;">lightbulb</span>Idea
-        </button>
-        <button onclick="competitorOpen('${c.id}')">
-          <span class="material-symbols-rounded" style="font-size:14px;">edit</span>
-        </button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function boardQuickIdea(username) {
-  // Apre il modal idea con la fonte pre-compilata
-  document.getElementById('ideaEditId').value = '';
-  document.getElementById('ideaTitle').value = '';
-  document.getElementById('ideaType').value = 'IMAGE';
-  document.getElementById('ideaNotes').value = '';
-  document.getElementById('ideaSource').value = '@' + username;
-  document.getElementById('ideaDeleteBtn').style.display = 'none';
-  document.getElementById('ideaPromoteBtn').style.display = 'none';
-  document.getElementById('ideaModalTitle').textContent = 'Idea ispirata da @' + username;
-  document.getElementById('ideaModal').classList.add('show');
-  // Switcha alla tab idee
-  document.querySelectorAll('.board-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.board-pane').forEach(p => p.classList.remove('active'));
-  document.querySelector('.board-tab[data-board="ideas"]').classList.add('active');
-  document.getElementById('board-ideas').classList.add('active');
-}
-
-function competitorOpen(id) {
-  const items = boardLoadCompetitors();
-  const item = id ? items.find(i => i.id === id) : null;
-  document.getElementById('compEditId').value = id || '';
-  document.getElementById('compUsername').value = item?.username || '';
-  document.getElementById('compNote').value = item?.note || '';
-  document.getElementById('compDeleteBtn').style.display = id ? 'inline-flex' : 'none';
-  document.getElementById('competitorModalTitle').textContent = id ? 'Modifica profilo' : 'Aggiungi profilo';
-  document.getElementById('competitorModal').classList.add('show');
-}
-
-function boardSaveCompetitor() {
-  const id = document.getElementById('compEditId').value;
-  const username = document.getElementById('compUsername').value.trim().replace(/^@/, '');
-  if (!username) { alert('Inserisci almeno l\'username.'); return; }
-  const item = {
-    id: id || Date.now().toString(),
-    username,
-    note: document.getElementById('compNote').value.trim()
-  };
-  const items = boardLoadCompetitors();
-  const idx = items.findIndex(i => i.id === item.id);
-  if (idx >= 0) items[idx] = item; else items.unshift(item);
-  boardSaveCompetitors(items);
-  document.getElementById('competitorModal').classList.remove('show');
-  boardRenderCompetitors();
-}
-
-function boardDeleteCompetitor() {
-  const id = document.getElementById('compEditId').value;
-  if (!id || !confirm('Eliminare questo profilo?')) return;
-  boardSaveCompetitors(boardLoadCompetitors().filter(i => i.id !== id));
-  document.getElementById('competitorModal').classList.remove('show');
-  boardRenderCompetitors();
-}
-
-
-// Seed iniziale: se localStorage vuoto, pre-popola con competitor e idee fresche
-function boardSeed() {
-  if (!localStorage.getItem(BOARD_COMP_KEY)) {
-    const defaultComp = [{"username": "fantacalcio_official", "note": "Account ufficiale Fantacalcio.it · top di nicchia"}, {"username": "fantamaster", "note": "Voti, consigli, news mercato · multi-format"}, {"username": "laboratoriocalcistico", "note": "Statistiche xG, analisi tecniche · ~16k"}, {"username": "euroleghefc", "note": "Aste, mercato, consigli · ~14k"}, {"username": "fantapazz", "note": "Voti e probabili formazioni"}, {"username": "fcmazza", "note": "Consigli e formazioni · contenuti video"}, {"username": "sosfanta_official", "note": "Voti, statistiche, mercato"}, {"username": "fanta.lab", "note": "Analisi performance, format simili al tuo"}];
-    defaultComp.forEach((c, i) => c.id = 'seed-c-' + i);
-    boardSaveCompetitors(defaultComp);
-  }
-  if (!localStorage.getItem(BOARD_IDEAS_KEY)) {
-    const defaultIdeas = [{"title": "TOP 10 della stagione 2025/26", "type": "IMAGE", "status": "idea", "notes": "Classifica per fantamedia o per bonus totali. Riprende il tuo format TOP-LIST che fa PI 2x+. Da pubblicare entro fine maggio.", "source": ""}, {"title": "Top 5 rivelazioni vs top 5 flop dell'anno", "type": "CAROUSEL_ALBUM", "status": "idea", "notes": "Doppia classifica in 1 carosello: pagati poco e resi tanto vs pagati tanto e flop. Alta condivisibilità nei gruppi.", "source": ""}, {"title": "I 10 nomi da segnare per l'asta 2026/27", "type": "IMAGE", "status": "idea", "notes": "Anticipo del listone: giovani in rampa, big costanti, scommesse. Da iniziare a giugno, ripetere settimanale fino ad agosto.", "source": ""}, {"title": "Listone prezzi consigliati per ruolo", "type": "CAROUSEL_ALBUM", "status": "idea", "notes": "Contenuto evergreen pre-asta. Pubblicare prima ruolo (P/D/C/A) ogni settimana di luglio. Costruisce attesa e ricorrenza.", "source": ""}, {"title": "TOP 10 modificatore difesa stagione", "type": "IMAGE", "status": "idea", "notes": "Il tuo post sul modificatore ha fatto 2,15x. Replica per la stagione finita: i 10 difensori con miglior bonus modificatore.", "source": ""}, {"title": "Reel: 3 errori d'asta che ti fanno perdere la lega", "type": "REELS", "status": "idea", "notes": "Testa il Reel educativo. Hook nei primi 2 secondi, 15-25 sec, montaggio veloce. Format poco sfruttato sul tuo profilo.", "source": ""}, {"title": "Il parere dei 20 Esperti: 1 domanda, 20 risposte", "type": "CAROUSEL_ALBUM", "status": "idea", "notes": "Attiva finalmente il claim della bio. Es: 'Miglior acquisto sotto i 15 crediti?' Differenziante che nessun competitor ha.", "source": ""}, {"title": "La squadra ideale Mantra della stagione", "type": "IMAGE", "status": "idea", "notes": "11 titolare dei più redditizi per ruolo Mantra. Sfida i follower a dire chi manca. Alto potenziale di commenti.", "source": ""}, {"title": "Collab con un profilo 5-15k della nicchia", "type": "IMAGE", "status": "idea", "notes": "Post collaborativo (es. con laboratoriocalcistico o euroleghefc) su tema d'asta. La collab è la leva #1 per crescere prima di agosto.", "source": ""}, {"title": "TOP 10 overperformer xG 2025/26", "type": "IMAGE", "status": "idea", "notes": "Giocatori con delta Gol-xG più alto. Approccio analitico/tecnico che differenzia dai contenuti pop. Ottimo per posizionare il profilo come fonte autorevole.", "source": ""}];
-    defaultIdeas.forEach((it, i) => {
-      it.id = 'seed-i-' + i;
-      it.updatedAt = new Date().toISOString();
+  // Init GAPI client per Calendar API
+  gapi.load('client', async () => {
+    try {
+      await gapi.client.init({
+        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
+      });
+    } catch(e) { console.error('GAPI init error:', e); }
+  });
+  // Init token client
+  try {
+    gcalTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GCAL_CLIENT_ID,
+      scope: GCAL_SCOPES,
+      callback: (resp) => {
+        if (resp.error) { console.error('Auth error:', resp); return; }
+        gcalSignedIn = true;
+        // Salvo il token in sessionStorage per ricordare il login
+        sessionStorage.setItem('gcal_token', resp.access_token);
+        sessionStorage.setItem('gcal_expires', Date.now() + (resp.expires_in * 1000));
+        gcalUpdateUI();
+        gcalLoadEvents();
+        // Refresh automatico ogni 60s
+        if (!window.gcalRefreshInterval) {
+          window.gcalRefreshInterval = setInterval(gcalLoadEvents, 60000);
+        }
+      }
     });
-    boardSaveIdeas(defaultIdeas);
+    // Auto-restore se c'è un token valido
+    const savedToken = sessionStorage.getItem('gcal_token');
+    const expires = parseInt(sessionStorage.getItem('gcal_expires') || '0');
+    if (savedToken && Date.now() < expires) {
+      gapi.client.setToken({ access_token: savedToken });
+      gcalSignedIn = true;
+      gcalUpdateUI();
+      gcalLoadEvents();
+      if (!window.gcalRefreshInterval) {
+        window.gcalRefreshInterval = setInterval(gcalLoadEvents, 60000);
+      }
+    } else {
+      gcalUpdateUI();
+    }
+  } catch(e) { console.error('Token client init error:', e); gcalUpdateUI(); }
+}
+
+function gcalLogin() {
+  if (!gcalTokenClient) { alert('Google non ancora pronto. Riprova tra qualche secondo.'); return; }
+  gcalTokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function gcalLogout() {
+  const token = gapi.client.getToken();
+  if (token) {
+    google.accounts.oauth2.revoke(token.access_token, () => {});
+    gapi.client.setToken(null);
+  }
+  sessionStorage.removeItem('gcal_token');
+  sessionStorage.removeItem('gcal_expires');
+  gcalSignedIn = false;
+  gcalEvents = [];
+  if (window.gcalRefreshInterval) { clearInterval(window.gcalRefreshInterval); window.gcalRefreshInterval = null; }
+  gcalUpdateUI();
+  calRender(); ytRender();
+}
+
+async function gcalLoadEvents() {
+  if (!gcalSignedIn) return;
+  try {
+    // Carico eventi degli ultimi 60 giorni + futuri 180 giorni
+    const timeMin = new Date(Date.now() - 60*24*3600*1000).toISOString();
+    const timeMax = new Date(Date.now() + 180*24*3600*1000).toISOString();
+    const resp = await gapi.client.calendar.events.list({
+      calendarId: GCAL_CALENDAR_ID,
+      timeMin, timeMax,
+      maxResults: 500,
+      singleEvents: true,
+      orderBy: 'startTime'
+    });
+    gcalEvents = resp.result.items || [];
+    const countEl = document.getElementById('gcalEvtCount');
+    if (countEl) countEl.textContent = gcalEvents.length;
+    calRender(); ytRender();
+  } catch(e) {
+    console.error('gcalLoadEvents error:', e);
+    if (e.status === 401) {
+      // Token scaduto
+      gcalSignedIn = false;
+      sessionStorage.removeItem('gcal_token');
+      gcalUpdateUI();
+    }
   }
 }
 
-function boardInit() {
-  boardSeed();
-  boardRenderIdeas();
-  boardRenderCompetitors();
-  // Click outside modal closes it
-  document.getElementById('ideaModal').onclick = e => {
-    if (e.target.id === 'ideaModal') document.getElementById('ideaModal').classList.remove('show');
+async function gcalCreateEvent(platform, date, time, type, title, notes) {
+  if (!gcalSignedIn) { alert('Devi prima accedere a Google Calendar.'); return null; }
+  const startDate = date + 'T' + (time || '10:00') + ':00';
+  const endDate = date + 'T' + (time || '10:00') + ':00';
+  const start = new Date(startDate);
+  const end = new Date(start.getTime() + 30*60*1000); // 30 min event
+  // Prefix nel titolo: [IG] o [YT] + emoji formato
+  const formatEmoji = {IMAGE:'📊', CAROUSEL_ALBUM:'🎠', REELS:'🎬', STORY:'📱', VIDEO:'🎬', SHORT:'📱', LIVE:'🔴'};
+  const platformTag = platform === 'yt' ? '[YT]' : '[IG]';
+  const summary = `${platformTag} ${formatEmoji[type]||''} ${title}`;
+  const description = `Piattaforma: ${platform === 'yt' ? 'YouTube' : 'Instagram'}\nFormato: ${type}\n\n${notes||''}`;
+  try {
+    const resp = await gapi.client.calendar.events.insert({
+      calendarId: GCAL_CALENDAR_ID,
+      resource: {
+        summary,
+        description,
+        start: { dateTime: start.toISOString(), timeZone: 'Europe/Rome' },
+        end: { dateTime: end.toISOString(), timeZone: 'Europe/Rome' },
+        extendedProperties: { private: { platform, type, title, notes: notes||'' } }
+      }
+    });
+    await gcalLoadEvents();
+    return resp.result;
+  } catch(e) { console.error('gcalCreateEvent error:', e); alert('Errore creazione evento. Riprova.'); return null; }
+}
+
+async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes) {
+  if (!gcalSignedIn) return null;
+  const startDate = date + 'T' + (time || '10:00') + ':00';
+  const start = new Date(startDate);
+  const end = new Date(start.getTime() + 30*60*1000);
+  const formatEmoji = {IMAGE:'📊', CAROUSEL_ALBUM:'🎠', REELS:'🎬', STORY:'📱', VIDEO:'🎬', SHORT:'📱', LIVE:'🔴'};
+  const platformTag = platform === 'yt' ? '[YT]' : '[IG]';
+  const summary = `${platformTag} ${formatEmoji[type]||''} ${title}`;
+  const description = `Piattaforma: ${platform === 'yt' ? 'YouTube' : 'Instagram'}\nFormato: ${type}\n\n${notes||''}`;
+  try {
+    const resp = await gapi.client.calendar.events.update({
+      calendarId: GCAL_CALENDAR_ID,
+      eventId,
+      resource: {
+        summary, description,
+        start: { dateTime: start.toISOString(), timeZone: 'Europe/Rome' },
+        end: { dateTime: end.toISOString(), timeZone: 'Europe/Rome' },
+        extendedProperties: { private: { platform, type, title, notes: notes||'' } }
+      }
+    });
+    await gcalLoadEvents();
+    return resp.result;
+  } catch(e) { console.error('gcalUpdateEvent error:', e); return null; }
+}
+
+async function gcalDeleteEvent(eventId) {
+  if (!gcalSignedIn) return;
+  try {
+    await gapi.client.calendar.events.delete({ calendarId: GCAL_CALENDAR_ID, eventId });
+    await gcalLoadEvents();
+  } catch(e) { console.error('gcalDeleteEvent error:', e); }
+}
+
+// Converte un evento Google → formato interno per il render
+function gcalEventToInternal(ev) {
+  const ext = ev.extendedProperties?.private || {};
+  const startDt = ev.start?.dateTime || ev.start?.date;
+  const dt = new Date(startDt);
+  const date = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+  const time = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+  return {
+    id: ev.id,
+    date, time,
+    type: ext.type || 'IMAGE',
+    title: ext.title || (ev.summary||'').replace(/^\[(IG|YT)\]\s*[\u{1F300}-\u{1FAFF}]?\s*/u, ''),
+    notes: ext.notes || '',
+    platform: ext.platform || (ev.summary?.startsWith('[YT]') ? 'yt' : 'ig')
   };
-  document.getElementById('competitorModal').onclick = e => {
-    if (e.target.id === 'competitorModal') document.getElementById('competitorModal').classList.remove('show');
-  };
+}
+
+// Funzioni che il calRender e ytRender chiameranno per ottenere i "pianificati"
+function gcalGetIgPlanned() {
+  return gcalEvents
+    .filter(e => {
+      const ext = e.extendedProperties?.private || {};
+      return ext.platform === 'ig' || (!ext.platform && e.summary?.startsWith('[IG]'));
+    })
+    .map(gcalEventToInternal);
+}
+function gcalGetYtPlanned() {
+  return gcalEvents
+    .filter(e => {
+      const ext = e.extendedProperties?.private || {};
+      return ext.platform === 'yt' || (!ext.platform && e.summary?.startsWith('[YT]'));
+    })
+    .map(gcalEventToInternal);
+}
+
+
+// ============================================================================
+// ONBOARDING 2-STEP
+// ============================================================================
+function updateOnboarding() {
+  const banner = document.getElementById('onboardingBanner');
+  if (!banner) return;
+  const hasKey = !!getKey();
+  const hasGoogle = gcalSignedIn;
+  // Mostra il banner se manca almeno una delle 2 cose
+  banner.style.display = (hasKey && hasGoogle) ? 'none' : 'block';
+
+  // Step 1: Google
+  const step1Card = document.getElementById('step1Card');
+  const step1Status = document.getElementById('step1Status');
+  const loginBtn = document.getElementById('onboardingLoginBtn');
+  if (hasGoogle) {
+    step1Card.style.opacity = '0.6';
+    step1Card.style.borderLeftColor = 'var(--pos)';
+    step1Status.innerHTML = '<span style="color:var(--pos);">✓ Completato</span>';
+    if (loginBtn) {
+      loginBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;">check_circle</span>Connesso';
+      loginBtn.style.background = 'var(--pos)';
+      loginBtn.disabled = true;
+    }
+  } else {
+    step1Card.style.opacity = '1';
+    step1Card.style.borderLeftColor = 'var(--accent)';
+    step1Status.textContent = 'da fare';
+    if (loginBtn) {
+      loginBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;">login</span>Accedi a Google';
+      loginBtn.style.background = 'var(--accent)';
+      loginBtn.disabled = false;
+    }
+  }
+
+  // Step 2: API key (sbloccato visivamente solo dopo step 1)
+  const step2Card = document.getElementById('step2Card');
+  const step2Status = document.getElementById('step2Status');
+  const keyBtn = document.getElementById('onboardingKeyBtn');
+  if (hasKey) {
+    step2Card.style.opacity = '0.6';
+    step2Card.style.borderLeftColor = 'var(--pos)';
+    step2Status.innerHTML = '<span style="color:var(--pos);">✓ Configurata</span>';
+    if (keyBtn) {
+      keyBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;">check_circle</span>Configurata';
+      keyBtn.style.background = 'var(--pos)';
+    }
+  } else {
+    step2Card.style.opacity = hasGoogle ? '1' : '0.6';
+    step2Card.style.borderLeftColor = 'var(--info)';
+    step2Status.textContent = 'da fare';
+    if (keyBtn) {
+      keyBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;">key</span>Inserisci API key';
+      keyBtn.style.background = 'var(--info)';
+    }
+  }
 }
 
 async function init() {
@@ -3785,13 +3837,14 @@ async function init() {
   document.querySelectorAll('section[data-tab="calendario"]').forEach(s => s.classList.add('tab-active'));
   const apiKey = getKey();
   if (!apiKey) {
-    setStatus('error', '⚙️  Configura la API key per vedere i dati');
-    // Mostra banner visibile in cima
-    const banner = document.getElementById('noKeyBanner');
-    if (banner) banner.style.display = 'flex';
-    document.getElementById('modal').classList.add('show');
+    setStatus('error', 'Completa l\'onboarding per vedere i dati');
+    updateOnboarding();
+    // Init Google Calendar anche senza API key (può loggarsi per primo)
+    gcalInit();
     return;
   }
+  // API key c'è — mostro comunque l'onboarding se Google non connesso
+  updateOnboarding();
   setStatus('', 'Caricamento dati…');
   try {
     const [daily, posts, profile, followerDaily] = await Promise.all([
@@ -3810,9 +3863,8 @@ async function init() {
     // Calendario
     calPublishedPosts = posts;
     calSetupEvents();
-    ytSetupEvents();
     calRender(); // render calendario IG subito (tab attiva di default)
-    boardInit();
+    gcalInit(); // Inizializzo Google Calendar (login + sync)
 
     // Fetch YouTube video pubblicati
     try {
