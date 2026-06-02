@@ -3706,14 +3706,8 @@ async function calDrop(e) {
   }
 }
 
-function gcalInit() {
-  // Mostra UI "connesso" come anticipo SOLO se gli script Google sono pronti
-  // (altrimenti rischiamo di mostrare "connesso" ma poi le chiamate falliscono)
-  const cachedToken = localStorage.getItem('gcal_token');
-  const cachedExpires = parseInt(localStorage.getItem('gcal_expires') || '0');
-  const tokenStillValid = cachedToken && Date.now() < cachedExpires - 5*60*1000;
-
-  // Aspetta che gli script Google siano caricati
+async function gcalInit() {
+  // Aspetta che gli script Google E gapi.client siano caricati
   if (typeof google === 'undefined' || typeof gapi === 'undefined') {
     if (!window.__gcalInitAttempts) window.__gcalInitAttempts = 0;
     window.__gcalInitAttempts++;
@@ -3724,46 +3718,82 @@ function gcalInit() {
     setTimeout(gcalInit, 200);
     return;
   }
-  console.log('[gcalInit] gapi e google pronti, init in corso');
-  // Init GAPI client per Calendar API
-  gapi.load('client', async () => {
+  // gapi è caricato ma gapi.client potrebbe non esistere ancora — lo carico
+  if (!gapi.client) {
+    console.log('[gcalInit] caricando gapi.client...');
+    gapi.load('client', () => {
+      console.log('[gcalInit] gapi.client caricato, riprendo init');
+      gcalInit();
+    });
+    return;
+  }
+  console.log('[gcalInit] gapi.client pronto, init in corso');
+  // Init GAPI con Calendar API (gapi.client è già pronto a questo punto)
+  if (!gapi.client.calendar) {
     try {
       await gapi.client.init({
         discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
       });
-    } catch(e) { console.error('GAPI init error:', e); }
-  });
+      console.log('[gcalInit] gapi.client.calendar inizializzato');
+    } catch(e) {
+      console.error('[gcalInit] GAPI init error:', e);
+      return;
+    }
+  }
   // Init token client
   try {
     gcalTokenClient = google.accounts.oauth2.initTokenClient({
       client_id: GCAL_CLIENT_ID,
       scope: GCAL_SCOPES,
-      callback: (resp) => {
+      callback: async (resp) => {
+        console.log('[token callback] response:', resp.error || 'success');
         if (resp.error) {
-          // Errore "silent" comune: l'utente non ha sessione Google attiva nel browser.
-          // In quel caso il banner di login resta visibile, l'utente cliccherà.
           if (resp.error === 'interaction_required' || resp.error === 'login_required' || resp.error === 'consent_required') {
-            console.log('Silent auth richiede interazione utente:', resp.error);
+            console.log('[token callback] richiede interazione utente:', resp.error);
             gcalUpdateUI();
             return;
           }
-          console.error('Auth error:', resp);
+          console.error('[token callback] auth error:', resp);
+          alert('Errore login Google: ' + (resp.error_description || resp.error));
           return;
         }
-        gcalSignedIn = true;
+        // Salvo subito in localStorage (sopravvive a refresh)
         const expiresAt = Date.now() + (resp.expires_in * 1000);
-        // Salvo in localStorage (sopravvive a refresh / chiusura tab)
         localStorage.setItem('gcal_token', resp.access_token);
         localStorage.setItem('gcal_expires', String(expiresAt));
-        localStorage.setItem('gcal_was_signed_in', '1'); // flag per silent re-auth futuro
+        localStorage.setItem('gcal_was_signed_in', '1');
+
+        // Aspetto che gapi.client sia pronto prima di setToken
+        let attempts = 0;
+        while ((typeof gapi === 'undefined' || !gapi.client || typeof gapi.client.setToken !== 'function') && attempts < 50) {
+          await new Promise(r => setTimeout(r, 100));
+          attempts++;
+        }
+        if (typeof gapi === 'undefined' || !gapi.client || typeof gapi.client.setToken !== 'function') {
+          console.error('[token callback] gapi.client mai pronto dopo 5s');
+          alert('Google API non caricata. Ricarica la pagina e riprova.');
+          return;
+        }
+        // Se manca anche gapi.client.calendar, lo carico
+        if (!gapi.client.calendar) {
+          try {
+            await gapi.client.init({
+              discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
+            });
+            console.log('[token callback] gapi.client.calendar inizializzato');
+          } catch(e) {
+            console.error('[token callback] gapi.client.init error:', e);
+            alert('Errore inizializzazione Calendar API: ' + (e.message || 'sconosciuto'));
+            return;
+          }
+        }
         gapi.client.setToken({ access_token: resp.access_token });
+        gcalSignedIn = true;
         gcalUpdateUI();
         gcalLoadEvents();
-        // Refresh eventi ogni 60s
         if (!window.gcalRefreshInterval) {
           window.gcalRefreshInterval = setInterval(gcalLoadEvents, 60000);
         }
-        // Programma il silent refresh del token prima della sua scadenza
         gcalScheduleSilentRefresh(expiresAt);
       }
     });
@@ -3888,15 +3918,16 @@ async function gcalLoadEvents() {
 // Helper: assicura che gapi abbia il token corrente settato prima di una chiamata API
 // Restituisce true se OK, false se serve riloggare
 function gcalEnsureToken() {
-  if (typeof gapi === 'undefined' || !gapi.client) return false;
+  if (typeof gapi === 'undefined' || !gapi.client || typeof gapi.client.setToken !== 'function') {
+    console.warn('[gcalEnsureToken] gapi.client non pronto');
+    return false;
+  }
   const savedToken = localStorage.getItem('gcal_token');
   const expires = parseInt(localStorage.getItem('gcal_expires') || '0');
-  // Se il token in localStorage è scaduto o assente, non c'è speranza
   if (!savedToken || Date.now() >= expires) {
     console.warn('[gcalEnsureToken] token scaduto o assente in localStorage');
     return false;
   }
-  // Verifico che gapi abbia il token. Se manca o è diverso, lo ri-setto.
   const current = gapi.client.getToken();
   if (!current || current.access_token !== savedToken) {
     console.log('[gcalEnsureToken] re-setto token in gapi');
