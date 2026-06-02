@@ -1533,7 +1533,7 @@ body {
           <span id="step1Status" style="margin-left:auto;font-size:11px;font-family:var(--font-mono);color:var(--ink-mute);"></span>
         </div>
         <div style="font-size:12.5px;color:var(--ink-soft);line-height:1.5;">
-          Usa l'account Google del progetto (<code style="background:var(--bg-elev);padding:2px 6px;border-radius:3px;font-size:11.5px;">progettoespertiprofeta@gmail.com</code>) per sincronizzare il calendario con il team.
+          Usa l’account Google del progetto (<code style="background:var(--bg-elev);padding:2px 6px;border-radius:3px;font-size:11.5px;">progettoespertiprofeta@gmail.com</code>) per sincronizzare il calendario con il team.
         </div>
         <button id="onboardingLoginBtn" onclick="gcalLogin()" style="background:var(--accent);border:none;color:var(--bg);padding:9px 14px;border-radius:6px;cursor:pointer;font-family:var(--font-mono);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;touch-action:manipulation;min-height:38px;">
           <span class="material-symbols-rounded" style="font-size:16px;">login</span>Accedi a Google
@@ -3364,7 +3364,17 @@ function calRender() {
     });
     ytPub.forEach(v => {
       const shortT = v.title.length > 25 ? v.title.slice(0,25)+'…' : v.title;
-      posts += `<div class="cal-post pub" style="background:rgba(255,0,0,0.2);color:#ff6666;"
+      const ytUrl = v.videoId ? 'https://www.youtube.com/watch?v=' + v.videoId : '';
+      const encoded = encodeURIComponent(JSON.stringify({
+        type: 'YT_VIDEO',
+        title: v.title,
+        views: v.views,
+        likes: v.likes,
+        date: v.date,
+        url: ytUrl
+      }));
+      posts += `<div class="cal-post pub" style="background:rgba(255,0,0,0.2);color:#ff6666;cursor:pointer;"
+        onclick="calShowYtDetail(event,'${encoded}')"
         title="YT · ${v.title} · ${v.views} views">🎬 ${shortT}</div>`;
     });
     igPlanned.forEach(p => {
@@ -3406,6 +3416,32 @@ function calDayClick(e, ds) {
   calOpenModal(ds, null);
 }
 
+
+function calShowYtDetail(e, encoded) {
+  e.stopPropagation();
+  const d = JSON.parse(decodeURIComponent(encoded));
+  document.getElementById('cdBadge').textContent = '🎬 YT VIDEO';
+  document.getElementById('cdBadge').style.background = 'rgba(255,0,0,0.2)';
+  document.getElementById('cdBadge').style.color = '#ff6666';
+  document.getElementById('cdTitle').textContent = d.title;
+  // Costruisco la data leggibile
+  const dt = d.date ? new Date(d.date + 'T00:00:00') : null;
+  document.getElementById('cdDate').textContent = dt ? dt.toLocaleDateString('it-IT', { day:'numeric', month:'long', year:'numeric' }) : '—';
+  // Reach → mostro views
+  document.getElementById('cdReach').textContent = numIt(d.views || 0) + ' views · ' + numIt(d.likes || 0) + ' likes';
+  document.getElementById('cdCaption').textContent = '';
+  // Link a YouTube
+  const linkEl = document.getElementById('cdLink');
+  if (d.url) {
+    linkEl.href = d.url;
+    linkEl.style.display = 'inline-flex';
+    linkEl.textContent = '▶ Apri su YouTube';
+  } else {
+    linkEl.style.display = 'none';
+  }
+  document.getElementById('calDetail').classList.add('show');
+}
+
 function calShowDetail(e, encoded) {
   e.stopPropagation();
   const d = JSON.parse(decodeURIComponent(encoded));
@@ -3416,11 +3452,22 @@ function calShowDetail(e, encoded) {
   const badge = document.getElementById('cdBadge');
   badge.textContent = TYPE[d.type]||d.type;
   badge.className = 'cal-detail-badge ' + d.type;
+  // Reset stile inline che YT detail aveva potenzialmente applicato
+  badge.style.background = '';
+  badge.style.color = '';
   document.getElementById('cdTitle').textContent = calShortTitle(d.caption) || 'Post';
   document.getElementById('cdDate').textContent = dateLabel + ' · ' + timeLabel;
   document.getElementById('cdReach').textContent = d.reach ? 'Reach: ' + numIt(d.reach) : '';
   document.getElementById('cdCaption').textContent = d.caption || '—';
-  document.getElementById('cdLink').href = d.url || '#';
+  // Reset link: torna a "Apri su Instagram" e ricostruisce contenuto originale
+  const linkEl = document.getElementById('cdLink');
+  if (d.url) {
+    linkEl.href = d.url;
+    linkEl.style.display = 'inline-flex';
+    linkEl.innerHTML = '<span class="material-symbols-rounded">open_in_new</span>Apri su Instagram';
+  } else {
+    linkEl.style.display = 'none';
+  }
   document.getElementById('calDetail').classList.add('show');
 }
 
@@ -3817,7 +3864,7 @@ async function gcalInit() {
       }
       gcalScheduleSilentRefresh(expires);
     } else if (localStorage.getItem('gcal_was_signed_in') === '1') {
-      console.log('[gcalInit] token scaduto/assente ma flag was_signed_in c\'è, tento silent refresh');
+      console.log('[gcalInit] token scaduto/assente ma flag was_signed_in c’è, tento silent refresh');
       // L'utente si era loggato — tenta silent auth (no popup)
       gcalUpdateUI();
       setTimeout(() => gcalSilentRefresh(), 500);
@@ -3971,7 +4018,7 @@ async function gcalCreateEvent(platform, date, time, type, title, notes) {
   const formatEmoji = {IMAGE:'📊', CAROUSEL_ALBUM:'🎠', REELS:'🎬', STORY:'📱', VIDEO:'🎬', SHORT:'📱', LIVE:'🔴'};
   const platformTag = platform === 'yt' ? '[YT]' : '[IG]';
   const summary = `${platformTag} ${formatEmoji[type]||''} ${title}`;
-  const description = `Piattaforma: ${platform === 'yt' ? 'YouTube' : 'Instagram'}\nFormato: ${type}\n\n${notes||''}`;
+  const description = 'Piattaforma: ' + (platform === 'yt' ? 'YouTube' : 'Instagram') + '\nFormato: ' + type + '\n\n' + (notes || '');
 
   const resource = {
     summary,
@@ -4004,7 +4051,7 @@ async function gcalCreateEvent(platform, date, time, type, title, notes) {
       localStorage.removeItem('gcal_token');
       gcalUpdateUI();
     } else if (status === 403) {
-      userMsg = 'Permesso negato dal calendario. Verifica di essere loggato con l\'account giusto (progettoespertiprofeta@gmail.com).';
+      userMsg = 'Permesso negato dal calendario. Verifica di essere loggato con l’account giusto (progettoespertiprofeta@gmail.com).';
     } else if (status === 404) {
       userMsg = 'Calendario non trovato. Verifica di essere loggato con progettoespertiprofeta@gmail.com.';
     }
@@ -4033,7 +4080,7 @@ async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes
   const formatEmoji = {IMAGE:'📊', CAROUSEL_ALBUM:'🎠', REELS:'🎬', STORY:'📱', VIDEO:'🎬', SHORT:'📱', LIVE:'🔴'};
   const platformTag = platform === 'yt' ? '[YT]' : '[IG]';
   const summary = `${platformTag} ${formatEmoji[type]||''} ${title}`;
-  const description = `Piattaforma: ${platform === 'yt' ? 'YouTube' : 'Instagram'}\nFormato: ${type}\n\n${notes||''}`;
+  const description = 'Piattaforma: ' + (platform === 'yt' ? 'YouTube' : 'Instagram') + '\nFormato: ' + type + '\n\n' + (notes || '');
 
   try {
     const resp = await gapi.client.calendar.events.update({
@@ -4060,7 +4107,7 @@ async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes
       localStorage.removeItem('gcal_token');
       gcalUpdateUI();
     } else if (status === 403 || status === 404) {
-      userMsg = 'Permesso negato o evento/calendario non trovato. Verifica l\'account Google.';
+      userMsg = 'Permesso negato o evento/calendario non trovato. Verifica l’account Google.';
     }
     alert(userMsg);
     return false;
@@ -4207,7 +4254,7 @@ async function init() {
   document.querySelectorAll('section[data-tab="calendario"]').forEach(s => s.classList.add('tab-active'));
   const apiKey = getKey();
   if (!apiKey) {
-    setStatus('error', 'Completa l\'onboarding per vedere i dati');
+    setStatus('error', 'Completa l’onboarding per vedere i dati');
     updateOnboarding();
     // Init Google Calendar anche senza API key (può loggarsi per primo)
     gcalInit();
@@ -4241,19 +4288,20 @@ async function init() {
 
     // Fetch YouTube video pubblicati
     try {
-      const ytRaw = await fetchWindsor(apiKey, ['published_at','video_title','views','likes'], {}, 'youtube');
+      const ytRaw = await fetchWindsor(apiKey, ['published_at','video_title','views','likes','video'], {}, 'youtube');
       // Deduplicazione per titolo: ogni video ha una sola published_at reale
       const ytMap = {};
       ytRaw.forEach(r => {
         const t = r.video_title || 'Video';
         const pubDate = (r.published_at || '').slice(0, 10);
         if (!pubDate) return;
-        const key = t + '|' + pubDate; // dedup per titolo+data (2 video potrebbero avere lo stesso titolo)
+        const key = t + '|' + pubDate;
         if (!ytMap[key]) {
-          ytMap[key] = { date: pubDate, title: t, views: 0, likes: 0 };
+          ytMap[key] = { date: pubDate, title: t, views: 0, likes: 0, videoId: r.video || '' };
         }
         ytMap[key].views += (r.views || 0);
         ytMap[key].likes += (r.likes || 0);
+        if (r.video && !ytMap[key].videoId) ytMap[key].videoId = r.video;
       });
       window.ytPublishedVideos = Object.values(ytMap);
       console.log('YT videos loaded:', window.ytPublishedVideos.length);
