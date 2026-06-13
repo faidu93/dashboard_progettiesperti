@@ -1623,6 +1623,12 @@ body {
       <span class="funnel-step-arrow"><span class="material-symbols-rounded">arrow_forward</span></span>
     </div>
     <div class="funnel-step">
+      <span class="funnel-step-label">Visualizzazioni</span>
+      <span class="funnel-step-value" id="fb-views">—</span>
+      <span class="funnel-step-conv" id="fb-views-conv">—</span>
+      <span class="funnel-step-arrow"><span class="material-symbols-rounded">arrow_forward</span></span>
+    </div>
+    <div class="funnel-step">
       <span class="funnel-step-label">Interazioni totali</span>
       <span class="funnel-step-value" id="fb-engaged">—</span>
       <span class="funnel-step-conv" id="fb-engaged-conv">—</span>
@@ -1760,7 +1766,7 @@ body {
       <dt>👥 Follower</dt><dd> = numero totale di account che seguono il profilo · target +50/settimana per profili in crescita.</dd>
       <dt>📈 Reach</dt><dd> = persone uniche che hanno visto un contenuto nel periodo · misura quanto sei visibile.</dd>
       <dt>⚡ Interazioni</dt><dd> = somma di like, commenti, save, share · misura quanto sei coinvolgente.</dd>
-      <dt>💬 ER medio (Engagement Rate)</dt><dd> = interazioni / reach × 100 · benchmark fantacalcio 3-5%.</dd>
+      <dt>💬 ER medio (Engagement Rate)</dt><dd> = media degli ER dei singoli post (interazioni / reach di ogni post) · benchmark fantacalcio 3-5%. Stessa logica degli strumenti di mercato.</dd>
       <dt>🔁 Shareability</dt><dd> = share / reach × 100 · indica quanto i contenuti vengono inoltrati nei gruppi (es. WhatsApp delle leghe). Target Instagram 1%.</dd>
       <dt>🎯 Target</dt><dd> = soglia di riferimento calcolata sul profilo: verde se raggiunto, rosso se sotto il 50%.</dd>
     </dl>
@@ -1818,7 +1824,7 @@ body {
     <div class="glossary">
       <div class="glossary-title"><span class="material-symbols-rounded">help</span>Come leggere le settimane</div>
       <dl>
-        <dt>WK1, WK2…</dt><dd> = settimane dalla ripresa attiva (27/04), 7 giorni ciascuna. ★ TOP segna la settimana con reach più alta del periodo. La card "IN CORSO" è la settimana parziale.</dd>
+        <dt>WK1, WK2…</dt><dd> = settimane dei dati disponibili (Meta fornisce ~30 giorni di storico), 7 giorni ciascuna. ★ TOP segna la settimana con reach più alta del periodo. La card "IN CORSO" è la settimana parziale. L'ER di ogni settimana è calcolato sulle interazioni e sulla reach dei contenuti pubblicati in quei giorni.</dd>
         <dt>WK corr. e WK prec.</dt><dd> = nei KPI in alto, sono le ultime 2 settimane con le loro date precise. Il delta ↑↓ accanto a ogni riga confronta sempre quella settimana con la <strong>settimana precedente</strong>: la riga "WK corr." con la settimana di prima, la riga "WK prec." con la settimana ancora prima.</dd>
       </dl>
     </div>
@@ -1833,7 +1839,7 @@ body {
     <div class="panel-grid two-col">
       <div class="panel">
         <div class="panel-title"><span class="material-symbols-rounded">show_chart</span>Reach giornaliera</div>
-        <div class="panel-sub" id="reachPanelSub">Periodo dalla ripresa</div>
+        <div class="panel-sub" id="reachPanelSub">Periodo dati disponibili</div>
         <div class="chart-wrap h-260"><canvas id="chartReach"></canvas></div>
       </div>
       <div class="panel">
@@ -2277,9 +2283,8 @@ body {
 </div>
 
 <script>
-const WINDSOR_BASE = 'https://connectors.windsor.ai/';
-// URL del backend Vercel (sostituisce Windsor). Configurabile via localStorage
-// così puoi cambiarlo senza modificare il file: localStorage.setItem('backend_base', 'https://...')
+// URL del backend Vercel. Configurabile via localStorage senza modificare il file:
+// localStorage.setItem('backend_base', 'https://...')
 const BACKEND_BASE = (() => {
   try { return localStorage.getItem('backend_base') || 'https://dashboard-esperti-backend.vercel.app'; }
   catch(e) { return 'https://dashboard-esperti-backend.vercel.app'; }
@@ -2308,8 +2313,6 @@ const pct2 = n => (Math.round(n*100)/100).toLocaleString('it-IT',{minimumFractio
 const fmtDate = d => `${d.getDate().toString().padStart(2,'0')}/${MONTHS_NUM[d.getMonth()]}`;
 const fmtDateLong = d => `${d.getDate().toString().padStart(2,'0')}/${MONTHS_NUM[d.getMonth()]}/${d.getFullYear()}`;
 
-function getKey() { try { return localStorage.getItem('windsor_api_key'); } catch(e) { return null; } }
-function setKey(k) { try { localStorage.setItem('windsor_api_key', k); } catch(e) {} }
 function getCollabSet() {
   try { return new Set(JSON.parse(localStorage.getItem(COLLAB_KEY) || '[]')); }
   catch(e) { return new Set(); }
@@ -2318,18 +2321,6 @@ function toggleCollab(mediaId) {
   const s = getCollabSet();
   if (s.has(mediaId)) s.delete(mediaId); else s.add(mediaId);
   try { localStorage.setItem(COLLAB_KEY, JSON.stringify([...s])); } catch(e) {}
-}
-
-async function fetchWindsor(apiKey, fields, opts = {}, connector = 'instagram') {
-  const params = new URLSearchParams({ api_key: apiKey, fields: fields.join(',') });
-  if (opts.date_preset) params.set('date_preset', opts.date_preset);
-  if (opts.date_from) params.set('date_from', opts.date_from);
-  if (opts.date_to) params.set('date_to', opts.date_to);
-  const url = `${WINDSOR_BASE}${connector}?${params}`;
-  const res = await fetch(url);
-  if (!res.ok) { const body = await res.text().catch(()=>'' ); throw new Error(`HTTP ${res.status} — ${body.slice(0,200)}`); }
-  const j = await res.json();
-  return j.data || j;
 }
 
 function setStatus(mode, msg) {
@@ -2375,8 +2366,11 @@ function sumWindow(daily, days, endIdx, posts) {
   const window = daily.slice(start, endIdx + 1);
   let int = window.reduce((s,r)=>s+(r.total_interactions||0),0);
   let shares = window.reduce((s,r)=>s+(r.shares||0),0);
+  let postReach = 0;
+  let erAvg = 0; // media degli ER per-post nella finestra (coerente col Content Lab)
   // Se i daily non hanno interazioni (Meta non le espone), le calcolo dai post
-  // pubblicati nell'intervallo di date della finestra.
+  // pubblicati nell'intervallo di date della finestra. Raccolgo anche la reach
+  // dei post e l'ER medio per-post.
   if (posts && posts.length && window.length) {
     const dStart = new Date(window[0].date + 'T00:00:00');
     const dEnd = new Date(window[window.length-1].date + 'T23:59:59');
@@ -2386,11 +2380,16 @@ function sumWindow(daily, days, endIdx, posts) {
     });
     const intFromPosts = inWin.reduce((s,p)=>s+(p.media_engagement||0),0);
     const sharesFromPosts = inWin.reduce((s,p)=>s+(p.media_shares||0),0);
+    postReach = inWin.reduce((s,p)=>s+(p.media_reach||0),0);
+    const erList = inWin.map(p => { const r=p.media_reach||0; return r>0 ? (p.media_engagement||0)/r*100 : null; }).filter(v => v!==null);
+    erAvg = erList.length ? erList.reduce((s,v)=>s+v,0)/erList.length : 0;
     if (intFromPosts > 0) int = intFromPosts;
     if (sharesFromPosts > 0) shares = sharesFromPosts;
   }
   return {
     reach: window.reduce((s,r)=>s+(r.reach||0),0),
+    postReach,
+    erAvg,
     int,
     eng: int,
     foll: window.reduce((s,r)=>s+(r.follows_and_unfollows||0),0),
@@ -2442,9 +2441,17 @@ function renderKPIs(daily, profile, posts) {
   // accounts_engaged non disponibile come serie: stima = interazioni (proxy prudente)
   const eng = periodPosts.reduce((s,p)=>s+(p.media_engagement||0),0);
   const foll = period.reduce((s,r)=>s+(r.follows_and_unfollows||0),0);
-  const er = reach > 0 ? (ints/reach)*100 : 0;
+  // reach dei post del periodo (per la shareability e riferimenti coerenti)
+  const postReachPeriod = periodPosts.reduce((s,p)=>s+(p.media_reach||0),0);
+  // Visualizzazioni totali (views) del periodo — dai daily (Meta le espone giornalmente)
+  const views = period.reduce((s,r)=>s+(r.views||0),0);
+  // ER MEDIO = media degli ER per-post (engagement/reach di ciascun post), come fanno
+  // gli strumenti di mercato (Metricool ecc.). Stessa formula del Content Lab → numeri
+  // coerenti in tutta la dashboard e allineati ai benchmark esterni (~4-5%).
+  const erPostList = periodPosts.map(p => { const r=p.media_reach||0; return r>0 ? (p.media_engagement||0)/r*100 : null; }).filter(v => v!==null);
+  const er = erPostList.length ? erPostList.reduce((s,v)=>s+v,0)/erPostList.length : 0;
   const conv = reach > 0 ? (foll/reach)*100 : 0;
-  const shareability = reach > 0 ? (shares/reach)*100 : 0;
+  const shareability = postReachPeriod > 0 ? (shares/postReachPeriod)*100 : 0;
   const reachPerDay = reach/period.length;
 
   // Costruisco 3 finestre da 7gg: corrente, precedente, 2 fa
@@ -2469,8 +2476,8 @@ function renderKPIs(daily, profile, posts) {
   const dStart = new Date(period[0].date);
   const dEnd = new Date(period[period.length-1].date);
 
-  document.getElementById('metaPeriod').textContent = `${fmtDate(dStart)} – ${fmtDate(dEnd)} · ${period.length} giorni dalla ripresa`;
-  document.getElementById('reachPanelSub').textContent = `${period.length} giorni dalla ripresa`;
+  document.getElementById('metaPeriod').textContent = `${fmtDate(dStart)} – ${fmtDate(dEnd)} · ${period.length} giorni di dati`;
+  document.getElementById('reachPanelSub').textContent = `${period.length} giorni di dati`;
 
   // === TARGET DINAMICI (basati sul profilo) ===
   // Calcolo target a partire dai dati storici/medie del profilo stesso
@@ -2528,26 +2535,30 @@ function renderKPIs(daily, profile, posts) {
     { dates: wk1Dates, abs: numIt(last7.int), delta: deltaPctIcon(last7.int, prev7.int) },
     { dates: wk2Dates, abs: numIt(prev7.int), delta: deltaPctIcon(prev7.int, prev14.int) });
 
-  // KPI 4: ER medio
-  const er1 = last7.reach > 0 ? (last7.int/last7.reach)*100 : 0;
-  const er2 = prev7.reach > 0 ? (prev7.int/prev7.reach)*100 : 0;
-  const er3 = prev14.reach > 0 ? (prev14.int/prev14.reach)*100 : 0;
+  // KPI 4: ER medio — media degli ER per-post (coerente con Content Lab e benchmark)
+  const er1 = last7.erAvg, er2 = prev7.erAvg, er3 = prev14.erAvg;
   renderKPI('k-er', pct1(er), '',
     { dates: wk1Dates, abs: pct1(er1), delta: deltaPctIcon(er1, er2) },
     { dates: wk2Dates, abs: pct1(er2), delta: deltaPctIcon(er2, er3) });
 
-  // KPI 5: Shareability
-  const sh1 = last7.reach > 0 ? (last7.shares/last7.reach)*100 : 0;
-  const sh2 = prev7.reach > 0 ? (prev7.shares/prev7.reach)*100 : 0;
-  const sh3 = prev14.reach > 0 ? (prev14.shares/prev14.reach)*100 : 0;
+  // KPI 5: Shareability — shares / reach dei post della finestra
+  const sh1 = last7.postReach > 0 ? (last7.shares/last7.postReach)*100 : 0;
+  const sh2 = prev7.postReach > 0 ? (prev7.shares/prev7.postReach)*100 : 0;
+  const sh3 = prev14.postReach > 0 ? (prev14.shares/prev14.postReach)*100 : 0;
   renderKPI('k-share', pct2(shareability), '',
     { dates: wk1Dates, abs: pct2(sh1), delta: deltaPctIcon(sh1, sh2) },
     { dates: wk2Dates, abs: pct2(sh2), delta: deltaPctIcon(sh2, sh3) });
 
   // FUNNEL BAR (sopra KPI)
   document.getElementById('fb-reach').textContent = numIt(reach);
+  const fbViews = document.getElementById('fb-views');
+  if (fbViews) {
+    fbViews.textContent = numIt(views);
+    const vc = document.getElementById('fb-views-conv');
+    if (vc) vc.textContent = reach > 0 ? `${(views/reach).toFixed(1)}× sulla reach` : '—';
+  }
   document.getElementById('fb-engaged').textContent = numIt(eng);
-  document.getElementById('fb-engaged-conv').textContent = `${pct1((eng/reach)*100)} sulla reach`;
+  document.getElementById('fb-engaged-conv').textContent = `${pct1(er)} ER sulla reach contenuti`;
   document.getElementById('fb-follow').textContent = `${foll>=0?'+':''}${foll}`;
   document.getElementById('fb-follow-conv').textContent = `${pct1(conv)} reach→follower · target 1,2%`;
 
@@ -2576,20 +2587,29 @@ function renderWeeks(period, posts) {
     weeks.push(period.slice(i, i+7));
   }
   const isLastPartial = (weeks[weeks.length-1].length < 7);
-  // Stats per ranking — interazioni calcolate dai post della settimana (i daily non le hanno)
+  // Stats per ranking — interazioni E reach dei post calcolate dai post della settimana.
+  // L'ER usa reach-dei-post (coerente: stesse fonti a num. e den.), non la reach
+  // del profilo (che si spalma su più giorni e creava ER incoerenti).
   const stats = weeks.map(w => {
-    let ints = w.reduce((s,r)=>s+(r.total_interactions||0),0);
+    let ints = 0, postReach = 0, shares = 0, erAvg = 0;
     if (posts && posts.length && w.length) {
       const ws = new Date(w[0].date + 'T00:00:00');
       const we = new Date(w[w.length-1].date + 'T23:59:59');
-      const intFromPosts = posts.filter(p => {
+      const inWk = posts.filter(p => {
         const t = new Date(p.timestamp); return t >= ws && t <= we;
-      }).reduce((s,p)=>s+(p.media_engagement||0),0);
-      if (intFromPosts > 0) ints = intFromPosts;
+      });
+      ints = inWk.reduce((s,p)=>s+(p.media_engagement||0),0);
+      postReach = inWk.reduce((s,p)=>s+(p.media_reach||0),0);
+      shares = inWk.reduce((s,p)=>s+(p.media_shares||0),0);
+      const erList = inWk.map(p => { const r=p.media_reach||0; return r>0 ? (p.media_engagement||0)/r*100 : null; }).filter(v => v!==null);
+      erAvg = erList.length ? erList.reduce((s,v)=>s+v,0)/erList.length : 0;
     }
     return {
-      reach: w.reduce((s,r)=>s+(r.reach||0),0),
+      reach: w.reduce((s,r)=>s+(r.reach||0),0),  // reach profilo (mostrata)
+      postReach,
       ints,
+      shares,
+      erAvg,
       foll: w.reduce((s,r)=>s+((r.follows_and_unfollows||0)),0),
     };
   });
@@ -2613,7 +2633,7 @@ function renderWeeks(period, posts) {
   weeks.forEach((w, idx) => {
     const s = stats[idx];
     const pCount = postsByWeek[idx];
-    const er = s.reach > 0 ? (s.ints/s.reach)*100 : 0;
+    const er = s.erAvg;
     const dStart = new Date(w[0].date);
     const dEnd = new Date(w[w.length-1].date);
     const isCurrent = (idx === weeks.length-1 && isLastPartial);
@@ -2782,7 +2802,7 @@ function renderFormatTable(posts) {
     return {
       t, n,
       reach: items.reduce((s,p)=>s+(p.media_reach||0),0)/n,
-      er: items.reduce((s,p)=>{ const r=p.media_reach||0; return s + (r>0 ? (p.media_engagement||0)/r*100 : 0); },0)/n,
+      er: (() => { const vals = items.map(p=>{const r=p.media_reach||0; return r>0?(p.media_engagement||0)/r*100:null;}).filter(v=>v!==null); return vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : 0; })(),
       save: items.reduce((s,p)=>s+(p.media_saved||0),0)/n,
       share: items.reduce((s,p)=>s+(p.media_shares||0),0)/n,
       comm: items.reduce((s,p)=>s+(p.media_comments_count||0),0)/n,
@@ -2968,7 +2988,8 @@ function renderPiList(posts) {
     piList.appendChild(row);
   });
   // ER avg profilo
-  const er = posts.reduce((s,p) => { const r=p.media_reach||0; return s + (r>0 ? (p.media_engagement||0)/r*100 : 0); }, 0) / posts.length;
+  const erVals = posts.map(p => { const r=p.media_reach||0; return r>0 ? (p.media_engagement||0)/r*100 : null; }).filter(v => v!==null);
+  const er = erVals.length ? erVals.reduce((s,v)=>s+v,0)/erVals.length : 0;
   document.getElementById('labErAvg').textContent = pct1(er);
 }
 
@@ -3039,7 +3060,7 @@ function renderFormatTableWow(posts) {
     return {
       n,
       reach: items.reduce((s,p)=>s+(p.media_reach||0),0)/n,
-      er: items.reduce((s,p)=>{ const r=p.media_reach||0; return s + (r>0 ? (p.media_engagement||0)/r*100 : 0); },0)/n,
+      er: (() => { const vals = items.map(p=>{const r=p.media_reach||0; return r>0?(p.media_engagement||0)/r*100:null;}).filter(v=>v!==null); return vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : 0; })(),
       save: items.reduce((s,p)=>s+(p.media_saved||0),0)/n,
       share: items.reduce((s,p)=>s+(p.media_shares||0),0)/n,
       comm: items.reduce((s,p)=>s+(p.media_comments_count||0),0)/n,
@@ -3252,7 +3273,7 @@ function renderFreshness(daily) {
   if (!el || !txt || daily.length === 0) return;
 
   // Trova l'ultimo giorno con dati "significativi" (reach > 10 e interazioni non null)
-  // perché il giorno corrente Windsor lo restituisce spesso con valori parziali/null
+  // perché il giorno corrente Meta lo restituisce spesso con valori parziali/null
   const sorted = [...daily].sort((a, b) => new Date(b.date) - new Date(a.date));
   const today = new Date(); today.setHours(0, 0, 0, 0);
   
@@ -3416,12 +3437,12 @@ function calRender() {
     if (isToday) cls += ' today';
     if (isWeekend) cls += ' weekend-day';
 
-    // Post Instagram pubblicati (Windsor)
+    // Post Instagram pubblicati
     const igPub = (calCurrentFilter === 'yt') ? [] : calPublishedPosts.filter(p => {
       const pd = new Date(p.timestamp);
       return calDateStr(pd) === ds;
     });
-    // Video YouTube pubblicati (Windsor)
+    // Video YouTube pubblicati
     const ytPub = (calCurrentFilter === 'ig') ? [] : (window.ytPublishedVideos || []).filter(v => v.date === ds);
     // Post pianificati Google Calendar (filtrati per IG/YT)
     let igPlanned = [], ytPlanned = [];
@@ -3630,10 +3651,12 @@ function calSetupEvents() {
       // Hook bacheca idee
       const fromIdea = document.getElementById('calModal').dataset.fromIdea;
       if (fromIdea) {
-        const ideas = boardLoadIdeas().filter(i => i.id !== fromIdea);
-        boardSaveIdeas(ideas);
+        if (typeof boardLoadIdeas === 'function' && typeof boardSaveIdeas === 'function') {
+          const ideas = boardLoadIdeas().filter(i => i.id !== fromIdea);
+          boardSaveIdeas(ideas);
+          if (typeof boardRenderIdeas === 'function') boardRenderIdeas();
+        }
         delete document.getElementById('calModal').dataset.fromIdea;
-        if (typeof boardRenderIdeas === 'function') boardRenderIdeas();
       }
       document.getElementById('calModal').classList.remove('show');
       return;
@@ -3653,10 +3676,12 @@ function calSetupEvents() {
     // Se viene da un'idea, rimuovo l'idea dalla bacheca (è stata "spostata" nel calendario)
     const fromIdea = document.getElementById('calModal').dataset.fromIdea;
     if (fromIdea) {
-      const ideas = boardLoadIdeas().filter(i => i.id !== fromIdea);
-      boardSaveIdeas(ideas);
+      if (typeof boardLoadIdeas === 'function' && typeof boardSaveIdeas === 'function') {
+        const ideas = boardLoadIdeas().filter(i => i.id !== fromIdea);
+        boardSaveIdeas(ideas);
+        if (typeof boardRenderIdeas === 'function') boardRenderIdeas();
+      }
       delete document.getElementById('calModal').dataset.fromIdea;
-      if (typeof boardRenderIdeas === 'function') boardRenderIdeas();
     }
     document.getElementById('calModal').classList.remove('show');
     renderFn();
@@ -4422,7 +4447,7 @@ function updateOnboarding() {
 async function init() {
   // Attiva tab calendario subito
   document.querySelectorAll('section[data-tab="calendario"]').forEach(s => s.classList.add('tab-active'));
-  // I dati ora arrivano dal backend Vercel: non serve più la API key Windsor nel browser.
+  // I dati arrivano dal backend Vercel.
   updateOnboarding();
   setStatus('', 'Caricamento dati…');
   // CRITICAL: setup eventi PRIMA del fetch — così i bottoni funzionano anche se il backend fallisce
@@ -4431,7 +4456,7 @@ async function init() {
   gcalInit(); // Google Calendar init sempre
 
   try {
-    // === BACKEND VERCEL (sostituisce Windsor) ===
+    // === BACKEND VERCEL ===
     // Una sola chiamata restituisce daily + posts + profile già uniti lato server.
     const ig = await fetchBackend('/api/instagram-insights');
     const daily = ig.daily || [];
