@@ -1542,14 +1542,14 @@ body {
       <div id="step2Card" style="background:var(--bg-elev-2);border:1px solid var(--line);border-left:3px solid var(--info);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;opacity:0.6;">
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="background:var(--info);color:var(--bg);width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:13px;font-weight:700;">2</span>
-          <strong style="font-size:13.5px;color:var(--ink);">Inserisci API key Windsor</strong>
+          <strong style="font-size:13.5px;color:var(--ink);">Dati Instagram &amp; YouTube</strong>
           <span id="step2Status" style="margin-left:auto;font-size:11px;font-family:var(--font-mono);color:var(--ink-mute);"></span>
         </div>
         <div style="font-size:12.5px;color:var(--ink-soft);line-height:1.5;">
-          La tua API key Windsor.ai serve per leggere i dati di Instagram e YouTube. <strong>Chiedila in privato</strong> a Lapo &mdash; non condividerla su canali pubblici.
+          I dati di Instagram e YouTube arrivano automaticamente dal backend. Nessuna configurazione necessaria.
         </div>
-        <button id="onboardingKeyBtn" onclick="document.getElementById('modal').classList.add('show')" style="background:var(--info);border:none;color:var(--bg);padding:9px 14px;border-radius:6px;cursor:pointer;font-family:var(--font-mono);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;touch-action:manipulation;min-height:38px;">
-          <span class="material-symbols-rounded" style="font-size:16px;">key</span>Inserisci API key
+        <button id="onboardingKeyBtn" disabled style="background:var(--pos);border:none;color:var(--bg);padding:9px 14px;border-radius:6px;cursor:default;font-family:var(--font-mono);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;touch-action:manipulation;min-height:38px;">
+          <span class="material-symbols-rounded" style="font-size:16px;">check_circle</span>Connesso
         </button>
       </div>
     </div>
@@ -2257,6 +2257,26 @@ body {
 
 <script>
 const WINDSOR_BASE = 'https://connectors.windsor.ai/';
+// URL del backend Vercel (sostituisce Windsor). Configurabile via localStorage
+// così puoi cambiarlo senza modificare il file: localStorage.setItem('backend_base', 'https://...')
+const BACKEND_BASE = (() => {
+  try { return localStorage.getItem('backend_base') || 'https://dashboard-esperti-backend.vercel.app'; }
+  catch(e) { return 'https://dashboard-esperti-backend.vercel.app'; }
+})();
+
+// Chiama un endpoint del backend Vercel e restituisce il JSON.
+async function fetchBackend(path) {
+  const url = `${BACKEND_BASE}${path}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`HTTP ${res.status} — ${body.slice(0, 200)}`);
+  }
+  const j = await res.json();
+  if (j && j.error) throw new Error(j.error);
+  return j;
+}
+
 const MONTHS_NUM = ['01','02','03','04','05','06','07','08','09','10','11','12'];
 const COLLAB_KEY = 'epf_collab_posts'; // localStorage key per i post collaborativi
 
@@ -2389,8 +2409,10 @@ function renderKPIs(daily, profile, posts) {
   const prev14 = sumWindow(daily, 7, lastIdx - 14);
   // Date range delle 2 settimane visibili (corrente e precedente)
   const wkRange = (n, end) => {
+    // Robustezza: se end è fuori range (negativo o oltre), ritorno '—'
+    if (end < 0 || lastIdx < 0 || !daily[Math.min(end, lastIdx)]) return '—';
     const s = Math.max(0, end - n + 1);
-    if (s > lastIdx) return '—';
+    if (s > lastIdx || !daily[s]) return '—';
     const sd = new Date(daily[s].date);
     const ed = new Date(daily[Math.min(end, lastIdx)].date);
     return `${fmtDate(sd)}–${fmtDate(ed)}`;
@@ -4197,10 +4219,10 @@ function gcalGetYtPlanned() {
 function updateOnboarding() {
   const banner = document.getElementById('onboardingBanner');
   if (!banner) return;
-  const hasKey = !!getKey();
   const hasGoogle = gcalSignedIn;
-  // Mostra il banner se manca almeno una delle 2 cose
-  banner.style.display = (hasKey && hasGoogle) ? 'none' : 'block';
+  // I dati IG/YT arrivano dal backend (sempre configurato). Il banner serve ora
+  // solo a guidare la connessione di Google Calendar.
+  banner.style.display = hasGoogle ? 'none' : 'block';
 
   // Step 1: Google
   const step1Card = document.getElementById('step1Card');
@@ -4226,59 +4248,40 @@ function updateOnboarding() {
     }
   }
 
-  // Step 2: API key (sbloccato visivamente solo dopo step 1)
+  // Step 2: dati Instagram/YouTube — ora sempre attivi via backend
   const step2Card = document.getElementById('step2Card');
   const step2Status = document.getElementById('step2Status');
   const keyBtn = document.getElementById('onboardingKeyBtn');
-  if (hasKey) {
+  if (step2Card) {
     step2Card.style.opacity = '0.6';
     step2Card.style.borderLeftColor = 'var(--pos)';
-    step2Status.innerHTML = '<span style="color:var(--pos);">✓ Configurata</span>';
-    if (keyBtn) {
-      keyBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;">check_circle</span>Configurata';
-      keyBtn.style.background = 'var(--pos)';
-    }
-  } else {
-    step2Card.style.opacity = hasGoogle ? '1' : '0.6';
-    step2Card.style.borderLeftColor = 'var(--info)';
-    step2Status.textContent = 'da fare';
-    if (keyBtn) {
-      keyBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;">key</span>Inserisci API key';
-      keyBtn.style.background = 'var(--info)';
-    }
+  }
+  if (step2Status) step2Status.innerHTML = '<span style="color:var(--pos);">✓ Attivo</span>';
+  if (keyBtn) {
+    keyBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;">check_circle</span>Connesso';
+    keyBtn.style.background = 'var(--pos)';
+    keyBtn.disabled = true;
   }
 }
 
 async function init() {
   // Attiva tab calendario subito
   document.querySelectorAll('section[data-tab="calendario"]').forEach(s => s.classList.add('tab-active'));
-  const apiKey = getKey();
-  if (!apiKey) {
-    setStatus('error', 'Completa l’onboarding per vedere i dati');
-    updateOnboarding();
-    // Init Google Calendar anche senza API key (può loggarsi per primo)
-    gcalInit();
-    return;
-  }
-  // API key c'è — mostro comunque l'onboarding se Google non connesso
+  // I dati ora arrivano dal backend Vercel: non serve più la API key Windsor nel browser.
   updateOnboarding();
   setStatus('', 'Caricamento dati…');
-  // CRITICAL: setup eventi PRIMA del fetch — così i bottoni funzionano anche se Windsor fallisce
+  // CRITICAL: setup eventi PRIMA del fetch — così i bottoni funzionano anche se il backend fallisce
   calSetupEvents();
   calRender();
-  gcalInit(); // Google Calendar init sempre, anche senza Windsor
+  gcalInit(); // Google Calendar init sempre
 
   try {
-    const [daily, posts, profile, followerDaily] = await Promise.all([
-      fetchWindsor(apiKey, ['date','reach','views','accounts_engaged','likes','comments','saves','shares','total_interactions','follows_and_unfollows'], { date_preset: 'last_90d' }),
-      fetchWindsor(apiKey, ['media_id','timestamp','media_type','media_caption','media_permalink','media_reach','media_engagement','media_like_count','media_comments_count','media_saved','media_shares'], { date_preset: 'last_90d' }),
-      fetchWindsor(apiKey, ['account_name','followers_count','media_count']).then(r => Array.isArray(r) ? r[0] : r),
-      fetchWindsor(apiKey, ['date','follower_count_1d'], { date_preset: 'last_30d' }).catch(() => [])
-    ]);
-    // Unisco follower_count_1d nei daily
-    const follMap = {};
-    (followerDaily || []).forEach(r => { if (r.date) follMap[r.date] = r.follower_count_1d; });
-    daily.forEach(d => { if (follMap[d.date] != null) d.follower_count_1d = follMap[d.date]; });
+    // === BACKEND VERCEL (sostituisce Windsor) ===
+    // Una sola chiamata restituisce daily + posts + profile già uniti lato server.
+    const ig = await fetchBackend('/api/instagram-insights');
+    const daily = ig.daily || [];
+    const posts = ig.posts || [];
+    const profile = ig.profile || {};
     daily.sort((a,b) => new Date(a.date) - new Date(b.date));
     CACHED = { daily, posts, profile };
     renderFreshness(daily);
@@ -4286,9 +4289,10 @@ async function init() {
     calPublishedPosts = posts;
     calRender();
 
-    // Fetch YouTube video pubblicati
+    // Fetch YouTube video pubblicati dal backend
     try {
-      const ytRaw = await fetchWindsor(apiKey, ['published_at','video_title','views','likes','video'], {}, 'youtube');
+      const yt = await fetchBackend('/api/youtube-videos');
+      const ytRaw = yt.data || yt.videos || [];
       // Deduplicazione per titolo: ogni video ha una sola published_at reale
       const ytMap = {};
       ytRaw.forEach(r => {
@@ -4338,7 +4342,7 @@ async function init() {
     document.getElementById('footTime').textContent = now.toLocaleString('it-IT');
     setStatus('live', 'Live · ' + now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}));
   } catch(e) {
-    console.error('Windsor error:', e);
+    console.error('Backend error:', e);
     setStatus('error', 'Errore: ' + e.message.slice(0,60));
   }
 }
