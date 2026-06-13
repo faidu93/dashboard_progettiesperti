@@ -1558,10 +1558,10 @@ body {
   <section class="hero">
     <div class="hero-meta">
       <span><span class="material-symbols-rounded">calendar_month</span><span id="metaPeriod">—</span></span>
-      <span><span class="material-symbols-rounded">cloud_sync</span><span>Powered by Windsor.ai</span></span>
+      <span><span class="material-symbols-rounded">cloud_sync</span><span>Dati ufficiali Meta · Instagram Graph API</span></span>
       <span><span class="material-symbols-rounded">verified</span><span>@esperti_profeta_fantacalcio</span></span>
     </div>
-    <div class="freshness" id="freshness" title="Quando sono stati aggiornati gli ultimi dati Windsor.ai">
+    <div class="freshness" id="freshness" title="Quando sono stati aggiornati gli ultimi dati da Meta">
       <span class="freshness-dot"></span>
       <span id="freshnessText">Verifica freschezza dati…</span>
     </div>
@@ -1623,7 +1623,7 @@ body {
       <span class="funnel-step-arrow"><span class="material-symbols-rounded">arrow_forward</span></span>
     </div>
     <div class="funnel-step">
-      <span class="funnel-step-label">Account engaged</span>
+      <span class="funnel-step-label">Interazioni totali</span>
       <span class="funnel-step-value" id="fb-engaged">—</span>
       <span class="funnel-step-conv" id="fb-engaged-conv">—</span>
       <span class="funnel-step-arrow"><span class="material-symbols-rounded">arrow_forward</span></span>
@@ -1828,7 +1828,7 @@ body {
   <section class="section" data-tab="performance">
     <div class="section-head">
       <div><div class="section-eyebrow">📊 Performance temporale</div><div class="section-title">Curva reach &amp; pubblico</div></div>
-      <div class="section-meta live">Live · Windsor.ai</div>
+      <div class="section-meta live">Live · Meta API</div>
     </div>
     <div class="panel-grid two-col">
       <div class="panel">
@@ -1838,20 +1838,35 @@ body {
       </div>
       <div class="panel">
         <div class="panel-title"><span class="material-symbols-rounded">diversity_3</span>Pubblico</div>
-        <div class="panel-sub">1.775 categorizzati</div>
-        <div class="demo-section">
-          <div class="demo-section-title">Genere</div>
-          <div class="demo-row"><span class="demo-label">Maschi</span><div class="demo-track"><div class="demo-fill" style="width:100%"></div></div><span class="demo-val">95,2%</span></div>
-          <div class="demo-row"><span class="demo-label">Femmine</span><div class="demo-track"><div class="demo-fill" style="width:5.1%"></div></div><span class="demo-val">4,8%</span></div>
-        </div>
-        <div class="demo-section">
-          <div class="demo-section-title">Età (maschi)</div>
-          <div class="demo-row"><span class="demo-label">18–24</span><div class="demo-track"><div class="demo-fill" style="width:36%"></div></div><span class="demo-val">14,7%</span></div>
-          <div class="demo-row"><span class="demo-label">25–34</span><div class="demo-track"><div class="demo-fill" style="width:100%"></div></div><span class="demo-val">41,2%</span></div>
-          <div class="demo-row"><span class="demo-label">35–44</span><div class="demo-track"><div class="demo-fill" style="width:78%"></div></div><span class="demo-val">32,1%</span></div>
-          <div class="demo-row"><span class="demo-label">45+</span><div class="demo-track"><div class="demo-fill" style="width:25%"></div></div><span class="demo-val">10,2%</span></div>
+        <div class="panel-sub" id="demoSub">Demografia reale · Meta</div>
+        <div id="demoContent">
+          <div class="demo-section">
+            <div class="demo-section-title">Genere</div>
+            <div class="demo-row"><span class="demo-label">Maschi</span><div class="demo-track"><div class="demo-fill" style="width:100%"></div></div><span class="demo-val">95,2%</span></div>
+            <div class="demo-row"><span class="demo-label">Femmine</span><div class="demo-track"><div class="demo-fill" style="width:5.1%"></div></div><span class="demo-val">4,8%</span></div>
+          </div>
+          <div class="demo-section">
+            <div class="demo-section-title">Età</div>
+            <div class="demo-row"><span class="demo-label">18–24</span><div class="demo-track"><div class="demo-fill" style="width:36%"></div></div><span class="demo-val">14,7%</span></div>
+            <div class="demo-row"><span class="demo-label">25–34</span><div class="demo-track"><div class="demo-fill" style="width:100%"></div></div><span class="demo-val">41,2%</span></div>
+            <div class="demo-row"><span class="demo-label">35–44</span><div class="demo-track"><div class="demo-fill" style="width:78%"></div></div><span class="demo-val">32,1%</span></div>
+            <div class="demo-row"><span class="demo-label">45+</span><div class="demo-track"><div class="demo-fill" style="width:25%"></div></div><span class="demo-val">10,2%</span></div>
+          </div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ORARI ATTIVITÀ FOLLOWER (Meta online_followers) — appare solo se disponibile -->
+  <section class="section" data-tab="performance" id="onlineFollowersSection" style="display:none;">
+    <div class="section-head">
+      <div><div class="section-eyebrow">🕐 Quando sono online</div><div class="section-title">Orari di attività dei follower</div></div>
+      <div class="section-meta live">Live · Meta</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><span class="material-symbols-rounded">schedule</span>Follower online per ora del giorno</div>
+      <div class="panel-sub">Media degli ultimi giorni · usa questi orari per pianificare i post</div>
+      <div class="chart-wrap h-260"><canvas id="chartOnline"></canvas></div>
     </div>
   </section>
 
@@ -2052,7 +2067,7 @@ body {
       <div>
         <div class="pillar-col-title">Cosa funziona</div>
         <div class="insight pos"><div class="insight-head"><span class="material-symbols-rounded">trending_up</span><span class="insight-title">TOP-LIST tecnica</span></div><div class="insight-body">Pattern "classifica + dato tecnico + esegesi numerica" è l'asset replicabile del profilo.</div></div>
-        <div class="insight pos"><div class="insight-head"><span class="material-symbols-rounded">groups</span><span class="insight-title">Audience iper-qualificata</span></div><div class="insight-body">95% maschi sui categorizzati · 73% fascia 25-44 · italiani città Serie A. Profilo perfetto del fantallenatore.</div></div>
+        <div class="insight pos"><div class="insight-head"><span class="material-symbols-rounded">groups</span><span class="insight-title">Audience iper-qualificata</span></div><div class="insight-body" id="insightAudience">95% maschi sui categorizzati · 73% fascia 25-44 · italiani città Serie A. Profilo perfetto del fantallenatore.</div></div>
       </div>
       <div>
         <div class="pillar-col-title">Cosa limita</div>
@@ -2185,7 +2200,7 @@ body {
       </div>
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-legend">
-        <span style="font-weight:700;color:var(--ink);">Pubblicati (Windsor):</span>
+        <span style="font-weight:700;color:var(--ink);">Pubblicati:</span>
         <span><i class="cl-img"></i>IG IMAGE</span>
         <span><i class="cl-car"></i>IG CAROSELLO</span>
         <span><i class="cl-reel"></i>IG REEL</span>
@@ -2212,28 +2227,20 @@ body {
 
 <div class="modal-bg" id="modalShare">
   <div class="modal" style="max-width: 560px;">
-    <h3>Condividere la dashboard con altre persone</h3>
-    <p>La dashboard è un file HTML standalone. Per condividerla hai <strong>4 strade</strong>, dalla più semplice alla più strutturata:</p>
+    <h3>Condividere la dashboard con il team</h3>
+    <p>La dashboard è pubblicata online e i dati arrivano automaticamente dal backend. Per condividerla:</p>
     <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px;">
-      <div style="padding:12px 14px;background:var(--bg-elev-2);border-left:2px solid var(--accent);border-radius:0 6px 6px 0;">
-        <div style="font-size:12px;font-weight:600;color:var(--ink);margin-bottom:4px;">1 · Mandare il file via email/WhatsApp</div>
-        <div style="font-size:11.5px;color:var(--ink-soft);line-height:1.5;">Salvi il file HTML e lo invii. La persona deve aprirlo nel browser e inserire la <em>sua</em> API key Windsor.ai. La key tua resta nel <em>tuo</em> browser e non viene condivisa.</div>
+      <div style="padding:12px 14px;background:var(--bg-elev-2);border-left:2px solid var(--pos);border-radius:0 6px 6px 0;">
+        <div style="font-size:12px;font-weight:600;color:var(--ink);margin-bottom:4px;">1 · Condividi il link diretto</div>
+        <div style="font-size:11.5px;color:var(--ink-soft);line-height:1.5;">Basta inviare l'URL pubblico: <code style="font-size:10.5px;background:var(--bg);padding:1px 4px;border-radius:3px;">faidu93.github.io/dashboard_progettiesperti</code>. Chiunque apra il link vede gli stessi dati aggiornati — non serve nessuna configurazione, i dati arrivano dal backend.</div>
       </div>
       <div style="padding:12px 14px;background:var(--bg-elev-2);border-left:2px solid var(--info);border-radius:0 6px 6px 0;">
-        <div style="font-size:12px;font-weight:600;color:var(--ink);margin-bottom:4px;">2 · Caricarla su un drive condiviso (Google Drive, Dropbox, OneDrive)</div>
-        <div style="font-size:11.5px;color:var(--ink-soft);line-height:1.5;">Carichi il file e condividi il link di download. Stessa cosa: ogni persona inserisce la propria API key al primo accesso.</div>
-      </div>
-      <div style="padding:12px 14px;background:var(--bg-elev-2);border-left:2px solid var(--pos);border-radius:0 6px 6px 0;">
-        <div style="font-size:12px;font-weight:600;color:var(--ink);margin-bottom:4px;">3 · Hostarla online (gratis) con GitHub Pages, Netlify Drop o Vercel</div>
-        <div style="font-size:11.5px;color:var(--ink-soft);line-height:1.5;">Trascini il file su <a href="https://app.netlify.com/drop" target="_blank" style="color:var(--accent);">netlify.com/drop</a> e ottieni un URL pubblico tipo <code style="font-size:10.5px;background:var(--bg);padding:1px 4px;border-radius:3px;">dashboard-epf.netlify.app</code>. Chiunque apre l'URL vede la dashboard. <strong style="color:var(--ink);">Attenzione</strong>: chi non ha l'API key vedrà solo l'interfaccia vuota — devi condividere la key separatamente, o creare una versione "view-only" con dati hardcoded per stakeholder esterni.</div>
-      </div>
-      <div style="padding:12px 14px;background:var(--bg-elev-2);border-left:2px solid var(--accent-bright);border-radius:0 6px 6px 0;">
-        <div style="font-size:12px;font-weight:600;color:var(--ink);margin-bottom:4px;">4 · Dashboard Windsor.ai nativa (per stakeholder esterni)</div>
-        <div style="font-size:11.5px;color:var(--ink-soft);line-height:1.5;">Windsor.ai stessa offre <strong style="color:var(--ink);">dashboard condivisibili via link pubblico</strong> dalla loro web app. Soluzione più semplice se vuoi condividere con team o clienti senza dare l'API key a nessuno.</div>
+        <div style="font-size:12px;font-weight:600;color:var(--ink);margin-bottom:4px;">2 · Sincronizza il calendario col team</div>
+        <div style="font-size:11.5px;color:var(--ink-soft);line-height:1.5;">Per pianificare insieme, ognuno accede con l'account Google del progetto (<em>progettoespertiprofeta@gmail.com</em>): gli eventi del calendario editoriale sono condivisi e in tempo reale.</div>
       </div>
     </div>
-    <div class="modal-hint" style="background:rgba(239,90,90,0.06);border-left-color:var(--neg);">
-      <strong>Sicurezza API key:</strong> non condividere mai la tua API key Windsor.ai in chat pubbliche, screenshot o file. Chiunque la possieda può vedere tutti i dati del tuo account Instagram. Se è stata esposta, rigenerala dalle impostazioni Windsor.ai.
+    <div class="modal-hint" style="background:rgba(90,174,240,0.06);border-left-color:var(--info);">
+      <strong>Privacy:</strong> i token di accesso a Meta sono al sicuro nel backend (Vercel), non sono mai esposti nella dashboard pubblica. Chi apre il link vede solo i dati, mai le credenziali.
     </div>
     <div class="modal-actions">
       <button class="btn-primary" id="btnShareClose">Ho capito</button>
@@ -2243,14 +2250,28 @@ body {
 
 <div class="modal-bg" id="modal">
   <div class="modal">
-    <h3>Configura Windsor.ai</h3>
-    <p>Inserisci la <strong>API key Windsor.ai del progetto</strong>. Chiedila in privato a Lapo &mdash; non viene mai condivisa pubblicamente. Resterà salvata solo nel <em>localStorage</em> del tuo browser, da inserire una volta per dispositivo.</p>
-    <label for="apiKey">API key</label>
-    <input type="password" id="apiKey" placeholder="Incolla qui la tua key..." autocomplete="off">
-    <div class="modal-hint"><strong>Come ottenerla:</strong> Windsor.ai → Account → API access → copia il token.</div>
+    <h3>Stato connessione dati</h3>
+    <p>La dashboard riceve i dati da un <strong>backend privato su Vercel</strong> che si collega ufficialmente a Meta (Instagram Graph API) e a YouTube. Non serve nessuna API key nel browser.</p>
+    <div id="backendStatus" style="display:flex;flex-direction:column;gap:8px;margin:14px 0;">
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);">
+        <span class="material-symbols-rounded" style="font-size:16px;color:var(--pos);">check_circle</span>
+        <span id="stIg">Instagram · verifica…</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);">
+        <span class="material-symbols-rounded" style="font-size:16px;color:var(--pos);">check_circle</span>
+        <span id="stYt">YouTube · verifica…</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);">
+        <span class="material-symbols-rounded" style="font-size:16px;color:var(--pos);">check_circle</span>
+        <span id="stDemo">Demografia · verifica…</span>
+      </div>
+    </div>
+    <label for="apiKey" style="font-size:11px;color:var(--ink-mute);">URL backend (avanzato — di norma non si tocca)</label>
+    <input type="text" id="apiKey" placeholder="https://dashboard-esperti-backend.vercel.app" autocomplete="off">
+    <div class="modal-hint"><strong>Quando serve:</strong> solo se sposti il backend su un altro indirizzo Vercel. Lascia vuoto per usare quello predefinito.</div>
     <div class="modal-actions">
-      <button class="btn-secondary" id="btnCancel">Annulla</button>
-      <button class="btn-primary" id="btnSave">Salva e collega</button>
+      <button class="btn-secondary" id="btnCancel">Chiudi</button>
+      <button class="btn-primary" id="btnSave">Salva URL</button>
     </div>
   </div>
 </div>
@@ -2349,15 +2370,31 @@ function computeMedian(arr) {
   return s[Math.floor(s.length/2)];
 }
 
-function sumWindow(daily, days, endIdx) {
+function sumWindow(daily, days, endIdx, posts) {
   const start = Math.max(0, endIdx - days + 1);
   const window = daily.slice(start, endIdx + 1);
+  let int = window.reduce((s,r)=>s+(r.total_interactions||0),0);
+  let shares = window.reduce((s,r)=>s+(r.shares||0),0);
+  // Se i daily non hanno interazioni (Meta non le espone), le calcolo dai post
+  // pubblicati nell'intervallo di date della finestra.
+  if (posts && posts.length && window.length) {
+    const dStart = new Date(window[0].date + 'T00:00:00');
+    const dEnd = new Date(window[window.length-1].date + 'T23:59:59');
+    const inWin = posts.filter(p => {
+      const t = new Date(p.timestamp);
+      return t >= dStart && t <= dEnd;
+    });
+    const intFromPosts = inWin.reduce((s,p)=>s+(p.media_engagement||0),0);
+    const sharesFromPosts = inWin.reduce((s,p)=>s+(p.media_shares||0),0);
+    if (intFromPosts > 0) int = intFromPosts;
+    if (sharesFromPosts > 0) shares = sharesFromPosts;
+  }
   return {
     reach: window.reduce((s,r)=>s+(r.reach||0),0),
-    int: window.reduce((s,r)=>s+(r.total_interactions||0),0),
-    eng: window.reduce((s,r)=>s+(r.accounts_engaged||0),0),
+    int,
+    eng: int,
     foll: window.reduce((s,r)=>s+(r.follows_and_unfollows||0),0),
-    shares: window.reduce((s,r)=>s+(r.shares||0),0),
+    shares,
     days: window.length
   };
 }
@@ -2393,10 +2430,18 @@ function renderKPIs(daily, profile, posts) {
 
   // Totali periodo ripresa
   const reach = period.reduce((s,r)=>s+(r.reach||0),0);
-  const ints = period.reduce((s,r)=>s+(r.total_interactions||0),0);
-  const eng = period.reduce((s,r)=>s+(r.accounts_engaged||0),0);
+  // INTERAZIONI/SHARES dai POST del periodo (i daily non li espongono — Meta non li dà
+  // come serie giornaliera). I post invece hanno engagement reale per ciascuno.
+  const RESUME = new Date(RESUME_DATE);
+  const periodPosts = (posts || []).filter(p => {
+    const t = new Date(p.timestamp);
+    return t >= RESUME;
+  });
+  const ints = periodPosts.reduce((s,p)=>s+(p.media_engagement||0),0);
+  const shares = periodPosts.reduce((s,p)=>s+(p.media_shares||0),0);
+  // accounts_engaged non disponibile come serie: stima = interazioni (proxy prudente)
+  const eng = periodPosts.reduce((s,p)=>s+(p.media_engagement||0),0);
   const foll = period.reduce((s,r)=>s+(r.follows_and_unfollows||0),0);
-  const shares = period.reduce((s,r)=>s+(r.shares||0),0);
   const er = reach > 0 ? (ints/reach)*100 : 0;
   const conv = reach > 0 ? (foll/reach)*100 : 0;
   const shareability = reach > 0 ? (shares/reach)*100 : 0;
@@ -2404,9 +2449,9 @@ function renderKPIs(daily, profile, posts) {
 
   // Costruisco 3 finestre da 7gg: corrente, precedente, 2 fa
   const lastIdx = daily.length - 1;
-  const last7 = sumWindow(daily, 7, lastIdx);
-  const prev7 = sumWindow(daily, 7, lastIdx - 7);
-  const prev14 = sumWindow(daily, 7, lastIdx - 14);
+  const last7 = sumWindow(daily, 7, lastIdx, periodPosts);
+  const prev7 = sumWindow(daily, 7, lastIdx - 7, periodPosts);
+  const prev14 = sumWindow(daily, 7, lastIdx - 14, periodPosts);
   // Date range delle 2 settimane visibili (corrente e precedente)
   const wkRange = (n, end) => {
     // Robustezza: se end è fuori range (negativo o oltre), ritorno '—'
@@ -2531,12 +2576,23 @@ function renderWeeks(period, posts) {
     weeks.push(period.slice(i, i+7));
   }
   const isLastPartial = (weeks[weeks.length-1].length < 7);
-  // Stats per ranking
-  const stats = weeks.map(w => ({
-    reach: w.reduce((s,r)=>s+(r.reach||0),0),
-    ints: w.reduce((s,r)=>s+(r.total_interactions||0),0),
-    foll: w.reduce((s,r)=>s+((r.follows_and_unfollows||0)),0),
-  }));
+  // Stats per ranking — interazioni calcolate dai post della settimana (i daily non le hanno)
+  const stats = weeks.map(w => {
+    let ints = w.reduce((s,r)=>s+(r.total_interactions||0),0);
+    if (posts && posts.length && w.length) {
+      const ws = new Date(w[0].date + 'T00:00:00');
+      const we = new Date(w[w.length-1].date + 'T23:59:59');
+      const intFromPosts = posts.filter(p => {
+        const t = new Date(p.timestamp); return t >= ws && t <= we;
+      }).reduce((s,p)=>s+(p.media_engagement||0),0);
+      if (intFromPosts > 0) ints = intFromPosts;
+    }
+    return {
+      reach: w.reduce((s,r)=>s+(r.reach||0),0),
+      ints,
+      foll: w.reduce((s,r)=>s+((r.follows_and_unfollows||0)),0),
+    };
+  });
   const maxReach = Math.max(...stats.map(s=>s.reach));
   // Conteggio post per settimana (per tipo)
   const postsByWeek = weeks.map(w => {
@@ -2923,7 +2979,14 @@ let CACHED = { daily: null, posts: null, profile: null };
 
 function refreshDataDisplay() {
   if (!CACHED.daily) return;
-  const validPosts = CACHED.posts.filter(p => p.media_reach != null && p.media_reach > 0);
+  // Tiene i post che hanno almeno un segnale valido: reach, oppure interazioni
+  // (like/commenti). Così non scarta post recenti la cui reach non è ancora
+  // esposta da Meta, ma che hanno comunque engagement reale.
+  const validPosts = CACHED.posts.filter(p =>
+    (p.media_reach != null && p.media_reach > 0) ||
+    (p.media_engagement != null && p.media_engagement > 0) ||
+    (p.media_like_count != null && p.media_like_count > 0)
+  );
   const ctx = renderKPIs(CACHED.daily, CACHED.profile, validPosts);
   if (ctx) {
     renderWeeks(ctx.period, validPosts);
@@ -3644,6 +3707,98 @@ function calSetupEvents() {
 // ============================================================================
 // FOLLOWER ANALYSIS — chart + KPI
 // ============================================================================
+// ============================================================================
+// DEMOGRAFIA REALE (Meta) — età + genere
+// ============================================================================
+function renderDemographics(demo) {
+  if (!demo || !demo.available) return; // mantengo il fallback hardcoded
+  const content = document.getElementById('demoContent');
+  const sub = document.getElementById('demoSub');
+  if (!content) return;
+
+  const gender = demo.gender || {};
+  const age = demo.age || {};
+  const M = gender.M || 0, F = gender.F || 0, U = gender.U || 0;
+  const totGenderDich = M + F; // escludo "non dichiarato" dalle percentuali genere
+  const totCategorizzati = M + F + U;
+
+  // Costruisco le righe genere
+  let html = '<div class="demo-section"><div class="demo-section-title">Genere</div>';
+  if (totGenderDich > 0) {
+    const pM = (M/totGenderDich)*100, pF = (F/totGenderDich)*100;
+    const maxG = Math.max(pM, pF) || 1;
+    html += demoRow('Maschi', pM, (pM/maxG)*100);
+    html += demoRow('Femmine', pF, (pF/maxG)*100);
+  }
+  html += '</div>';
+
+  // Righe età (ordino le fasce)
+  const ageOrder = ['13-17','18-24','25-34','35-44','45-54','55-64','65+'];
+  const ageLabels = {'13-17':'13–17','18-24':'18–24','25-34':'25–34','35-44':'35–44','45-54':'45–54','55-64':'55–64','65+':'65+'};
+  const totAge = ageOrder.reduce((s,k)=>s+(age[k]||0),0);
+  if (totAge > 0) {
+    const maxAge = Math.max(...ageOrder.map(k=>age[k]||0)) || 1;
+    html += '<div class="demo-section"><div class="demo-section-title">Età</div>';
+    ageOrder.forEach(k => {
+      if ((age[k]||0) > 0) {
+        const pct = ((age[k]||0)/totAge)*100;
+        html += demoRow(ageLabels[k], pct, ((age[k]||0)/maxAge)*100);
+      }
+    });
+    html += '</div>';
+  }
+
+  content.innerHTML = html;
+  if (sub) sub.textContent = numIt(totCategorizzati) + ' follower categorizzati · dati Meta';
+
+  // Aggiorno l'insight "Audience iper-qualificata" nella Strategia con numeri reali
+  const insight = document.getElementById('insightAudience');
+  if (insight && totGenderDich > 0 && totAge > 0) {
+    const pctM = Math.round((M/totGenderDich)*100);
+    const core = ((age['25-34']||0) + (age['35-44']||0));
+    const pctCore = Math.round((core/totAge)*100);
+    insight.textContent = `${pctM}% maschi sui categorizzati · ${pctCore}% fascia 25-44 · italiani città Serie A. Profilo perfetto del fantallenatore.`;
+  }
+}
+
+function demoRow(label, pctVal, barWidth) {
+  return `<div class="demo-row"><span class="demo-label">${label}</span>`
+    + `<div class="demo-track"><div class="demo-fill" style="width:${Math.max(2,barWidth).toFixed(0)}%"></div></div>`
+    + `<span class="demo-val">${pct1(pctVal)}</span></div>`;
+}
+
+// ============================================================================
+// ORARI ATTIVITÀ FOLLOWER (Meta online_followers) — appare solo se disponibile
+// ============================================================================
+let onlineChart = null;
+function renderOnlineFollowers(demo) {
+  const section = document.getElementById('onlineFollowersSection');
+  if (!section) return;
+  const online = (demo && demo.online_followers) || {};
+  const hours = Object.keys(online);
+  if (!hours.length) { section.style.display = 'none'; return; } // Meta non li espone ancora
+
+  section.style.display = '';
+  const labels = [];
+  const data = [];
+  for (let h = 0; h < 24; h++) {
+    labels.push(h + ':00');
+    data.push(online[String(h)] || 0);
+  }
+  const canvas = document.getElementById('chartOnline');
+  if (!canvas || typeof Chart === 'undefined') return;
+  if (onlineChart) onlineChart.destroy();
+  onlineChart = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Follower online', data,
+      backgroundColor: 'rgba(255,140,30,0.55)', borderColor: 'rgba(255,140,30,1)', borderWidth: 1, borderRadius: 3 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { ticks: { color: '#8a8f98', font: { size: 9 } }, grid: { display: false } },
+                y: { ticks: { color: '#8a8f98', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
+  });
+}
+
 function renderFollowerAnalysis(daily) {
   // Prendo gli ultimi 14 giorni con dati validi
   const valid = daily.filter(d => d.follower_count_1d != null || d.follows_and_unfollows != null).slice(-14);
@@ -4314,7 +4469,13 @@ async function init() {
       window.ytPublishedVideos = [];
     }
     ytRender();
-    const validPosts = posts.filter(p => p.media_reach != null && p.media_reach > 0);
+
+    // Filtro robusto: tiene post con reach OPPURE engagement (non scarta post recenti)
+    const validPosts = posts.filter(p =>
+      (p.media_reach != null && p.media_reach > 0) ||
+      (p.media_engagement != null && p.media_engagement > 0) ||
+      (p.media_like_count != null && p.media_like_count > 0)
+    );
     const ctx = renderKPIs(daily, profile, validPosts);
     if (ctx) {
       CACHED.period = ctx.period;
@@ -4331,6 +4492,17 @@ async function init() {
     setupWowToggle(validPosts);
     renderDailyActions(daily, validPosts, profile);
     document.getElementById('compYou').textContent = numIt(profile.followers_count);
+
+    // === DEMOGRAFIA REALE + ORARI ATTIVITÀ (nuovo da Meta) ===
+    // Caricata in modo non bloccante: se non disponibile, restano i dati di fallback.
+    try {
+      const demo = await fetchBackend('/api/instagram-demographics');
+      window.CACHED_DEMO = demo;
+      renderDemographics(demo);
+      renderOnlineFollowers(demo);
+    } catch(e) {
+      console.log('Demografia non disponibile:', e);
+    }
     // Aggiorno barra mappa: scala log su max 100k (L4 medio)
     const mapBar = document.getElementById('mapYouBar');
     if (mapBar) {
@@ -4348,15 +4520,31 @@ async function init() {
 }
 
 document.getElementById('btnConfig').addEventListener('click', () => {
-  document.getElementById('apiKey').value = getKey() || '';
+  // Mostro l'URL backend corrente (vuoto = default) e verifico lo stato
+  let saved = '';
+  try { saved = localStorage.getItem('backend_base') || ''; } catch(e) {}
+  document.getElementById('apiKey').value = saved;
+  // Aggiorno gli indicatori di stato in base ai dati già caricati
+  const stIg = document.getElementById('stIg');
+  const stYt = document.getElementById('stYt');
+  const stDemo = document.getElementById('stDemo');
+  if (stIg) stIg.textContent = (CACHED && CACHED.profile && CACHED.profile.followers_count)
+    ? `Instagram · attivo (${numIt(CACHED.profile.followers_count)} follower)` : 'Instagram · nessun dato';
+  if (stYt) stYt.textContent = (window.ytPublishedVideos && window.ytPublishedVideos.length)
+    ? `YouTube · attivo (${window.ytPublishedVideos.length} video)` : 'YouTube · nessun dato';
+  if (stDemo) stDemo.textContent = (window.CACHED_DEMO && window.CACHED_DEMO.available)
+    ? 'Demografia · attiva' : 'Demografia · in attesa di Meta';
   document.getElementById('modal').classList.add('show');
 });
 document.getElementById('btnCancel').addEventListener('click', () => document.getElementById('modal').classList.remove('show'));
 document.getElementById('btnSave').addEventListener('click', () => {
   const v = document.getElementById('apiKey').value.trim();
-  if (v) setKey(v);
+  try {
+    if (v) localStorage.setItem('backend_base', v.replace(/\/$/, ''));
+    else localStorage.removeItem('backend_base');
+  } catch(e) {}
   document.getElementById('modal').classList.remove('show');
-  init();
+  location.reload(); // ricarico per applicare il nuovo URL backend
 });
 document.getElementById('modal').addEventListener('click', (e) => { if (e.target.id === 'modal') document.getElementById('modal').classList.remove('show'); });
 
