@@ -1623,12 +1623,6 @@ body {
       <span class="funnel-step-arrow"><span class="material-symbols-rounded">arrow_forward</span></span>
     </div>
     <div class="funnel-step">
-      <span class="funnel-step-label">Visualizzazioni</span>
-      <span class="funnel-step-value" id="fb-views">—</span>
-      <span class="funnel-step-conv" id="fb-views-conv">—</span>
-      <span class="funnel-step-arrow"><span class="material-symbols-rounded">arrow_forward</span></span>
-    </div>
-    <div class="funnel-step">
       <span class="funnel-step-label">Interazioni totali</span>
       <span class="funnel-step-value" id="fb-engaged">—</span>
       <span class="funnel-step-conv" id="fb-engaged-conv">—</span>
@@ -2443,8 +2437,6 @@ function renderKPIs(daily, profile, posts) {
   const foll = period.reduce((s,r)=>s+(r.follows_and_unfollows||0),0);
   // reach dei post del periodo (per la shareability e riferimenti coerenti)
   const postReachPeriod = periodPosts.reduce((s,p)=>s+(p.media_reach||0),0);
-  // Visualizzazioni totali (views) del periodo — dai daily (Meta le espone giornalmente)
-  const views = period.reduce((s,r)=>s+(r.views||0),0);
   // ER MEDIO = media degli ER per-post (engagement/reach di ciascun post), come fanno
   // gli strumenti di mercato (Metricool ecc.). Stessa formula del Content Lab → numeri
   // coerenti in tutta la dashboard e allineati ai benchmark esterni (~4-5%).
@@ -2551,12 +2543,6 @@ function renderKPIs(daily, profile, posts) {
 
   // FUNNEL BAR (sopra KPI)
   document.getElementById('fb-reach').textContent = numIt(reach);
-  const fbViews = document.getElementById('fb-views');
-  if (fbViews) {
-    fbViews.textContent = numIt(views);
-    const vc = document.getElementById('fb-views-conv');
-    if (vc) vc.textContent = reach > 0 ? `${(views/reach).toFixed(1)}× sulla reach` : '—';
-  }
   document.getElementById('fb-engaged').textContent = numIt(eng);
   document.getElementById('fb-engaged-conv').textContent = `${pct1(er)} ER sulla reach contenuti`;
   document.getElementById('fb-follow').textContent = `${foll>=0?'+':''}${foll}`;
