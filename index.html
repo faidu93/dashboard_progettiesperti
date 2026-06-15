@@ -1495,6 +1495,35 @@ body {
   .cal-post.plan { cursor: grab; }
   .cal-post.plan:active { cursor: grabbing; }
 
+  /* ============ UPLOAD MEDIA NEL MODAL CALENDARIO ============ */
+  .cal-upload {
+    border: 1.5px dashed var(--line-strong); border-radius: 9px;
+    padding: 18px; text-align: center; cursor: pointer;
+    transition: border-color .15s, background .15s; background: var(--bg-elev-2);
+  }
+  .cal-upload:hover { border-color: var(--accent); background: rgba(255,140,30,0.04); }
+  .cal-upload.dragover { border-color: var(--accent); background: rgba(255,140,30,0.08); }
+  .cal-upload .material-symbols-rounded { font-size: 28px; color: var(--ink-mute); }
+  .cal-upload-text { font-size: 12.5px; color: var(--ink-soft); margin-top: 6px; }
+  .cal-upload-hint { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute); margin-top: 4px; }
+  .cal-upload-preview { margin-top: 12px; display: none; }
+  .cal-upload-preview.show { display: block; }
+  .cal-upload-preview img, .cal-upload-preview video {
+    max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--line);
+  }
+  .cal-upload-status {
+    font-family: var(--font-mono); font-size: 11px; margin-top: 8px;
+    display: flex; align-items: center; gap: 6px; justify-content: center;
+  }
+  .cal-upload-status.ok { color: var(--pos); }
+  .cal-upload-status.err { color: var(--neg); }
+  .cal-upload-status.loading { color: var(--accent); }
+  .cal-upload-remove {
+    background: transparent; border: 1px solid var(--line-strong); color: var(--ink-soft);
+    border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer; margin-top: 8px;
+  }
+  .cal-post.autopub { box-shadow: inset 0 0 0 1.5px var(--pos); }
+
 </style>
 </head>
 <body>
@@ -2129,9 +2158,23 @@ body {
         <label>Titolo / Idea</label>
         <input type="text" id="calTitle" placeholder="Es: TOP 10 marcatori stagione 25/26">
       </div>
+      <div class="cal-field" id="calMediaField" style="display:none;">
+        <label>Media (carica = pubblica davvero su Instagram)</label>
+        <div class="cal-upload" id="calUpload">
+          <input type="file" id="calUploadInput" accept="image/*,video/*" style="display:none;">
+          <span class="material-symbols-rounded">cloud_upload</span>
+          <div class="cal-upload-text">Trascina qui o clicca per caricare</div>
+          <div class="cal-upload-hint">JPEG, PNG, MP4 · senza media resta solo un promemoria</div>
+        </div>
+        <div class="cal-upload-preview" id="calUploadPreview"></div>
+        <div class="cal-upload-status" id="calUploadStatus"></div>
+        <button type="button" class="cal-upload-remove" id="calUploadRemove" style="display:none;">Rimuovi media</button>
+        <input type="hidden" id="calMediaUrl">
+        <input type="hidden" id="calMediaKind">
+      </div>
       <div class="cal-field">
-        <label>Note (opzionale)</label>
-        <textarea id="calNotes" placeholder="Testo, riferimenti, hashtag…"></textarea>
+        <label>Note / Caption</label>
+        <textarea id="calNotes" placeholder="Testo, riferimenti, hashtag… (diventa la caption se carichi un media)"></textarea>
       </div>
       <div class="cal-modal-actions">
         <button class="cal-btn" id="calDeleteBtn" style="color:var(--neg);display:none;">Elimina</button>
@@ -2295,6 +2338,134 @@ async function fetchBackend(path) {
   const j = await res.json();
   if (j && j.error) throw new Error(j.error);
   return j;
+}
+
+// ============================================================================
+// PUBBLICAZIONE INSTAGRAM (upload media + coda programmata)
+// ============================================================================
+// PUBLISH SECRET: chiesto una volta e tenuto solo per la sessione corrente
+function getPublishSecret() {
+  let s = '';
+  try { s = sessionStorage.getItem('publish_secret') || ''; } catch(e) {}
+  if (!s) {
+    s = (prompt('Inserisci la password di pubblicazione (PUBLISH_SECRET):') || '').trim();
+    if (s) { try { sessionStorage.setItem('publish_secret', s); } catch(e) {} }
+  }
+  return s;
+}
+function clearPublishSecret() {
+  try { sessionStorage.removeItem('publish_secret'); } catch(e) {}
+}
+
+// Upload di un file su Vercel Blob tramite /api/upload → ritorna l'URL pubblico
+async function uploadMediaToBlob(file) {
+  const secret = getPublishSecret();
+  if (!secret) throw new Error('Password di pubblicazione mancante.');
+  const res = await fetch(`${BACKEND_BASE}/api/upload`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': file.type || 'application/octet-stream',
+      'X-Publish-Secret': secret,
+      'X-Filename': file.name || 'upload'
+    },
+    body: file
+  });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok || j.error) {
+    if (res.status === 401) clearPublishSecret();
+    throw new Error(j.error || `Upload fallito (HTTP ${res.status})`);
+  }
+  return j.url;
+}
+
+// Aggiunge un post alla coda di pubblicazione reale (/api/schedule)
+async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso }) {
+  const secret = getPublishSecret();
+  if (!secret) throw new Error('Password di pubblicazione mancante.');
+  const res = await fetch(`${BACKEND_BASE}/api/schedule?action=add`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret },
+    body: JSON.stringify({
+      mediaType: mediaKind === 'video' ? 'REELS' : 'IMAGE',
+      mediaUrl,
+      caption: caption || '',
+      scheduledAt: scheduledAtIso
+    })
+  });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok || j.error) {
+    if (res.status === 401) clearPublishSecret();
+    throw new Error(j.error || `Coda fallita (HTTP ${res.status})`);
+  }
+  return j.post;
+}
+
+// Gestione UI dell'area upload nel modal
+function calResetUpload() {
+  const u = document.getElementById('calMediaUrl');
+  const k = document.getElementById('calMediaKind');
+  if (u) u.value = '';
+  if (k) k.value = '';
+  const prev = document.getElementById('calUploadPreview');
+  if (prev) { prev.innerHTML = ''; prev.classList.remove('show'); }
+  const st = document.getElementById('calUploadStatus');
+  if (st) { st.innerHTML = ''; st.className = 'cal-upload-status'; }
+  const rm = document.getElementById('calUploadRemove');
+  if (rm) rm.style.display = 'none';
+  const inp = document.getElementById('calUploadInput');
+  if (inp) inp.value = '';
+}
+
+async function calHandleFile(file) {
+  if (!file) return;
+  const isVideo = (file.type || '').startsWith('video');
+  const status = document.getElementById('calUploadStatus');
+  const prev = document.getElementById('calUploadPreview');
+
+  const localUrl = URL.createObjectURL(file);
+  prev.innerHTML = isVideo
+    ? `<video src="${localUrl}" controls muted></video>`
+    : `<img src="${localUrl}" alt="anteprima">`;
+  prev.classList.add('show');
+
+  status.className = 'cal-upload-status loading';
+  status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">progress_activity</span> Caricamento su Blob…';
+
+  try {
+    const url = await uploadMediaToBlob(file);
+    document.getElementById('calMediaUrl').value = url;
+    document.getElementById('calMediaKind').value = isVideo ? 'video' : 'image';
+    status.className = 'cal-upload-status ok';
+    status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> Media caricato · questo post verrà pubblicato automaticamente';
+    document.getElementById('calUploadRemove').style.display = 'inline-block';
+  } catch (e) {
+    status.className = 'cal-upload-status err';
+    status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">error</span> ' + (e.message || 'Errore upload');
+    calResetUpload();
+  }
+}
+
+function calSetupUpload() {
+  const zone = document.getElementById('calUpload');
+  const input = document.getElementById('calUploadInput');
+  if (!zone || !input) return;
+  zone.addEventListener('click', () => input.click());
+  input.addEventListener('change', e => calHandleFile(e.target.files[0]));
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) calHandleFile(e.dataTransfer.files[0]);
+  });
+  const rm = document.getElementById('calUploadRemove');
+  if (rm) rm.addEventListener('click', calResetUpload);
+}
+
+// Mostra l'area media solo per Instagram
+function calToggleMediaField() {
+  const platform = document.getElementById('calPlatform').value;
+  const field = document.getElementById('calMediaField');
+  if (field) field.style.display = (platform === 'ig') ? 'flex' : 'none';
 }
 
 const MONTHS_NUM = ['01','02','03','04','05','06','07','08','09','10','11','12'];
@@ -3380,6 +3551,7 @@ function calOnPlatformChange() {
   } else {
     typeSelect.innerHTML = '<option value="IMAGE">📊 IMAGE</option><option value="CAROUSEL_ALBUM">🎠 CAROSELLO</option><option value="REELS">🎬 REEL</option><option value="STORY">📱 STORY</option>';
   }
+  calToggleMediaField();
 }
 
 // ytRender è alias di calRender (rendering unificato)
@@ -3582,6 +3754,8 @@ function calEditPlanned(e, id, platform) {
   document.getElementById('calModal').dataset.platform = platform;
   document.getElementById('calDeleteBtn').style.display = 'inline-flex';
   document.getElementById('calModalTitle').textContent = 'Modifica post';
+  calResetUpload();
+  calToggleMediaField();
   document.getElementById('calModal').classList.add('show');
 }
 
@@ -3596,10 +3770,13 @@ function calOpenModal(ds, id) {
   document.getElementById('calNotes').value = '';
   document.getElementById('calDeleteBtn').style.display = 'none';
   document.getElementById('calModalTitle').textContent = 'Pianifica post';
+  calResetUpload();
+  calToggleMediaField();
   document.getElementById('calModal').classList.add('show');
 }
 
 function calSetupEvents() {
+  calSetupUpload();
   document.getElementById('calPrev').onclick = () => {
     calCurrentDate = new Date(calCurrentDate.getFullYear(), calCurrentDate.getMonth()-1, 1);
     calRender();
@@ -3630,10 +3807,43 @@ function calSetupEvents() {
     const title = document.getElementById('calTitle').value.trim();
     const notes = document.getElementById('calNotes').value.trim();
     if (!date || !title) { alert('Inserisci almeno data e titolo.'); return; }
+
+    // --- PUBBLICAZIONE REALE: solo IG + media caricato ---
+    const mediaUrl = document.getElementById('calMediaUrl') ? document.getElementById('calMediaUrl').value : '';
+    const mediaKind = document.getElementById('calMediaKind') ? document.getElementById('calMediaKind').value : '';
+    let willAutoPublish = false;
+    if (platform === 'ig' && mediaUrl) {
+      const localDateTime = new Date(`${date}T${(time || '10:00')}:00`);
+      if (isNaN(localDateTime.getTime())) { alert('Data/ora non valide.'); return; }
+      if (localDateTime.getTime() < Date.now() - 60000) {
+        if (!confirm('L\'orario scelto è nel passato: il post verrà pubblicato al prossimo giro del cron. Continuare?')) return;
+      }
+      const saveBtn = document.getElementById('calSaveBtn');
+      const prevLabel = saveBtn.innerHTML;
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span class="material-symbols-rounded">progress_activity</span>Accodo pubblicazione…';
+      try {
+        await schedulePublish({ mediaUrl, mediaKind, caption: notes, scheduledAtIso: localDateTime.toISOString() });
+        willAutoPublish = true;
+      } catch (e) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = prevLabel;
+        alert('Errore nella programmazione della pubblicazione: ' + (e.message || 'sconosciuto'));
+        return;
+      }
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = prevLabel;
+    }
+    // Marco titolo/note per distinguere i post auto-pubblicati in calendario
+    const titleForCal = willAutoPublish ? ('✅ ' + title) : title;
+    const notesForCal = willAutoPublish
+      ? (notes + '\n\n[Pubblicazione automatica programmata · media già caricato]')
+      : notes;
+
     // Se Google connesso, scrive direttamente su Google Calendar
     if (gcalSignedIn) {
-      if (id) { await gcalUpdateEvent(id, platform, date, time, type, title, notes); }
-      else { await gcalCreateEvent(platform, date, time, type, title, notes); }
+      if (id) { await gcalUpdateEvent(id, platform, date, time, type, titleForCal, notesForCal); }
+      else { await gcalCreateEvent(platform, date, time, type, titleForCal, notesForCal); }
       // Hook bacheca idee
       const fromIdea = document.getElementById('calModal').dataset.fromIdea;
       if (fromIdea) {
@@ -3654,9 +3864,9 @@ function calSetupEvents() {
     const items = loadFn();
     if (id) {
       const idx = items.findIndex(i => i.id === id);
-      if (idx >= 0) items[idx] = {id, date, time, type, title, notes};
+      if (idx >= 0) items[idx] = {id, date, time, type, title: titleForCal, notes: notesForCal};
     } else {
-      items.push({id: Date.now().toString(), date, time, type, title, notes});
+      items.push({id: Date.now().toString(), date, time, type, title: titleForCal, notes: notesForCal});
     }
     saveFn(items);
     // Se viene da un'idea, rimuovo l'idea dalla bacheca (è stata "spostata" nel calendario)
