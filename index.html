@@ -2907,12 +2907,15 @@ function renderWeeks(period, posts) {
 
 function renderReachChart(period) {
   const ctx = document.getElementById('chartReach').getContext('2d');
+  // Se esiste già un grafico su questo canvas, lo distruggo prima di ricrearlo
+  // (altrimenti Chart.js dà "Canvas is already in use" e il grafico non si aggiorna).
+  if (window.reachChart) { window.reachChart.destroy(); window.reachChart = null; }
   // Filtro giorni con dati validi (reach non null) per evitare cali fittizi a 0
   const validDays = period.filter(d => d.reach != null);
   const grad = ctx.createLinearGradient(0, 0, 0, 260);
   grad.addColorStop(0, 'rgba(255,140,30,0.32)');
   grad.addColorStop(1, 'rgba(255,140,30,0.01)');
-  new Chart(ctx, {
+  window.reachChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: validDays.map(d => fmtDate(new Date(d.date))),
@@ -4191,7 +4194,9 @@ function renderFollowerAnalysis(daily) {
   // Chart
   const ctx = document.getElementById('chartFollowers');
   if (!ctx) return;
-  new Chart(ctx.getContext('2d'), {
+  // Distruggo il grafico precedente su questo canvas, se esiste
+  if (window.followersChart) { window.followersChart.destroy(); window.followersChart = null; }
+  window.followersChart = new Chart(ctx.getContext('2d'), {
     type: 'bar',
     data: {
       labels: valid.map(d => fmtDate(new Date(d.date))),
