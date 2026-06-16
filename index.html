@@ -313,7 +313,7 @@ body {
 .wt-car { color: var(--info); }
 .wt-reel { color: var(--pos); }
 .week-best-badge { font-size: 9.5px; padding: 2px 6px; background: var(--pos); color: var(--bg); border-radius: 3px; font-weight: 700; letter-spacing: 0.04em; margin-left: 6px; vertical-align: middle; }
-.week-card.current::after { content: 'IN CORSO'; position: absolute; top: 10px; right: 12px; font-family: var(--font-mono); font-size: 8.5px; padding: 2px 6px; background: rgba(255,140,30,0.15); color: var(--accent); border-radius: 3px; font-weight: 600; letter-spacing: 0.06em; }
+.week-card.current::after { content: ''; display: none; }
 .week-label { font-family: var(--font-mono); font-size: 11px; color: var(--accent); font-weight: 500; margin-bottom: 2px; }
 .week-dates { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-soft); margin-bottom: 12px; }
 .week-metric { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; }
@@ -1805,17 +1805,17 @@ body {
     </div>
     <div class="panel">
       <div class="panel-title"><span class="material-symbols-rounded">group_add</span>Follower: entrati vs usciti</div>
-      <div class="panel-sub">Nuovi follower al giorno e saldo netto · ultimi 14 giorni</div>
+      <div class="panel-sub">Nuovi follower al giorno e saldo netto · ultimi 30 giorni</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0;">
         <div style="background:var(--bg-elev-2);padding:14px;border-radius:8px;text-align:center;">
           <div style="font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">Nuovi follow</div>
           <div style="font-size:26px;font-weight:700;color:var(--pos);font-variant-numeric:tabular-nums;" id="follNew">—</div>
-          <div style="font-size:10px;color:var(--ink-mute);margin-top:4px;">ultimi 14gg</div>
+          <div style="font-size:10px;color:var(--ink-mute);margin-top:4px;">ultimi 30gg</div>
         </div>
         <div style="background:var(--bg-elev-2);padding:14px;border-radius:8px;text-align:center;">
           <div style="font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">Unfollow stimati</div>
           <div style="font-size:26px;font-weight:700;color:var(--neg);font-variant-numeric:tabular-nums;" id="follLost">—</div>
-          <div style="font-size:10px;color:var(--ink-mute);margin-top:4px;">ultimi 14gg</div>
+          <div style="font-size:10px;color:var(--ink-mute);margin-top:4px;">ultimi 30gg</div>
         </div>
         <div style="background:var(--bg-elev-2);padding:14px;border-radius:8px;text-align:center;">
           <div style="font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">Retention</div>
@@ -1847,7 +1847,7 @@ body {
     <div class="glossary">
       <div class="glossary-title"><span class="material-symbols-rounded">help</span>Come leggere le settimane</div>
       <dl>
-        <dt>WK1, WK2…</dt><dd> = settimane dei dati disponibili (Meta fornisce ~30 giorni di storico), 7 giorni ciascuna. ★ TOP segna la settimana con reach più alta del periodo. La card "IN CORSO" è la settimana parziale. L'ER di ogni settimana è calcolato sulle interazioni e sulla reach dei contenuti pubblicati in quei giorni.</dd>
+        <dt>WK1, WK2…</dt><dd> = settimane di calendario (lunedì → domenica). ★ TOP segna la settimana con reach più alta. La card "WK in corso" è la settimana che contiene oggi: ha dati parziali e non è confrontabile finché non si completa la domenica. L'ER di ogni settimana è calcolato sulle interazioni e sulla reach dei contenuti pubblicati in quei giorni.</dd>
         <dt>WK corr. e WK prec.</dt><dd> = nei KPI in alto, sono le ultime 2 settimane con le loro date precise. Il delta ↑↓ accanto a ogni riga confronta sempre quella settimana con la <strong>settimana precedente</strong>: la riga "WK corr." con la settimana di prima, la riga "WK prec." con la settimana ancora prima.</dd>
       </dl>
     </div>
@@ -1989,7 +1989,14 @@ body {
 
     <!-- PI LIST con titoli -->
     <div class="panel" style="margin-top:20px;">
-      <div class="panel-title"><span class="material-symbols-rounded">stacked_bar_chart</span>Performance Index — tutti i post</div>
+      <div class="panel-title" style="justify-content:space-between;align-items:center;">
+        <span style="display:flex;align-items:center;gap:8px;">
+          <span class="material-symbols-rounded">stacked_bar_chart</span>Performance Index — tutti i post
+        </span>
+        <select id="piMonthFilter" style="background:var(--bg-elev-2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 10px;font-family:var(--font-mono);font-size:12px;cursor:pointer;">
+          <option value="all">Tutti i mesi</option>
+        </select>
+      </div>
       <div class="panel-sub" id="piSub">Reach del post / reach mediana profilo</div>
       <div id="piList"></div>
     </div>
@@ -2739,11 +2746,31 @@ function renderKPI(id, value, valueCls, wk1, wk2) {
 function renderWeeks(period, posts) {
   const grid = document.getElementById('weeksGrid');
   grid.innerHTML = '';
+  // Raggruppo i giorni in settimane ISO (lunedì → domenica), non in blocchi da 7
+  // a partire dal primo giorno disponibile. Così ogni WK è una settimana di
+  // calendario reale e la "WK in corso" è quella che contiene oggi.
   const weeks = [];
-  for (let i = 0; i < period.length; i += 7) {
-    weeks.push(period.slice(i, i+7));
+  if (period.length) {
+    let cur = [];
+    period.forEach(d => {
+      const dow = (new Date(d.date + 'T00:00:00').getDay() + 6) % 7; // 0=Lun..6=Dom
+      if (dow === 0 && cur.length) { weeks.push(cur); cur = []; }
+      cur.push(d);
+    });
+    if (cur.length) weeks.push(cur);
   }
-  const isLastPartial = (weeks[weeks.length-1].length < 7);
+  // La settimana "in corso" è quella che contiene la data di oggi (o l'ultima se
+  // i dati finiscono prima di oggi ma la settimana non è ancora chiusa = < domenica).
+  const today = new Date(); today.setHours(0,0,0,0);
+  const lastWeek = weeks[weeks.length-1] || [];
+  const lastDayOfLastWeek = lastWeek.length ? new Date(lastWeek[lastWeek.length-1].date + 'T00:00:00') : null;
+  // Domenica della settimana dell'ultimo giorno
+  const isLastPartial = (() => {
+    if (!lastDayOfLastWeek) return false;
+    const dow = (lastDayOfLastWeek.getDay() + 6) % 7; // 0=Lun..6=Dom
+    // parziale se l'ultimo giorno NON è domenica (settimana non completata)
+    return dow < 6;
+  })();
   // Stats per ranking — interazioni E reach dei post calcolate dai post della settimana.
   // L'ER usa reach-dei-post (coerente: stesse fonti a num. e den.), non la reach
   // del profilo (che si spalma su più giorni e creava ER incoerenti).
@@ -2803,9 +2830,10 @@ function renderWeeks(period, posts) {
     const card = document.createElement('div');
     card.className = `week-card ${cls}`;
     const badge = (!isCurrent && s.reach === maxReach && weeks.length > 1) ? ' <span class="week-best-badge">★ TOP</span>' : '';
+    const label = isCurrent ? 'WK in corso' : `WK${idx+1}`;
     card.innerHTML = `
-      <div class="week-label">WK${idx+1}${badge}</div>
-      <div class="week-dates">${fmtDate(dStart)} – ${fmtDate(dEnd)}</div>
+      <div class="week-label">${label}${badge}</div>
+      <div class="week-dates">${fmtDate(dStart)} – ${fmtDate(dEnd)}${isCurrent ? ' · parziale' : ''}</div>
       <div class="week-metric"><span class="week-metric-label">Reach</span><span class="week-metric-val${s.reach===maxReach?' accent':''}">${numIt(s.reach)}</span></div>
       <div class="week-metric"><span class="week-metric-label">Interazioni</span><span class="week-metric-val">${numIt(s.ints)}</span></div>
       <div class="week-metric"><span class="week-metric-label">Follower</span><span class="week-metric-val">${s.foll>=0?'+':''}${s.foll}</span></div>
@@ -3106,22 +3134,85 @@ function renderSlots(posts) {
   grid.innerHTML = h;
 }
 
+// Stato del filtro mese del Performance Index ('all' o 'YYYY-MM')
+let PI_MONTH_FILTER = 'all';
+
+// Popola il <select> dei mesi una sola volta, in base ai post disponibili
+function piPopulateMonths(posts) {
+  const sel = document.getElementById('piMonthFilter');
+  if (!sel) return;
+  const MESI = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  // Raccolgo i mesi distinti (YYYY-MM) presenti nei post, ordinati dal più recente
+  const months = [...new Set(posts.map(p => {
+    const d = new Date(p.timestamp);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  }))].sort().reverse();
+  const prev = sel.value || 'all';
+  sel.innerHTML = '<option value="all">Tutti i mesi</option>' +
+    months.map(m => {
+      const [y, mo] = m.split('-');
+      return `<option value="${m}">${MESI[parseInt(mo)-1]} ${y}</option>`;
+    }).join('');
+  // Mantengo la selezione se ancora valida
+  sel.value = [...sel.options].some(o => o.value === prev) ? prev : 'all';
+  if (!sel.dataset.bound) {
+    sel.addEventListener('change', () => {
+      PI_MONTH_FILTER = sel.value;
+      renderPiList(CACHED && CACHED.posts ? piValidPosts(CACHED.posts) : []);
+    });
+    sel.dataset.bound = '1';
+  }
+}
+
+// Helper: stesso filtro "post validi" usato altrove
+function piValidPosts(posts) {
+  return posts.filter(p =>
+    (p.media_reach != null && p.media_reach > 0) ||
+    (p.media_engagement != null && p.media_engagement > 0) ||
+    (p.media_like_count != null && p.media_like_count > 0)
+  );
+}
+
 function renderPiList(posts) {
+  // La MEDIANA e le statistiche del Content Lab restano calcolate su TUTTI i post
+  // (storico completo), così il PI è confrontabile tra mesi diversi.
   const allReaches = posts.map(p => p.media_reach || 0);
   const median = computeMedian(allReaches);
   document.getElementById('labMedian').textContent = numIt(median);
-  const sorted = [...posts].sort((a,b) => (b.media_reach||0) - (a.media_reach||0));
-  const topReach = sorted[0]?.media_reach || 0;
+  const sortedAll = [...posts].sort((a,b) => (b.media_reach||0) - (a.media_reach||0));
+  const topReach = sortedAll[0]?.media_reach || 0;
   const topPi = median > 0 ? topReach/median : 0;
   document.getElementById('labTopPi').textContent = topPi.toFixed(2) + '×';
   document.getElementById('labTopPiSub').textContent = `Best ${numIt(topReach)} vs mediana ${numIt(median)}`;
-  document.getElementById('piSub').textContent = `Reach del post / reach mediana del profilo (${numIt(median)}). Sotto 1× = sotto media`;
+
+  // Popolo il filtro mesi (idempotente)
+  piPopulateMonths(posts);
+
+  // Applico il filtro mese SOLO alla lista visualizzata (la mediana resta globale)
+  let view = sortedAll;
+  let monthLabel = 'tutti i mesi';
+  if (PI_MONTH_FILTER !== 'all') {
+    view = sortedAll.filter(p => {
+      const d = new Date(p.timestamp);
+      const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      return key === PI_MONTH_FILTER;
+    });
+    const [y, mo] = PI_MONTH_FILTER.split('-');
+    const MESI = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+    monthLabel = `${MESI[parseInt(mo)-1]} ${y}`;
+  }
+
+  document.getElementById('piSub').textContent = `Reach del post / reach mediana del profilo (${numIt(median)}). Sotto 1× = sotto media · ${PI_MONTH_FILTER==='all'?'tutti i post':monthLabel+' ('+view.length+' post)'}`;
   document.getElementById('contentLabMeta').textContent = `Live · ${posts.length} post analizzati`;
+  // La barra è proporzionale al reach massimo dello storico (coerenza visiva tra mesi)
   const maxReach = topReach;
   const piList = document.getElementById('piList');
   piList.innerHTML = '';
+  if (view.length === 0) {
+    piList.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:18px 0;text-align:center;">Nessun post in questo mese</div>';
+  }
   const collabSet = getCollabSet();
-  sorted.forEach((p, idx) => {
+  view.forEach((p, idx) => {
     const d = new Date(p.timestamp);
     const t = normalizeType(p.media_type);
     const reach = p.media_reach || 0;
@@ -3144,7 +3235,7 @@ function renderPiList(posts) {
       <span class="post-metric-cell">${numIt(reach)}</span>`;
     piList.appendChild(row);
   });
-  // ER avg profilo
+  // ER avg profilo (sempre su tutti i post)
   const erVals = posts.map(p => { const r=p.media_reach||0; return r>0 ? (p.media_engagement||0)/r*100 : null; }).filter(v => v!==null);
   const er = erVals.length ? erVals.reduce((s,v)=>s+v,0)/erVals.length : 0;
   document.getElementById('labErAvg').textContent = pct1(er);
@@ -4021,8 +4112,8 @@ function renderOnlineFollowers(demo) {
 }
 
 function renderFollowerAnalysis(daily) {
-  // Prendo gli ultimi 14 giorni con dati validi
-  const valid = daily.filter(d => d.follower_count_1d != null || d.follows_and_unfollows != null).slice(-14);
+  // Prendo gli ultimi 30 giorni con dati validi
+  const valid = daily.filter(d => d.follower_count_1d != null || d.follows_and_unfollows != null).slice(-30);
   if (valid.length === 0) return;
   const newF = valid.reduce((s,d) => s + (d.follower_count_1d||0), 0);
   const netF = valid.reduce((s,d) => s + (d.follows_and_unfollows||0), 0);
@@ -4245,7 +4336,9 @@ async function gcalInit() {
     // Auto-restore se c'è un token valido
     const savedToken = localStorage.getItem('gcal_token');
     const expires = parseInt(localStorage.getItem('gcal_expires') || '0');
-    const stillValid = savedToken && (Date.now() < expires - 5*60*1000);
+    // Riuso il token salvato quasi fino alla scadenza reale (margine 2 min),
+    // così a ogni refresh NON ripropongo il login se il token è ancora buono.
+    const stillValid = savedToken && (Date.now() < expires - 2*60*1000);
 
     console.log('[gcalInit] token cached:', !!savedToken, 'valid:', stillValid, 'expires in (s):', Math.round((expires - Date.now())/1000));
 
@@ -4301,7 +4394,11 @@ function gcalScheduleSilentRefresh(expiresAt) {
 
 function gcalLogin() {
   if (!gcalTokenClient) { alert('Google non ancora pronto. Riprova tra qualche secondo.'); return; }
-  gcalTokenClient.requestAccessToken({ prompt: 'consent' });
+  // prompt:'' riusa il consenso già dato (niente schermata ripetuta se già autorizzato).
+  // Se non c'è ancora alcun consenso, Google mostra comunque il popup la prima volta.
+  // Il flag forza 'consent' solo se l'utente preme di nuovo dopo un fallimento.
+  const needConsent = (localStorage.getItem('gcal_was_signed_in') !== '1');
+  gcalTokenClient.requestAccessToken({ prompt: needConsent ? 'consent' : '' });
 }
 
 function gcalLogout() {
