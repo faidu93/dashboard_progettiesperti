@@ -1048,21 +1048,35 @@ body {
   }
   /* Post nel calendario */
   .cal-post {
-    font-size: 10px; padding: 3px 6px; border-radius: 4px;
+    display: flex; align-items: center; gap: 4px;
+    font-size: 10px; padding: 4px 6px; border-radius: 4px;
     font-weight: 600; line-height: 1.25;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     cursor: pointer; max-width: 100%;
   }
-  /* Pubblicati: colore pieno */
-  .cal-post.pub.IMAGE            { background: rgba(255,140,30,0.25); color: #ffb060; }
-  .cal-post.pub.CAROUSEL_ALBUM   { background: rgba(90,174,240,0.25); color: #7bc8f8; }
-  .cal-post.pub.REELS            { background: rgba(54,201,118,0.25); color: #5fe8a8; }
-  /* Pianificati: bordo tratteggiato, sfondo tenue */
-  .cal-post.plan                 { border: 1.5px dashed; background: transparent; }
-  .cal-post.plan.IMAGE           { border-color: #ff8c1e; color: #ff8c1e; }
-  .cal-post.plan.CAROUSEL_ALBUM  { border-color: #5aaef0; color: #5aaef0; }
-  .cal-post.plan.REELS           { border-color: #36c976; color: #36c976; }
-  .cal-post.plan.STORY           { border-color: #a05af0; color: #a05af0; }
+  .cal-post .cp-ico { font-size: 12px; flex-shrink: 0; font-style: normal; }
+  .cal-post .cp-lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+  /* ── Instagram ── */
+  /* Foto + Carosello: azzurro */
+  .cal-post.pub.IMAGE          { background: #0d2d4a; color: #7ec8f0; }
+  .cal-post.pub.CAROUSEL_ALBUM { background: #0d2d4a; color: #7ec8f0; }
+  /* Reel: verde */
+  .cal-post.pub.REELS          { background: #0d3020; color: #6ee0a0; }
+  /* ── YouTube ── */
+  /* Video + Short: rosso */
+  .cal-post.pub.VIDEO          { background: #3d1212; color: #f08080; }
+  .cal-post.pub.SHORT          { background: #3d1212; color: #f08080; }
+  /* Live YT: ambra */
+  .cal-post.pub.LIVE           { background: #3a2500; color: #ffc04d; }
+  /* ── Pianificati: stessa icona e colore, bordo tratteggiato, sfondo trasparente ── */
+  .cal-post.plan               { background: transparent !important; }
+  .cal-post.plan.IMAGE         { outline: 2px dashed #3a7aaa; color: #7ec8f0; }
+  .cal-post.plan.CAROUSEL_ALBUM{ outline: 2px dashed #3a7aaa; color: #7ec8f0; }
+  .cal-post.plan.REELS         { outline: 2px dashed #2d7a52; color: #6ee0a0; }
+  .cal-post.plan.VIDEO         { outline: 2px dashed #8b3232; color: #f08080; }
+  .cal-post.plan.SHORT         { outline: 2px dashed #8b3232; color: #f08080; }
+  .cal-post.plan.LIVE          { outline: 2px dashed #8b5500; color: #ffc04d; }
+  .cal-post.plan.STORY         { outline: 2px dashed #6a3aaa; color: #b39ddb; }
   /* + aggiungi (appare al hover) */
   .cal-plus {
     font-size: 18px; color: var(--ink-mute); text-align: center;
@@ -1072,16 +1086,17 @@ body {
   .cal-day:hover .cal-plus { opacity: 0.6; }
   /* Legenda */
   .cal-legend {
-    display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px;
-    font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft);
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: 12px; margin-top: 16px; padding-top: 14px;
+    border-top: 1px solid var(--line);
+    font-family: var(--font-mono); font-size: 11px;
   }
-  .cal-legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .cal-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-  .cli { background: rgba(255,140,30,0.5); }
-  .clc { background: rgba(90,174,240,0.5); }
-  .clr { background: rgba(54,201,118,0.5); }
-  .cls { background: rgba(160,90,240,0.5); }
-  .clp { border: 1.5px dashed var(--ink-mute); background: transparent; border-radius: 2px; }
+  .cal-legend-section { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .cal-legend-head { font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--ink-mute); margin-right: 2px; }
+  .cal-legend-item { display: flex; align-items: center; }
+  .cal-leg-chip { font-size: 10px !important; padding: 3px 6px !important; cursor: default !important; }
+  .cal-legend-sep { width: 1px; height: 24px; background: var(--line); flex-shrink: 0; }
   /* Modal pianifica */
   .cal-modal-bg {
     position: fixed; inset: 0; background: rgba(0,0,0,0.72);
@@ -2213,9 +2228,9 @@ body {
       <div class="cal-field">
         <label>Formato</label>
         <select id="calType">
-          <option value="IMAGE">📊 IMAGE — post statico</option>
-          <option value="CAROUSEL_ALBUM">🎠 CAROSELLO</option>
-          <option value="REELS">🎬 REEL</option>
+          <option value="IMAGE">📷 Foto</option>
+          <option value="CAROUSEL_ALBUM">⊞ Carosello</option>
+          <option value="REELS">▶ Reel</option>
           <option value="STORY">📱 STORY</option>
         </select>
       </div>
@@ -2308,14 +2323,41 @@ body {
       </div>
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-legend">
-        <span style="font-weight:700;color:var(--ink);">Pubblicati:</span>
-        <span><i class="cl-img"></i>IG IMAGE</span>
-        <span><i class="cl-car"></i>IG CAROSELLO</span>
-        <span><i class="cl-reel"></i>IG REEL</span>
-        <span><i style="background:rgba(255,0,0,0.45);width:10px;height:10px;border-radius:2px;display:inline-block;"></i>YT VIDEO</span>
-        <br>
-        <span style="font-weight:700;color:var(--ink);">Pianificati (Google Calendar):</span>
-        <span><i class="cl-plan"></i>bordo tratteggiato</span>
+        <div class="cal-legend-section">
+          <span class="cal-legend-head">Instagram</span>
+          <span class="cal-legend-item">
+            <span class="cal-post pub IMAGE cal-leg-chip"><span class="cp-ico material-symbols-rounded">photo_camera</span><span class="cp-lbl">Foto</span></span>
+          </span>
+          <span class="cal-legend-item">
+            <span class="cal-post pub CAROUSEL_ALBUM cal-leg-chip"><span class="cp-ico material-symbols-rounded">grid_view</span><span class="cp-lbl">Carosello</span></span>
+          </span>
+          <span class="cal-legend-item">
+            <span class="cal-post pub REELS cal-leg-chip"><span class="cp-ico material-symbols-rounded">play_circle</span><span class="cp-lbl">Reel</span></span>
+          </span>
+        </div>
+        <div class="cal-legend-sep"></div>
+        <div class="cal-legend-section">
+          <span class="cal-legend-head">YouTube</span>
+          <span class="cal-legend-item">
+            <span class="cal-post pub VIDEO cal-leg-chip"><span class="cp-ico material-symbols-rounded">smart_display</span><span class="cp-lbl">Video</span></span>
+          </span>
+          <span class="cal-legend-item">
+            <span class="cal-post pub SHORT cal-leg-chip"><span class="cp-ico material-symbols-rounded">smartphone</span><span class="cp-lbl">Short</span></span>
+          </span>
+          <span class="cal-legend-item">
+            <span class="cal-post pub LIVE cal-leg-chip"><span class="cp-ico material-symbols-rounded">sensors</span><span class="cp-lbl">Live</span></span>
+          </span>
+        </div>
+        <div class="cal-legend-sep"></div>
+        <div class="cal-legend-section">
+          <span class="cal-legend-head">Stato</span>
+          <span class="cal-legend-item">
+            <span class="cal-post pub IMAGE cal-leg-chip"><span class="cp-ico material-symbols-rounded">photo_camera</span><span class="cp-lbl">Pubblicato</span></span>
+          </span>
+          <span class="cal-legend-item">
+            <span class="cal-post plan IMAGE cal-leg-chip"><span class="cp-ico material-symbols-rounded">photo_camera</span><span class="cp-lbl">Pianificato</span></span>
+          </span>
+        </div>
       </div>
     </div>
 
@@ -3032,7 +3074,7 @@ function renderWeeks(period, posts) {
       <div class="week-metric"><span class="week-metric-label">Interazioni</span><span class="week-metric-val">${numIt(s.ints)}</span></div>
       <div class="week-metric"><span class="week-metric-label">Follower</span><span class="week-metric-val">${s.foll>=0?'+':''}${s.foll}</span></div>
       <div class="week-metric"><span class="week-metric-label">ER</span><span class="week-metric-val">${pct1(er)}</span></div>
-      <div class="week-metric week-posts"><span class="week-metric-label">Contenuti</span><span class="week-metric-val">${pCount.total}${pCount.total > 0 ? ' <span class="week-types">'+(pCount.IMAGE?'<span class="wt wt-img" title="IMAGE">📊'+pCount.IMAGE+'</span>':'')+(pCount.CAROUSEL_ALBUM?'<span class="wt wt-car" title="CAROSELLO">🎠'+pCount.CAROUSEL_ALBUM+'</span>':'')+(pCount.REELS?'<span class="wt wt-reel" title="REEL">🎬'+pCount.REELS+'</span>':'')+'</span>' : ''}</span></div>`;
+      <div class="week-metric week-posts"><span class="week-metric-label">Contenuti</span><span class="week-metric-val">${pCount.total}${pCount.total > 0 ? ' <span class="week-types">'+(pCount.IMAGE?'<span class="wt wt-img" title="Foto" style="color:#7ec8f0"><span class="material-symbols-rounded" style="font-size:12px;vertical-align:middle;">photo_camera</span>'+pCount.IMAGE+'</span>':'')+(pCount.CAROUSEL_ALBUM?'<span class="wt wt-car" title="Carosello" style="color:#7ec8f0"><span class="material-symbols-rounded" style="font-size:12px;vertical-align:middle;">grid_view</span>'+pCount.CAROUSEL_ALBUM+'</span>':'')+(pCount.REELS?'<span class="wt wt-reel" title="Reel" style="color:#6ee0a0"><span class="material-symbols-rounded" style="font-size:12px;vertical-align:middle;">play_circle</span>'+pCount.REELS+'</span>':'')+'</span>' : ''}</span></div>`;
     grid.appendChild(card);
   });
 }
@@ -3897,9 +3939,9 @@ function calOnPlatformChange() {
   const platform = document.getElementById('calPlatform').value;
   const typeSelect = document.getElementById('calType');
   if (platform === 'yt') {
-    typeSelect.innerHTML = '<option value="VIDEO">🎬 VIDEO</option><option value="SHORT">📱 SHORT</option><option value="LIVE">🔴 LIVE</option>';
+    typeSelect.innerHTML = '<option value="VIDEO">▶ Video</option><option value="SHORT">⬜ Short</option><option value="LIVE">◉ Live</option>';
   } else {
-    typeSelect.innerHTML = '<option value="IMAGE">📊 IMAGE</option><option value="CAROUSEL_ALBUM">🎠 CAROSELLO</option><option value="REELS">🎬 REEL</option><option value="STORY">📱 STORY</option>';
+    typeSelect.innerHTML = '<option value="IMAGE">📷 Foto</option><option value="CAROUSEL_ALBUM">⊞ Carosello</option><option value="REELS">▶ Reel</option><option value="STORY">◈ Story</option>';
   }
   calToggleMediaField();
   calUpdateSlotHint();
@@ -3966,6 +4008,24 @@ function calUpdateSlotHint() {
 
 // ytRender è alias di calRender (rendering unificato)
 function ytRender() { calRender(); }
+
+// Ritorna icona Material Symbols + label per un cal-post in base a piattaforma e tipo
+function calPostChip(platform, type, label) {
+  const icons = {
+    // Instagram
+    'ig:IMAGE':          'photo_camera',
+    'ig:CAROUSEL_ALBUM': 'grid_view',
+    'ig:REELS':          'play_circle',
+    'ig:STORY':          'history',
+    // YouTube
+    'yt:VIDEO':          'smart_display',
+    'yt:SHORT':          'smartphone',
+    'yt:LIVE':           'sensors',
+  };
+  const key = platform + ':' + (type || '').toUpperCase();
+  const icon = icons[key] || (platform === 'yt' ? 'smart_display' : 'photo_camera');
+  return `<span class="cp-ico material-symbols-rounded" aria-hidden="true">${icon}</span><span class="cp-lbl">${label}</span>`;
+}
 
 function calRender() {
   const grid = document.getElementById('calGrid');
@@ -4034,7 +4094,7 @@ function calRender() {
       }));
       posts += `<div class="cal-post pub ${p.media_type}"
         onclick="calShowDetail(event,'${encoded}')"
-        title="IG · ${t}${reach}">📸 ${t}</div>`;
+        title="IG · ${t}${reach}">${calPostChip('ig', p.media_type, (p.time?p.time.slice(0,5)+' ':'')+t)}</div>`;
     });
     ytPub.forEach(v => {
       const shortT = v.title.length > 25 ? v.title.slice(0,25)+'…' : v.title;
@@ -4047,9 +4107,11 @@ function calRender() {
         date: v.date,
         url: ytUrl
       }));
-      posts += `<div class="cal-post pub" style="background:rgba(255,0,0,0.2);color:#ff6666;cursor:pointer;"
+      // Determino il tipo YT: la dashboard salva 'VIDEO','SHORT','LIVE' — uso VIDEO come default
+      const ytType = v.ytType || 'VIDEO';
+      posts += `<div class="cal-post pub ${ytType}"
         onclick="calShowYtDetail(event,'${encoded}')"
-        title="YT · ${v.title} · ${v.views} views">🎬 ${shortT}</div>`;
+        title="YT · ${v.title} · ${v.views} views">${calPostChip('yt', ytType, shortT)}</div>`;
     });
     igPlanned.forEach(p => {
       // Un post si auto-pubblica se è stato salvato con media caricato:
@@ -4059,14 +4121,14 @@ function calRender() {
         draggable="true"
         data-evid="${p.id}" data-platform="ig" data-evtype="${p.type}" data-evtitle="${p.title.replace(/"/g,'&quot;')}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}"
         onclick="calEditPlanned(event,'${p.id}','ig')"
-        title="${isAutoPub ? '✅ Pubblicazione automatica · ' : ''}IG · ${p.time||''} ${p.title} (trascina per spostare)">📸 ${p.time?p.time.slice(0,5)+' ':''}${p.title}</div>`;
+        title="${isAutoPub ? '✅ Pubblicazione automatica · ' : ''}IG · ${p.time||''} ${p.title} (trascina per spostare)">${calPostChip('ig', p.type, (p.time?p.time.slice(0,5)+' ':'')+p.title)}</div>`;
     });
     ytPlanned.forEach(p => {
-      posts += `<div class="cal-post plan" style="border:1.5px dashed #ff4444;color:#ff4444;background:transparent;"
+      posts += `<div class="cal-post plan ${p.type||'VIDEO'}"
         draggable="true"
         data-evid="${p.id}" data-platform="yt" data-evtype="${p.type}" data-evtitle="${p.title.replace(/"/g,'&quot;')}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}"
         onclick="calEditPlanned(event,'${p.id}','yt')"
-        title="YT · ${p.time||''} ${p.title} (trascina per spostare)">🎬 ${p.time?p.time.slice(0,5)+' ':''}${p.title}</div>`;
+        title="YT · ${p.time||''} ${p.title} (trascina per spostare)">${calPostChip('yt', p.type||'VIDEO', (p.time?p.time.slice(0,5)+' ':'')+p.title)}</div>`;
     });
 
     h += `<div class="cal-day${cls}" data-date="${ds}"
@@ -4122,7 +4184,7 @@ function calShowYtDetail(e, encoded) {
 function calShowDetail(e, encoded) {
   e.stopPropagation();
   const d = JSON.parse(decodeURIComponent(encoded));
-  const TYPE = { IMAGE:'📊 IMAGE', CAROUSEL_ALBUM:'🎠 CAROSELLO', REELS:'🎬 REEL' };
+  const TYPE = { IMAGE:'Foto', CAROUSEL_ALBUM:'Carosello', REELS:'Reel', VIDEO:'Video', SHORT:'Short', LIVE:'Live' };
   const dt = new Date(d.ts);
   const dateLabel = dt.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
   const timeLabel = dt.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Rome'});
@@ -4176,7 +4238,7 @@ function calOpenModal(ds, id) {
   document.getElementById('calEditId').value = id || '';
   document.getElementById('calDate').value = ds || calDateStr(new Date());
   document.getElementById('calTime').value = '10:00';
-  document.getElementById('calType').innerHTML = '<option value="IMAGE">📊 IMAGE</option><option value="CAROUSEL_ALBUM">🎠 CAROSELLO</option><option value="REELS">🎬 REEL</option><option value="STORY">📱 STORY</option>';
+  document.getElementById('calType').innerHTML = '<option value="IMAGE">📷 Foto</option><option value="CAROUSEL_ALBUM">⊞ Carosello</option><option value="REELS">▶ Reel</option><option value="STORY">◈ Story</option>';
   document.getElementById('calType').value = 'IMAGE';
   document.getElementById('calModal').dataset.platform = 'ig';
   document.getElementById('calTitle').value = '';
