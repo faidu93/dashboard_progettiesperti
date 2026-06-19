@@ -1523,6 +1523,32 @@ body {
     border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer; margin-top: 8px;
   }
   .cal-post.autopub { box-shadow: inset 0 0 0 1.5px var(--pos); }
+.queue-row { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; background: var(--bg-elev-2); }
+.queue-main { flex: 1; min-width: 0; }
+.queue-cap { font-size: 13px; color: var(--ink); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.queue-meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-mute); margin-top: 3px; }
+.queue-del { background: transparent; border: 1px solid var(--line); color: var(--ink-mute); border-radius: 6px; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+.queue-del:hover { border-color: var(--neg); color: var(--neg); }
+.queue-del .material-symbols-rounded { font-size: 17px; }
+.conv-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+.conv-kpi { background: var(--bg-elev-2); border: 1px solid var(--line); border-radius: 9px; padding: 13px 14px; }
+.conv-kpi-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute); }
+.conv-kpi-val { font-size: 26px; font-weight: 700; color: var(--ink); margin: 4px 0 2px; }
+.conv-kpi-val.accent { color: var(--accent); }
+.conv-kpi-val.pos { color: var(--pos); }
+.conv-kpi-sub { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute); }
+.conv-row { display: grid; grid-template-columns: 52px 56px 1fr 48px auto; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.conv-date { font-family: var(--font-mono); font-size: 11px; color: var(--ink-mid); }
+.conv-npost { font-family: var(--font-mono); font-size: 9.5px; color: var(--ink-mute); background: var(--bg-elev-2); border-radius: 4px; padding: 2px 5px; text-align: center; }
+.conv-bar-wrap { height: 7px; background: var(--bg-elev-2); border-radius: 4px; overflow: hidden; }
+.conv-bar { height: 100%; border-radius: 4px; transition: width 0.4s; }
+.conv-eff { font-family: var(--font-mono); font-size: 13px; font-weight: 700; text-align: right; }
+.conv-detail { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute); white-space: nowrap; }
+@media (max-width: 640px) {
+  .conv-kpis { grid-template-columns: 1fr; }
+  .conv-row { grid-template-columns: 48px 1fr 44px; }
+  .conv-npost, .conv-detail { display: none; }
+}
 
 </style>
 </head>
@@ -1800,46 +1826,6 @@ body {
   <!-- FOLLOWER ANALYSIS -->
   <section class="section" data-tab="performance">
     <div class="section-head">
-      <div><div class="section-eyebrow">👥 Crescita</div><div class="section-title">Analisi follower</div></div>
-      <div class="section-meta live">Live · dati giornalieri</div>
-    </div>
-    <div class="panel">
-      <div class="panel-title"><span class="material-symbols-rounded">group_add</span>Follower: entrati vs usciti</div>
-      <div class="panel-sub">Nuovi follower al giorno e saldo netto · ultimi 30 giorni</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0;">
-        <div style="background:var(--bg-elev-2);padding:14px;border-radius:8px;text-align:center;">
-          <div style="font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">Nuovi follow</div>
-          <div style="font-size:26px;font-weight:700;color:var(--pos);font-variant-numeric:tabular-nums;" id="follNew">—</div>
-          <div style="font-size:10px;color:var(--ink-mute);margin-top:4px;">ultimi 30gg</div>
-        </div>
-        <div style="background:var(--bg-elev-2);padding:14px;border-radius:8px;text-align:center;">
-          <div style="font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">Unfollow stimati</div>
-          <div style="font-size:26px;font-weight:700;color:var(--neg);font-variant-numeric:tabular-nums;" id="follLost">—</div>
-          <div style="font-size:10px;color:var(--ink-mute);margin-top:4px;">ultimi 30gg</div>
-        </div>
-        <div style="background:var(--bg-elev-2);padding:14px;border-radius:8px;text-align:center;">
-          <div style="font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">Retention</div>
-          <div style="font-size:26px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;" id="follRetention">—</div>
-          <div style="font-size:10px;color:var(--ink-mute);margin-top:4px;">netti / nuovi</div>
-        </div>
-      </div>
-      <div style="height:180px;position:relative;margin-top:12px;">
-        <canvas id="chartFollowers"></canvas>
-      </div>
-      <div class="glossary" style="margin-top:14px;">
-        <div class="glossary-title"><span class="material-symbols-rounded">help</span>Come leggere</div>
-        <dl>
-          <dt>Nuovi follow</dt><dd> = follower acquisiti (follower_count_1d di Instagram). Solo ingressi, non include le uscite.</dd>
-          <dt>Unfollow stimati</dt><dd> = differenza tra nuovi follow e saldo netto. Es: 20 nuovi - 12 netti = ~8 unfollow.</dd>
-          <dt>Retention</dt><dd> = saldo netto / nuovi follow × 100. Sopra il 70% = ottimo. Sotto il 50% = troppi ti abbandonano.</dd>
-        </dl>
-      </div>
-    </div>
-  </section>
-
-  <!-- WEEKS (Modifica #2: settimane con date GG/MM) -->
-  <section class="section" data-tab="performance">
-    <div class="section-head">
       <div><div class="section-eyebrow">📅 Evoluzione</div><div class="section-title">Settimana per settimana</div></div>
       <div class="section-meta live">Live · trend reale</div>
     </div>
@@ -1852,6 +1838,37 @@ body {
       </dl>
     </div>
   </section>
+
+  <section class="section" data-tab="performance">
+    <div class="section-head">
+      <div><div class="section-eyebrow">👥 Crescita</div><div class="section-title">Analisi follower</div></div>
+      <div class="section-meta live">Live · dati giornalieri</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><span class="material-symbols-rounded">group_add</span>Crescita follower</div>
+      <div class="panel-sub">Saldo netto follower al giorno · ultimi 30 giorni</div>
+      <div style="display:grid;grid-template-columns:1fr;gap:14px;margin:16px 0;">
+        <div style="background:var(--bg-elev-2);padding:18px;border-radius:8px;text-align:center;">
+          <div style="font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">Nuovi follower netti</div>
+          <div style="font-size:34px;font-weight:700;color:var(--pos);font-variant-numeric:tabular-nums;" id="follNew">—</div>
+          <div style="font-size:10px;color:var(--ink-mute);margin-top:4px;">somma del saldo giornaliero · ultimi 30gg</div>
+        </div>
+      </div>
+      <div style="height:180px;position:relative;margin-top:12px;">
+        <canvas id="chartFollowers"></canvas>
+      </div>
+      <div class="glossary" style="margin-top:14px;">
+        <div class="glossary-title"><span class="material-symbols-rounded">help</span>Come leggere</div>
+        <dl>
+          <dt>Nuovi follower netti</dt><dd> = saldo netto giornaliero dei follower (follows_and_unfollows di Instagram), sommato sui 30 giorni. È la crescita reale del profilo.</dd>
+          <dt>Perché non mostriamo gli unfollow?</dt><dd> = l'API di Instagram non fornisce gli unfollow come dato separato: restituisce solo il saldo netto (entrati meno usciti) di ogni giorno. Stimare le uscite per sottrazione darebbe sempre ~0, quindi mostriamo solo il dato reale.</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- WEEKS (Modifica #2: settimane con date GG/MM) -->
+
 
   <!-- REACH CURVE + PUBBLICO -->
   <section class="section" data-tab="performance">
@@ -1999,6 +2016,17 @@ body {
       </div>
       <div class="panel-sub" id="piSub">Reach del post / reach mediana profilo</div>
       <div id="piList"></div>
+    </div>
+
+    <!-- CONVERSIONE REACH → FOLLOWER (#3) -->
+    <div class="panel" style="margin-top:20px;">
+      <div class="panel-title"><span class="material-symbols-rounded">trending_up</span>Reach → Follower · la reach diventa crescita?</div>
+      <div class="panel-sub">Correlazione per giornata fra reach totale e follower netti guadagnati. Instagram non attribuisce i follower al singolo post, quindi il confronto è a livello di giorno.</div>
+      <div class="conv-kpis" id="convKpis"></div>
+      <div id="convList" style="margin-top:6px;"></div>
+      <div class="section-note" style="margin-top:14px;">
+        ℹ️ <strong>Come leggere</strong> — L'efficienza è <strong>follower netti ogni 1.000 di reach</strong>, calcolata sui giorni in cui hai pubblicato. Confrontala nel tempo: se sale, i tuoi contenuti convertono meglio. Nei giorni con un solo post il dato è attribuibile a quel contenuto; con più post resta una correlazione di giornata, non una certezza per singolo post.
+      </div>
     </div>
     <div class="glossary">
       <div class="glossary-title"><span class="material-symbols-rounded">help</span>Cosa significano i termini del Content Lab</div>
@@ -2174,13 +2202,14 @@ body {
       <div class="cal-modal-row">
         <div class="cal-field">
           <label>Data</label>
-          <input type="date" id="calDate">
+          <input type="date" id="calDate" oninput="calUpdateSlotHint()">
         </div>
         <div class="cal-field">
           <label>Ora</label>
-          <input type="time" id="calTime" value="10:00">
+          <input type="time" id="calTime" value="10:00" oninput="calUpdateSlotHint()">
         </div>
       </div>
+      <div id="calSlotHint" style="display:none;font-family:var(--font-mono);font-size:11px;padding:8px 11px;border-radius:7px;margin-bottom:4px;"></div>
       <div class="cal-field">
         <label>Formato</label>
         <select id="calType">
@@ -2287,6 +2316,20 @@ body {
         <br>
         <span style="font-weight:700;color:var(--ink);">Pianificati (Google Calendar):</span>
         <span><i class="cl-plan"></i>bordo tratteggiato</span>
+      </div>
+    </div>
+
+    <!-- CODA DI PUBBLICAZIONE (#1) -->
+    <div class="panel" style="margin-top:18px;">
+      <div class="panel-title" style="justify-content:space-between;align-items:center;">
+        <span style="display:flex;align-items:center;gap:8px;">
+          <span class="material-symbols-rounded">schedule_send</span>Coda di pubblicazione automatica
+        </span>
+        <button class="cal-btn" id="queueRefreshBtn" title="Aggiorna la coda"><span class="material-symbols-rounded">refresh</span></button>
+      </div>
+      <div class="panel-sub">Post Instagram in attesa di pubblicazione dal backend · si aggiorna dalla coda reale</div>
+      <div id="queueList" style="margin-top:14px;">
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:16px 0;text-align:center;">Premi aggiorna per caricare la coda.</div>
       </div>
     </div>
   </section>
@@ -2434,6 +2477,95 @@ async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso })
     throw new Error(j.error || `Coda fallita (HTTP ${res.status})`);
   }
   return j.post;
+}
+
+// ===== CODA DI PUBBLICAZIONE (#1) =====
+// Carica la coda reale dal backend (?action=list) e la mostra. Gestisce con
+// grazia il caso in cui il Blob sia limitato/non disponibile (es. fino al reset
+// del piano Hobby): mostra un messaggio invece di rompersi.
+async function loadPublishQueue() {
+  const box = document.getElementById('queueList');
+  if (!box) return;
+  box.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:16px 0;text-align:center;">Carico la coda…</div>';
+  const secret = getPublishSecret();
+  if (!secret) {
+    box.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:16px 0;text-align:center;">Inserisci la password di pubblicazione (programma un post) per vedere la coda.</div>';
+    return;
+  }
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/schedule?action=list`, {
+      headers: { 'X-Publish-Secret': secret }
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || j.error) {
+      if (res.status === 401) clearPublishSecret();
+      throw new Error(j.error || `HTTP ${res.status}`);
+    }
+    // Il backend schedule.js risponde { success, posts: [...] }
+    const queue = Array.isArray(j.posts) ? j.posts : (Array.isArray(j.queue) ? j.queue : (Array.isArray(j) ? j : []));
+    renderPublishQueue(queue);
+  } catch (e) {
+    box.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--warn);padding:16px 0;text-align:center;">Coda non disponibile al momento (${e.message}).<br><span style="color:var(--ink-mute);">Se il backend Blob è limitato, tornerà visibile al ripristino.</span></div>`;
+  }
+}
+
+function renderPublishQueue(queue) {
+  const box = document.getElementById('queueList');
+  if (!box) return;
+  if (!queue.length) {
+    box.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:16px 0;text-align:center;">Nessun post in coda.</div>';
+    return;
+  }
+  // Ordino: prima i pending per orario, poi published/error
+  const order = { pending: 0, error: 1, published: 2 };
+  const sorted = [...queue].sort((a, b) => {
+    const oa = order[a.status] ?? 3, ob = order[b.status] ?? 3;
+    if (oa !== ob) return oa - ob;
+    return new Date(a.scheduledAt) - new Date(b.scheduledAt);
+  });
+  const statusMeta = {
+    pending:   { label: 'in attesa', color: 'var(--accent)', icon: 'schedule' },
+    published: { label: 'pubblicato', color: 'var(--pos)', icon: 'check_circle' },
+    error:     { label: 'errore', color: 'var(--neg)', icon: 'error' }
+  };
+  let h = '';
+  sorted.forEach(p => {
+    const m = statusMeta[p.status] || { label: p.status || '—', color: 'var(--ink-mute)', icon: 'help' };
+    const dt = p.scheduledAt ? new Date(p.scheduledAt) : null;
+    const when = dt ? `${fmtDate(dt)} · ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}` : '—';
+    const cap = (p.caption || '').replace(/</g,'&lt;').slice(0, 70) || '(senza caption)';
+    const kind = p.mediaType === 'REELS' ? '🎬 Reel' : '📸 Immagine';
+    const canDelete = p.status === 'pending' || p.status === 'error';
+    h += `<div class="queue-row">
+      <span class="material-symbols-rounded" style="color:${m.color};font-size:20px;">${m.icon}</span>
+      <div class="queue-main">
+        <div class="queue-cap">${cap}${cap.length >= 70 ? '…' : ''}</div>
+        <div class="queue-meta">${kind} · ${when} · <span style="color:${m.color};">${m.label}</span>${p.status==='error' && p.error ? ' · <span style="color:var(--neg);">'+p.error.slice(0,40)+'</span>' : ''}</div>
+      </div>
+      ${canDelete ? `<button class="queue-del" title="Rimuovi dalla coda" onclick="deleteFromQueue('${p.id}')"><span class="material-symbols-rounded">delete</span></button>` : ''}
+    </div>`;
+  });
+  box.innerHTML = h;
+}
+
+async function deleteFromQueue(id) {
+  if (!confirm('Rimuovere questo post dalla coda di pubblicazione?')) return;
+  const secret = getPublishSecret();
+  if (!secret) { alert('Password di pubblicazione mancante.'); return; }
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/schedule?action=delete&id=${encodeURIComponent(id)}`, {
+      method: 'POST',
+      headers: { 'X-Publish-Secret': secret }
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || j.error) {
+      if (res.status === 401) clearPublishSecret();
+      throw new Error(j.error || `HTTP ${res.status}`);
+    }
+    loadPublishQueue(); // ricarico
+  } catch (e) {
+    alert('Eliminazione fallita: ' + e.message);
+  }
 }
 
 // Gestione UI dell'area upload nel modal
@@ -3306,7 +3438,68 @@ function renderPiList(posts) {
   document.getElementById('labErAvg').textContent = pct1(er);
 }
 
-// ============================================================================
+// ===== CONVERSIONE REACH → FOLLOWER (#3) =====
+// Correlazione onesta a livello di giornata: per ogni giorno con pubblicazioni,
+// confronto la reach totale e i follower netti guadagnati. Non attribuisco
+// follower al singolo post (Instagram non fornisce quel dato).
+function renderConversion(daily, posts) {
+  const kpiBox = document.getElementById('convKpis');
+  const listBox = document.getElementById('convList');
+  if (!kpiBox || !listBox) return;
+
+  // Conto i post pubblicati per data (YYYY-MM-DD)
+  const postsByDay = {};
+  (posts || []).forEach(p => {
+    const key = new Date(p.timestamp).toISOString().slice(0,10);
+    postsByDay[key] = (postsByDay[key] || 0) + 1;
+  });
+
+  // Giorni con almeno un post pubblicato e dati reach/follower disponibili
+  const rows = (daily || [])
+    .filter(d => postsByDay[d.date] && d.reach != null)
+    .map(d => {
+      const foll = d.follows_and_unfollows != null ? d.follows_and_unfollows : 0;
+      const reach = d.reach || 0;
+      const eff = reach > 0 ? (foll / reach) * 1000 : 0; // follower netti per 1000 reach
+      return { date: d.date, reach, foll, nPosts: postsByDay[d.date], eff };
+    })
+    .sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  if (!rows.length) {
+    kpiBox.innerHTML = '';
+    listBox.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:16px 0;text-align:center;">Dati insufficienti per la conversione.</div>';
+    return;
+  }
+
+  // KPI aggregati sul periodo
+  const totReach = rows.reduce((s,r) => s + r.reach, 0);
+  const totFoll = rows.reduce((s,r) => s + r.foll, 0);
+  const avgEff = totReach > 0 ? (totFoll / totReach) * 1000 : 0;
+  const bestDay = [...rows].sort((a,b) => b.eff - a.eff)[0];
+
+  kpiBox.innerHTML = `
+    <div class="conv-kpi"><div class="conv-kpi-label">Efficienza media</div><div class="conv-kpi-val accent">${avgEff.toFixed(2)}</div><div class="conv-kpi-sub">follower / 1.000 reach</div></div>
+    <div class="conv-kpi"><div class="conv-kpi-label">Follower netti (giorni con post)</div><div class="conv-kpi-val">${totFoll >= 0 ? '+' : ''}${numIt(totFoll)}</div><div class="conv-kpi-sub">su ${numIt(totReach)} reach</div></div>
+    <div class="conv-kpi"><div class="conv-kpi-label">Giorno più efficiente</div><div class="conv-kpi-val pos">${bestDay.eff.toFixed(2)}</div><div class="conv-kpi-sub">${fmtDate(new Date(bestDay.date))}</div></div>`;
+
+  // Lista giorni: barra proporzionale all'efficienza
+  const maxEff = Math.max(...rows.map(r => Math.abs(r.eff)), 0.01);
+  let h = '';
+  rows.slice(0, 20).forEach(r => {
+    const pct = Math.min(100, (Math.abs(r.eff) / maxEff) * 100);
+    const neg = r.foll < 0;
+    const barColor = neg ? 'var(--neg)' : (r.eff >= avgEff ? 'var(--pos)' : 'var(--accent)');
+    const single = r.nPosts === 1;
+    h += `<div class="conv-row">
+      <span class="conv-date">${fmtDate(new Date(r.date))}</span>
+      <span class="conv-npost" title="${r.nPosts} post pubblicati">${single ? '1 post' : r.nPosts + ' post'}</span>
+      <div class="conv-bar-wrap"><div class="conv-bar" style="width:${pct}%;background:${barColor};"></div></div>
+      <span class="conv-eff" style="color:${barColor};">${r.eff.toFixed(2)}</span>
+      <span class="conv-detail">${numIt(r.reach)} reach · ${r.foll >= 0 ? '+' : ''}${r.foll} follower</span>
+    </div>`;
+  });
+  listBox.innerHTML = h;
+}
 // CACHE DATI: salvo i dati ricevuti per refresh locale senza richiesta API
 // ============================================================================
 let CACHED = { daily: null, posts: null, profile: null };
@@ -3330,6 +3523,7 @@ function refreshDataDisplay() {
   renderFormatTable(validPosts);
   renderEngagementMix(validPosts);
   renderPiList(validPosts);
+  renderConversion(CACHED.daily, validPosts);
   renderSlots(validPosts);
   renderDailyActions(CACHED.daily, validPosts, CACHED.profile);
   calPublishedPosts = validPosts;
@@ -3708,6 +3902,66 @@ function calOnPlatformChange() {
     typeSelect.innerHTML = '<option value="IMAGE">📊 IMAGE</option><option value="CAROUSEL_ALBUM">🎠 CAROSELLO</option><option value="REELS">🎬 REEL</option><option value="STORY">📱 STORY</option>';
   }
   calToggleMediaField();
+  calUpdateSlotHint();
+}
+
+// ===== SUGGERITORE DI SLOT ORARIO (#2) =====
+// Valuta data+ora scelte nel modal contro le fasce prime-time validate dal
+// benchmark di settore (mar/gio 10-13 e 15-18 i picchi; mer mattina buono;
+// domenica e tarda sera deboli). Mostra un hint colorato, non blocca nulla.
+function calUpdateSlotHint() {
+  const hint = document.getElementById('calSlotHint');
+  if (!hint) return;
+  const platform = document.getElementById('calPlatform');
+  // Lo slot ha senso soprattutto per Instagram; per YT lo nascondo.
+  if (platform && platform.value === 'yt') { hint.style.display = 'none'; return; }
+  const dateV = document.getElementById('calDate').value;
+  const timeV = document.getElementById('calTime').value;
+  if (!dateV || !timeV) { hint.style.display = 'none'; return; }
+  const d = new Date(dateV + 'T' + timeV);
+  if (isNaN(d)) { hint.style.display = 'none'; return; }
+  const dow = d.getDay(); // 0=Dom..6=Sab
+  const h = d.getHours();
+  const DOW = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+
+  // Punteggio fascia: 'best' | 'good' | 'weak'
+  let level = 'good', msg = '';
+  const inMorning = h >= 10 && h < 13;     // 10-13
+  const inAfternoon = h >= 15 && h < 18;   // 15-18
+  const inLunch = h >= 12 && h < 14;       // pausa pranzo
+  const inEvening = h >= 18 && h < 20;     // dopo-lavoro
+
+  if ((dow === 2 || dow === 4) && (inMorning || inAfternoon)) {
+    level = 'best';
+    msg = `${DOW[dow]} ${String(h).padStart(2,'0')}:00 · slot prime-time (picco +16% engagement)`;
+  } else if (dow === 3 && inMorning) {
+    level = 'best';
+    msg = `Mercoledì mattina · fascia forte per la tua audience`;
+  } else if ((inMorning || inAfternoon || inLunch || inEvening) && dow !== 0) {
+    level = 'good';
+    msg = `${DOW[dow]} ${String(h).padStart(2,'0')}:00 · fascia discreta`;
+  } else if (dow === 0) {
+    level = 'weak';
+    msg = `Domenica · giorno meno prevedibile, engagement variabile`;
+  } else if (h >= 22 || h < 7) {
+    level = 'weak';
+    msg = `Tarda sera/notte · fascia debole, poca attività`;
+  } else {
+    level = 'good';
+    msg = `${DOW[dow]} ${String(h).padStart(2,'0')}:00 · fascia neutra`;
+  }
+
+  const styles = {
+    best: { bg: 'rgba(46,204,113,0.12)', bd: 'var(--pos)', col: 'var(--pos)', ico: '✅' },
+    good: { bg: 'rgba(255,140,30,0.10)', bd: 'rgba(255,140,30,0.4)', col: 'var(--accent)', ico: '○' },
+    weak: { bg: 'rgba(231,76,60,0.10)', bd: 'rgba(231,76,60,0.4)', col: 'var(--neg)', ico: '⚠' }
+  };
+  const s = styles[level];
+  hint.style.display = 'block';
+  hint.style.background = s.bg;
+  hint.style.border = '1px solid ' + s.bd;
+  hint.style.color = s.col;
+  hint.innerHTML = `${s.ico} ${msg}`;
 }
 
 // ytRender è alias di calRender (rendering unificato)
@@ -3931,6 +4185,7 @@ function calOpenModal(ds, id) {
   document.getElementById('calModalTitle').textContent = 'Pianifica post';
   calResetUpload();
   calToggleMediaField();
+  calUpdateSlotHint();
   document.getElementById('calModal').classList.add('show');
 }
 
@@ -3949,6 +4204,8 @@ function calSetupEvents() {
     calRender();
   };
   document.getElementById('calAddBtn').onclick = () => calOpenModal(null, null);
+  const qrb = document.getElementById('queueRefreshBtn');
+  if (qrb) qrb.onclick = () => loadPublishQueue();
   document.getElementById('calCancelBtn').onclick = () => document.getElementById('calModal').classList.remove('show');
   document.getElementById('calModal').onclick = e => {
     if (e.target.id === 'calModal') document.getElementById('calModal').classList.remove('show');
@@ -4183,14 +4440,12 @@ function renderFollowerAnalysis(daily) {
   // Prendo gli ultimi 30 giorni con dati validi
   const valid = daily.filter(d => d.follower_count_1d != null || d.follows_and_unfollows != null).slice(-30);
   if (valid.length === 0) return;
-  const newF = valid.reduce((s,d) => s + (d.follower_count_1d||0), 0);
-  const netF = valid.reduce((s,d) => s + (d.follows_and_unfollows||0), 0);
-  const lostF = Math.max(0, newF - netF);
-  const retention = newF > 0 ? Math.round(netF/newF*100) : 0;
+  // Instagram via Graph API NON espone gli unfollow separati: 'follows_and_unfollows'
+  // è già un saldo netto giornaliero. Mostriamo solo quel dato reale, senza
+  // dedurre unfollow/retention da una sottrazione che darebbe sempre ~0.
+  const netF = valid.reduce((s,d) => s + (d.follows_and_unfollows != null ? d.follows_and_unfollows : (d.follower_count_1d||0)), 0);
   const el = (id,v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
-  el('follNew', '+' + newF);
-  el('follLost', '-' + lostF);
-  el('follRetention', retention + '%');
+  el('follNew', (netF >= 0 ? '+' : '') + netF);
   // Chart
   const ctx = document.getElementById('chartFollowers');
   if (!ctx) return;
@@ -4201,13 +4456,12 @@ function renderFollowerAnalysis(daily) {
     data: {
       labels: valid.map(d => fmtDate(new Date(d.date))),
       datasets: [
-        { label: 'Nuovi follow', data: valid.map(d => d.follower_count_1d||0), backgroundColor: 'rgba(54,201,118,0.6)', borderRadius: 3, barPercentage: 0.7 },
-        { label: 'Saldo netto', data: valid.map(d => d.follows_and_unfollows||0), backgroundColor: 'rgba(255,140,30,0.6)', borderRadius: 3, barPercentage: 0.7 }
+        { label: 'Saldo netto follower', data: valid.map(d => d.follows_and_unfollows != null ? d.follows_and_unfollows : (d.follower_count_1d||0)), backgroundColor: 'rgba(54,201,118,0.6)', borderRadius: 3, barPercentage: 0.8 }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: true, position: 'top', labels: { font: { family: 'Inter', size: 11 }, color: '#a0a0a8', boxWidth: 12, padding: 12 } } },
+      plugins: { legend: { display: false } },
       scales: { x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 10 }, color: '#6b6b74' } }, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { family: 'Inter', size: 10 }, color: '#6b6b74' } } }
     }
   });
@@ -4876,6 +5130,7 @@ async function init() {
     renderFormatTable(validPosts);
     renderEngagementMix(validPosts);
     renderPiList(validPosts);
+    renderConversion(CACHED.daily, validPosts);
     renderSlots(validPosts);
     setupWowToggle(validPosts);
     renderDailyActions(daily, validPosts, profile);
