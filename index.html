@@ -5606,33 +5606,16 @@ function renderYtRawTable(videos) {
 
 function buildYtPrompt(videos, channels) {
   const rows = videos.map(v =>
-    `- [${v.channel}] "${v.title}" | ${v.publishedAt} | ${v.views} views | ${v.likes} like`
-  ).join('\n');
-  return `Sei un esperto di content strategy per fantacalcio italiano.
-
-Hai analizzato i video più visti di questi canali YouTube competitor: ${channels.join(', ')}.
-
-TOP video per views:
-${rows}
-
-Il tuo profilo è @esperti_profeta_fantacalcio: community fantacalcio italiana con un cast di 20+ esperti, uno per ogni club di Serie A. ~2.200 follower Instagram, canale YouTube in crescita. Formato di punta: TOP-LIST e analisi per club.
-
-Genera 6 idee di contenuto YouTube originali e differenzianti per questo profilo, ispirate ai pattern di successo dei competitor ma con un angolo unico legato al cast di esperti.
-
-Per ogni idea rispondi SOLO con questo JSON (array di 6 oggetti):
-[
-  {
-    "num": 1,
-    "format": "VIDEO" oppure "SHORT",
-    "title": "titolo del video (max 70 char, accattivante, SEO-friendly)",
-    "angle": "in cosa questo video è diverso dai competitor e sfrutta il cast",
-    "body": "descrizione del contenuto in 2-3 frasi: cosa mostra, struttura, hook iniziale",
-    "slot": "giorno e ora consigliati (es. Martedì 18:00)",
-    "tags": ["tag1", "tag2", "tag3"]
-  }
-]
-Rispondi SOLO con il JSON, nessun testo prima o dopo.`;
+    `- [${v.channel}] "${v.title}" | ${v.publishedAt} | ${v.views} views`
+  ).join(' | ');
+  return `Sei un content strategist fantacalcio italiano. Genera 6 idee YouTube per @esperti_profeta_fantacalcio (cast 20+ esperti uno per club Serie A, canale in crescita).
+Competitor: ${channels.join(', ')}.
+Top video: ${rows}
+Rispondi SOLO con JSON valido (no markdown, no testo):
+[{"num":1,"format":"VIDEO","title":"titolo max 70 char SEO","angle":"differenziale cast vs competitor","body":"struttura contenuto 2-3 frasi","slot":"Martedi 18:00","tags":["tag1","tag2","tag3"]}]
+Genera esattamente 6 oggetti con format VIDEO o SHORT.`;
 }
+
 
 function ytIntelReset() {
   document.getElementById('ytIntelConfig').style.display = 'block';
@@ -5668,37 +5651,14 @@ async function runIgIntelligence() {
 }
 
 function buildIgPrompt(profiles, focus) {
-  return `Sei un esperto di content strategy per fantacalcio italiano su Instagram.
-
-Profili competitor da analizzare: ${profiles || '@sosfantacalcio, @fantarete, @seriousornot.fantacalcio'}
-Focus tematico: ${focus}
-
-Il profilo da aiutare è @esperti_profeta_fantacalcio: community con un cast di 20+ esperti uno per club di Serie A, ~2.200 follower. Formato di punta: TOP-LIST, analisi per club, caroselli informativi. Obiettivo: crescita verso i 10k.
-
-Cerca online le tendenze attuali di contenuto Instagram nel settore fantacalcio italiano (post virali, format di successo, argomenti in trend nei profili competitor) e genera 6 idee di contenuto Instagram originali e differenzianti.
-
-Per ogni idea rispondi SOLO con questo JSON (array di 6 oggetti):
-[
-  {
-    "num": 1,
-    "format": "CAROUSEL_ALBUM" oppure "IMAGE" oppure "REELS",
-    "title": "titolo/caption hook (max 80 char)",
-    "angle": "come sfrutta il cast di esperti e si differenzia dai competitor",
-    "body": "descrizione del contenuto in 2-3 frasi: slide per slide o struttura del reel",
-    "slot": "giorno e ora consigliati (es. Martedì 10:30)",
-    "tags": ["hashtag1", "hashtag2", "hashtag3"]
-  }
-]
-Contesto tendenze Instagram fantacalcio 2026 (usa queste info per generare idee più rilevanti):
-- I caroselli informativi (guida all'asta, schede giocatore, top modificatori) hanno ER medio 6-8%
-- I reel brevi (30-60 sec) con countdown e classifiche stanno crescendo
-- I post che coinvolgono più club in un'unica classifica (TOP10, TOP5) hanno reach 8-15x la mediana
-- L'asta di agosto è il momento di picco: massima domanda di contenuti
-- I collab con profili pari-tier portano +15-20% reach sui post condivisi
-- Hashtag che funzionano: #fantacalcio #fanta #seriea #consiglifanta #astafantacalcio
-
-Rispondi SOLO con il JSON, nessun testo prima o dopo.`;
+  return `Sei un content strategist fantacalcio italiano. Genera 6 idee Instagram per @esperti_profeta_fantacalcio (cast 20+ esperti uno per club Serie A, ~2.200 follower, obiettivo 10k).
+Competitor: ${profiles || '@sosfantacalcio, @fantarete, @seriousornot.fantacalcio'}. Focus: ${focus}.
+Tendenze 2026: caroselli IG ER 6-8%, reel 30-60s classifiche in crescita, TOP10/TOP5 reach 8-15x mediana, agosto = picco asta, collab +15-20% reach.
+Rispondi SOLO con JSON valido (no markdown, no testo):
+[{"num":1,"format":"CAROUSEL_ALBUM","title":"titolo max 80 char","angle":"differenziale cast vs competitor","body":"struttura contenuto 2-3 frasi","slot":"Martedi 10:30","tags":["tag1","tag2","tag3"]}]
+Genera esattamente 6 oggetti con format CAROUSEL_ALBUM, IMAGE o REELS.`;
 }
+
 
 function igIntelReset() {
   document.getElementById('igIntelConfig').style.display = 'block';
@@ -5728,7 +5688,7 @@ async function callClaudeForIdeas(prompt, targetId, platform, useWebSearch = fal
 
   const body = {
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1000,
+    max_tokens: 2000,
     messages: [{ role: 'user', content: prompt }]
   };
   // Chiamo il proxy Vercel (non Anthropic direttamente — CORS)
