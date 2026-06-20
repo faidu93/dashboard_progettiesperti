@@ -5684,9 +5684,19 @@ async function callClaudeForIdeas(prompt, targetId, platform, useWebSearch = fal
     body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
   }
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const secret = getPublishSecret();
+  if (!secret) {
+    box.innerHTML = '<div class="idea-card loading">Inserisci prima la password di pubblicazione (programma un post) per usare l\'AI.</div>';
+    return;
+  }
+
+  // Chiamo il proxy Vercel invece di Anthropic direttamente (CORS)
+  const res = await fetch(`${BACKEND_BASE}/api/claude`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Publish-Secret': secret,
+    },
     body: JSON.stringify(body)
   });
   const data = await res.json();
