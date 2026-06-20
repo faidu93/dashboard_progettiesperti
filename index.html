@@ -1545,6 +1545,103 @@ body {
 .queue-del { background: transparent; border: 1px solid var(--line); color: var(--ink-mute); border-radius: 6px; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
 .queue-del:hover { border-color: var(--neg); color: var(--neg); }
 .queue-del .material-symbols-rounded { font-size: 17px; }
+
+/* ── INTELLIGENCE TAB ── */
+.intel-config { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; }
+.intel-field { display: flex; flex-direction: column; gap: 6px; }
+.intel-field label { font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em; color: var(--ink-mute); }
+.intel-field input, .intel-field textarea, .intel-field select {
+  background: var(--bg-elev-2); border: 1px solid var(--line);
+  border-radius: 7px; padding: 9px 12px; color: var(--ink);
+  font-family: var(--font-body); font-size: 13px; outline: none;
+  transition: border-color .15s; width: 100%; box-sizing: border-box;
+  resize: vertical;
+}
+.intel-field input:focus, .intel-field textarea:focus, .intel-field select:focus { border-color: var(--accent); }
+.intel-row { display: grid; grid-template-columns: 1fr 140px; gap: 12px; }
+.intel-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.intel-out-header { display: flex; align-items: center; justify-content: space-between;
+  margin: 18px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+/* Tabella video competitor */
+.yt-comp-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 12px; }
+.yt-comp-table th { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--ink-mute); text-align: left;
+  padding: 6px 10px; border-bottom: 1px solid var(--line); }
+.yt-comp-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.yt-comp-table tr:hover td { background: var(--bg-elev-2); }
+.yt-comp-channel { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute);
+  background: var(--bg-elev-2); padding: 2px 6px; border-radius: 4px; }
+/* Idee generate da Claude */
+.intel-ideas { display: flex; flex-direction: column; gap: 12px; }
+.idea-card { background: var(--bg-elev-2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 16px; }
+.idea-card.loading { min-height: 80px; display: flex; align-items: center;
+  justify-content: center; color: var(--ink-mute); font-family: var(--font-mono); font-size: 12px; }
+.idea-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.idea-num { font-family: var(--font-mono); font-size: 11px; color: var(--ink-mute);
+  background: var(--bg-elev); padding: 2px 7px; border-radius: 4px; font-weight: 700; }
+.idea-format { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-family: var(--font-mono); }
+.idea-format.ig-post { background: #0d2d4a; color: #7ec8f0; }
+.idea-format.ig-reel { background: #0d3020; color: #6ee0a0; }
+.idea-format.yt-vid  { background: #3d1212; color: #f08080; }
+.idea-format.yt-short{ background: #3d1212; color: #f08080; }
+.idea-slot { font-family: var(--font-mono); font-size: 10px; color: var(--accent);
+  margin-left: auto; background: rgba(255,140,30,.1); padding: 2px 7px; border-radius: 4px; }
+.idea-title { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.idea-body { font-size: 13px; color: var(--ink-mid); line-height: 1.55; }
+.idea-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.idea-tag { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute);
+  background: var(--bg-elev); border: 1px solid var(--line); padding: 2px 7px; border-radius: 4px; }
+#loadingOverlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg); /* stessa tinta della dashboard, niente strappo visivo */
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.4s ease;
+}
+#loadingOverlay.fade-out { opacity: 0; pointer-events: none; }
+#loadingOverlay.hidden { display: none; }
+#loadingBox {
+  width: 100%; max-width: 420px; padding: 32px 28px;
+  background: var(--bg-elev); border: 1px solid var(--line-strong);
+  border-radius: 16px; display: flex; flex-direction: column; gap: 18px;
+}
+#loadingHeader {
+  display: flex; align-items: center; gap: 12px;
+}
+#loadingIcon {
+  font-size: 26px; color: var(--accent);
+  animation: spin 1.2s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#loadingTitle {
+  font-size: 16px; font-weight: 700; color: var(--ink);
+  font-family: var(--font-display);
+}
+#loadingLog {
+  display: flex; flex-direction: column; gap: 7px;
+  min-height: 120px;
+}
+.log-row {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-mono); font-size: 12px; color: var(--ink-mid);
+  padding: 6px 10px; border-radius: 6px;
+  background: var(--bg-elev-2); border: 1px solid var(--line);
+  transition: all 0.2s;
+}
+.log-row.active { border-color: var(--accent); color: var(--ink); }
+.log-row.done   { border-color: var(--pos); color: var(--pos); }
+.log-row.error  { border-color: var(--neg); color: var(--neg); }
+.log-row.warn   { border-color: var(--accent); color: var(--accent); }
+.log-ico { font-size: 15px; flex-shrink: 0; }
+.log-ico.spin { animation: spin 1s linear infinite; }
+#loadingBar {
+  height: 4px; background: var(--line); border-radius: 2px; overflow: hidden;
+}
+#loadingBarFill {
+  height: 100%; width: 0%; background: var(--accent);
+  border-radius: 2px; transition: width 0.4s ease;
+}
 .conv-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
 .conv-kpi { background: var(--bg-elev-2); border: 1px solid var(--line); border-radius: 9px; padding: 13px 14px; }
 .conv-kpi-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute); }
@@ -1658,6 +1755,10 @@ body {
     <button class="tab-btn" data-tab="strategia" onclick="tabSwitch(this)" role="tab">
       <span class="material-symbols-rounded">map</span>
       <span class="tab-label">Strategia</span>
+    </button>
+    <button class="tab-btn" data-tab="intelligence" onclick="tabSwitch(this)" role="tab">
+      <span class="material-symbols-rounded">travel_explore</span>
+      <span class="tab-label">Intelligence</span>
     </button>
   </nav>
 
@@ -2379,6 +2480,124 @@ body {
 
 
 
+  <!-- TAB: INTELLIGENCE -->
+  <section class="section" data-tab="intelligence" style="margin-bottom:0;">
+    <div class="section-head">
+      <div>
+        <div class="section-eyebrow">🔍 Competitor</div>
+        <div class="section-title">Intelligence</div>
+      </div>
+      <span class="section-live">● LIVE · AI-POWERED</span>
+    </div>
+  </section>
+
+  <!-- TOOL 1: YouTube Intelligence -->
+  <section class="section" data-tab="intelligence">
+    <div class="panel">
+      <div class="panel-title">
+        <span class="material-symbols-rounded" style="color:#f08080;">smart_display</span>
+        YouTube Intelligence · analisi canali competitor
+      </div>
+      <div class="panel-sub">Analizza i video recenti dei competitor YouTube e genera idee di contenuto per il tuo canale</div>
+
+      <!-- Config -->
+      <div class="intel-config" id="ytIntelConfig">
+        <div class="intel-field">
+          <label>Canali competitor <span style="color:var(--ink-mute);font-weight:400;">(un ID o @handle per riga)</span></label>
+          <textarea id="ytChannels" rows="4" placeholder="@sosfantacalcio&#10;@micheledanese&#10;@zonafanta&#10;UCxxxxxxxxxxxxxxxx" oninput="intelSaveField('ytChannels')"></textarea>
+        </div>
+        <div class="intel-row">
+          <div class="intel-field">
+            <label>API Key YouTube Data v3</label>
+            <input type="password" id="ytApiKey" placeholder="AIza…" oninput="intelSaveField('ytApiKey')">
+          </div>
+          <div class="intel-field" style="max-width:140px;">
+            <label>Video per canale</label>
+            <select id="ytVideoCount" onchange="intelSaveField('ytVideoCount')">
+              <option value="5">5 video</option>
+              <option value="10" selected>10 video</option>
+              <option value="20">20 video</option>
+            </select>
+          </div>
+        </div>
+        <div class="intel-actions">
+          <button class="cal-btn primary" id="ytIntelRunBtn" onclick="runYtIntelligence()">
+            <span class="material-symbols-rounded">travel_explore</span>Analizza canali
+          </button>
+          <span id="ytIntelStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
+        </div>
+      </div>
+
+      <!-- Output -->
+      <div id="ytIntelOutput" style="display:none;">
+        <div class="intel-out-header">
+          <span id="ytIntelOutTitle" style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mid);"></span>
+          <button class="cal-btn" onclick="ytIntelReset()" style="font-size:11px;padding:5px 10px;">
+            <span class="material-symbols-rounded" style="font-size:14px;">refresh</span>Nuova analisi
+          </button>
+        </div>
+        <!-- Dati raw competitor -->
+        <div id="ytRawData" style="margin-bottom:18px;"></div>
+        <!-- Idee generate da Claude -->
+        <div class="intel-ideas" id="ytIdeas"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOOL 2: Instagram Intelligence -->
+  <section class="section" data-tab="intelligence">
+    <div class="panel">
+      <div class="panel-title">
+        <span class="material-symbols-rounded" style="color:#7ec8f0;">photo_camera</span>
+        Instagram Intelligence · tendenze e idee contenuto
+      </div>
+      <div class="panel-sub">Cerca le tendenze Instagram fantacalcio via web e genera idee di contenuto ottimizzate per il tuo profilo</div>
+
+      <!-- Config -->
+      <div class="intel-config" id="igIntelConfig">
+        <div class="intel-field">
+          <label>Profili competitor da monitorare <span style="color:var(--ink-mute);font-weight:400;">(uno per riga)</span></label>
+          <textarea id="igProfiles" rows="3" placeholder="@sosfantacalcio&#10;@fantarete&#10;@seriousornot.fantacalcio" oninput="intelSaveField('igProfiles')">@sosfantacalcio
+@fantarete
+@seriousornot.fantacalcio</textarea>
+        </div>
+        <div class="intel-field">
+          <label>Focus tematico <span style="color:var(--ink-mute);font-weight:400;">(aiuta l'AI a trovare contenuti rilevanti)</span></label>
+          <input type="text" id="igFocus" value="fantacalcio Serie A consigli asta modificatore" placeholder="es. fantacalcio asta consigli Serie A" oninput="intelSaveField('igFocus')">
+        </div>
+        <div class="intel-actions">
+          <button class="cal-btn primary" id="igIntelRunBtn" onclick="runIgIntelligence()">
+            <span class="material-symbols-rounded">travel_explore</span>Cerca tendenze e idee
+          </button>
+          <span id="igIntelStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
+        </div>
+      </div>
+
+      <!-- Output -->
+      <div id="igIntelOutput" style="display:none;">
+        <div class="intel-out-header">
+          <span id="igIntelOutTitle" style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mid);"></span>
+          <button class="cal-btn" onclick="igIntelReset()" style="font-size:11px;padding:5px 10px;">
+            <span class="material-symbols-rounded" style="font-size:14px;">refresh</span>Nuova ricerca
+          </button>
+        </div>
+        <div class="intel-ideas" id="igIdeas"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOADING OVERLAY -->
+  <div id="loadingOverlay">
+    <div id="loadingBox">
+      <div id="loadingHeader">
+        <span class="material-symbols-rounded" id="loadingIcon">sync</span>
+        <span id="loadingTitle">Caricamento dashboard…</span>
+      </div>
+      <div id="loadingLog"></div>
+      <div id="loadingBar"><div id="loadingBarFill"></div></div>
+    </div>
+  </div>
+
   <footer class="footer">
     <div class="footer-brand">
       <div class="footer-brand-logo"><div role="img" aria-label="logo" style="width:100%;height:100%;background:var(--logo-url) center/contain no-repeat;"></div></div>
@@ -2705,6 +2924,88 @@ function setStatus(mode, msg) {
   if (mode === 'live') el.classList.add('live');
   else if (mode === 'error') el.classList.add('error');
   txt.textContent = msg;
+}
+
+// ── LOADING OVERLAY ──
+// Gestisce l'overlay di caricamento con log visivo riga per riga.
+// Uso: loadingStart() → loadingStep(id, label) → loadingDone(id) / loadingError(id, msg)
+//      → loadingFinish() per chiudere
+const _loadRows = {};
+function loadingStart() {
+  const ov = document.getElementById('loadingOverlay');
+  const log = document.getElementById('loadingLog');
+  if (!ov || !log) return;
+  Object.keys(_loadRows).forEach(k => delete _loadRows[k]);
+  log.innerHTML = '';
+  document.getElementById('loadingBarFill').style.width = '0%';
+  document.getElementById('loadingTitle').textContent = 'Caricamento dashboard…';
+  document.getElementById('loadingIcon').textContent = 'sync';
+  document.getElementById('loadingIcon').style.color = 'var(--accent)';
+  ov.classList.remove('fade-out','hidden');
+}
+function loadingStep(id, label, state = 'active') {
+  const log = document.getElementById('loadingLog');
+  if (!log) return;
+  const icons = { active: 'progress_activity', done: 'check_circle', error: 'error', warn: 'warning' };
+  const spin = state === 'active' ? ' spin' : '';
+  const row = document.createElement('div');
+  row.className = `log-row ${state}`;
+  row.id = `log-${id}`;
+  row.innerHTML = `<span class="log-ico material-symbols-rounded${spin}">${icons[state]||'circle'}</span><span>${label}</span>`;
+  if (_loadRows[id]) {
+    _loadRows[id].replaceWith(row);
+  } else {
+    log.appendChild(row);
+  }
+  _loadRows[id] = row;
+}
+function loadingDone(id, label) {
+  const row = document.getElementById(`log-${id}`);
+  if (!row) return;
+  const ico = row.querySelector('.log-ico');
+  row.className = 'log-row done';
+  if (ico) { ico.classList.remove('spin'); ico.textContent = 'check_circle'; }
+  if (label) row.querySelector('span:last-child').textContent = label;
+}
+function loadingError(id, label) {
+  const row = document.getElementById(`log-${id}`);
+  if (!row) return;
+  const ico = row.querySelector('.log-ico');
+  row.className = 'log-row error';
+  if (ico) { ico.classList.remove('spin'); ico.textContent = 'error'; }
+  if (label) row.querySelector('span:last-child').textContent = label;
+}
+function loadingWarn(id, label) {
+  const row = document.getElementById(`log-${id}`);
+  if (!row) return;
+  const ico = row.querySelector('.log-ico');
+  row.className = 'log-row warn';
+  if (ico) { ico.classList.remove('spin'); ico.textContent = 'warning'; }
+  if (label) row.querySelector('span:last-child').textContent = label;
+}
+function loadingProgress(pct) {
+  const bar = document.getElementById('loadingBarFill');
+  if (bar) bar.style.width = Math.min(100, pct) + '%';
+}
+function loadingFinish(ok = true) {
+  const ov = document.getElementById('loadingOverlay');
+  const ico = document.getElementById('loadingIcon');
+  const title = document.getElementById('loadingTitle');
+  if (!ov) return;
+  loadingProgress(100);
+  if (ok) {
+    ico.textContent = 'check_circle'; ico.style.color = 'var(--pos)';
+    ico.style.animation = 'none';
+    title.textContent = 'Dati caricati ✓';
+  } else {
+    ico.textContent = 'error'; ico.style.color = 'var(--neg)';
+    ico.style.animation = 'none';
+    title.textContent = 'Caricamento parziale';
+  }
+  setTimeout(() => {
+    ov.classList.add('fade-out');
+    setTimeout(() => ov.classList.add('hidden'), 420);
+  }, 900);
 }
 
 function normalizeType(t) {
@@ -5123,32 +5424,367 @@ function updateOnboarding() {
   }
 }
 
+// ── Persistenza campi Intelligence in sessionStorage ──
+// La API key e le preferenze sopravvivono al refresh ma spariscono
+// alla chiusura del browser (più sicuro di localStorage per le key).
+const INTEL_KEYS = {
+  ytApiKey:     'intel_yt_apikey',    // localStorage (persiste tra sessioni)
+  ytChannels:   'intel_yt_channels',  // sessionStorage
+  ytVideoCount: 'intel_yt_count',     // sessionStorage
+  igProfiles:   'intel_ig_profiles',  // sessionStorage
+  igFocus:      'intel_ig_focus',     // sessionStorage
+};
+// Solo la API key va in localStorage (come la publish_secret)
+const INTEL_LOCAL = new Set(['ytApiKey']);
+
+function intelSaveField(id) {
+  try {
+    const store = INTEL_LOCAL.has(id) ? localStorage : sessionStorage;
+    store.setItem(INTEL_KEYS[id], document.getElementById(id).value);
+  } catch(e) {}
+}
+
+function intelRestoreFields() {
+  Object.entries(INTEL_KEYS).forEach(([id, key]) => {
+    try {
+      const store = INTEL_LOCAL.has(id) ? localStorage : sessionStorage;
+      const val = store.getItem(key);
+      const el = document.getElementById(id);
+      if (val !== null && el) el.value = val;
+    } catch(e) {}
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INTELLIGENCE TOOLS
+// ═══════════════════════════════════════════════════════════════
+
+// ── YouTube Intelligence ──
+// Chiama YouTube Data API v3 per ottenere i video recenti dei
+// canali competitor, poi usa Claude (API Anthropic) per generare
+// idee di contenuto tarate sul profilo Esperti Profeta.
+
+async function runYtIntelligence() {
+  const channelRaw = document.getElementById('ytChannels').value.trim();
+  const apiKey = document.getElementById('ytApiKey').value.trim();
+  const n = parseInt(document.getElementById('ytVideoCount').value) || 10;
+  if (!channelRaw) { alert('Inserisci almeno un canale.'); return; }
+  if (!apiKey) { alert('Inserisci la API Key YouTube Data v3.'); return; }
+
+  const channels = channelRaw.split('\n').map(s => s.trim()).filter(Boolean);
+  const btn = document.getElementById('ytIntelRunBtn');
+  const status = document.getElementById('ytIntelStatus');
+  btn.disabled = true;
+  status.textContent = 'Recupero video dai canali…';
+
+  try {
+    // FASE 1: per ogni canale, risolvo l'ID canale (se serve) e prendo gli ultimi N video
+    const allVideos = [];
+    for (const ch of channels) {
+      try {
+        status.textContent = `Analisi ${ch}…`;
+        // Risolvo handle → channelId
+        let channelId = ch;
+        if (ch.startsWith('@') || !ch.startsWith('UC')) {
+          const q = encodeURIComponent(ch.replace('@',''));
+          const srRes = await fetch(
+            `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${q}&maxResults=1&key=${apiKey}`
+          );
+          const srData = await srRes.json();
+          if (srData.error) throw new Error(srData.error.message);
+          channelId = srData.items?.[0]?.id?.channelId || ch;
+        }
+        // Prendo gli ultimi N video del canale
+        const vidRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&order=date&maxResults=${n}&type=video&key=${apiKey}`
+        );
+        const vidData = await vidRes.json();
+        if (vidData.error) throw new Error(vidData.error.message);
+        const videoIds = (vidData.items||[]).map(i => i.id?.videoId).filter(Boolean);
+        if (!videoIds.length) continue;
+        // Statistiche per ogni video
+        const statsRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails,snippet&id=${videoIds.join(',')}&key=${apiKey}`
+        );
+        const statsData = await statsRes.json();
+        (statsData.items||[]).forEach(v => {
+          allVideos.push({
+            channel: ch,
+            title: v.snippet?.title || '—',
+            publishedAt: (v.snippet?.publishedAt||'').slice(0,10),
+            views: parseInt(v.statistics?.viewCount||0),
+            likes: parseInt(v.statistics?.likeCount||0),
+            duration: v.contentDetails?.duration || '',
+            videoId: v.id,
+          });
+        });
+      } catch(e) {
+        console.warn(`Errore canale ${ch}:`, e.message);
+      }
+    }
+
+    if (!allVideos.length) {
+      status.textContent = '⚠ Nessun video trovato. Controlla i canali e la API key.';
+      btn.disabled = false; return;
+    }
+
+    // FASE 2: mostro la tabella dei video raw
+    status.textContent = `${allVideos.length} video trovati · Genero idee con AI…`;
+    renderYtRawTable(allVideos);
+
+    // FASE 3: chiamo Claude per le idee
+    const topVideos = [...allVideos].sort((a,b) => b.views - a.views).slice(0, 15);
+    const prompt = buildYtPrompt(topVideos, channels);
+    await callClaudeForIdeas(prompt, 'ytIdeas', 'yt');
+
+    // Mostro output
+    document.getElementById('ytIntelConfig').style.display = 'none';
+    document.getElementById('ytIntelOutput').style.display = 'block';
+    document.getElementById('ytIntelOutTitle').textContent =
+      `${allVideos.length} video analizzati da ${channels.length} canali · idee generate da Claude`;
+    status.textContent = '';
+  } catch(e) {
+    status.textContent = '❌ Errore: ' + e.message;
+  }
+  btn.disabled = false;
+}
+
+function renderYtRawTable(videos) {
+  const box = document.getElementById('ytRawData');
+  // Ordino per views desc
+  const sorted = [...videos].sort((a,b) => b.views - a.views);
+  const fmt = (n) => n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n);
+  let h = `<div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);margin-bottom:8px;">
+    TOP video per views — base per l'analisi AI</div>
+  <table class="yt-comp-table">
+    <thead><tr>
+      <th>Canale</th><th>Titolo</th><th>Data</th>
+      <th>Views</th><th>Like</th>
+    </tr></thead><tbody>`;
+  sorted.slice(0,20).forEach(v => {
+    const url = `https://youtube.com/watch?v=${v.videoId}`;
+    h += `<tr>
+      <td><span class="yt-comp-channel">${v.channel}</span></td>
+      <td><a href="${url}" target="_blank" rel="noopener" style="color:var(--ink);text-decoration:none;"
+         title="${v.title}">${v.title.slice(0,55)}${v.title.length>55?'…':''}</a></td>
+      <td style="font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);">${v.publishedAt}</td>
+      <td style="font-family:var(--font-mono);font-weight:700;color:var(--accent);">${fmt(v.views)}</td>
+      <td style="font-family:var(--font-mono);color:var(--ink-mute);">${fmt(v.likes)}</td>
+    </tr>`;
+  });
+  h += '</tbody></table>';
+  box.innerHTML = h;
+}
+
+function buildYtPrompt(videos, channels) {
+  const rows = videos.map(v =>
+    `- [${v.channel}] "${v.title}" | ${v.publishedAt} | ${v.views} views | ${v.likes} like`
+  ).join('\n');
+  return `Sei un esperto di content strategy per fantacalcio italiano.
+
+Hai analizzato i video più visti di questi canali YouTube competitor: ${channels.join(', ')}.
+
+TOP video per views:
+${rows}
+
+Il tuo profilo è @esperti_profeta_fantacalcio: community fantacalcio italiana con un cast di 20+ esperti, uno per ogni club di Serie A. ~2.200 follower Instagram, canale YouTube in crescita. Formato di punta: TOP-LIST e analisi per club.
+
+Genera 6 idee di contenuto YouTube originali e differenzianti per questo profilo, ispirate ai pattern di successo dei competitor ma con un angolo unico legato al cast di esperti.
+
+Per ogni idea rispondi SOLO con questo JSON (array di 6 oggetti):
+[
+  {
+    "num": 1,
+    "format": "VIDEO" oppure "SHORT",
+    "title": "titolo del video (max 70 char, accattivante, SEO-friendly)",
+    "angle": "in cosa questo video è diverso dai competitor e sfrutta il cast",
+    "body": "descrizione del contenuto in 2-3 frasi: cosa mostra, struttura, hook iniziale",
+    "slot": "giorno e ora consigliati (es. Martedì 18:00)",
+    "tags": ["tag1", "tag2", "tag3"]
+  }
+]
+Rispondi SOLO con il JSON, nessun testo prima o dopo.`;
+}
+
+function ytIntelReset() {
+  document.getElementById('ytIntelConfig').style.display = 'block';
+  document.getElementById('ytIntelOutput').style.display = 'none';
+  document.getElementById('ytIdeas').innerHTML = '';
+  document.getElementById('ytRawData').innerHTML = '';
+}
+
+// ── Instagram Intelligence ──
+// Usa web search (Claude con tool web_search) per cercare
+// tendenze Instagram fantacalcio e genera idee di contenuto.
+
+async function runIgIntelligence() {
+  const profiles = document.getElementById('igProfiles').value.trim();
+  const focus = document.getElementById('igFocus').value.trim() || 'fantacalcio Serie A';
+  const btn = document.getElementById('igIntelRunBtn');
+  const status = document.getElementById('igIntelStatus');
+  btn.disabled = true;
+  status.textContent = 'Ricerca tendenze in corso…';
+
+  try {
+    const prompt = buildIgPrompt(profiles, focus);
+    await callClaudeForIdeas(prompt, 'igIdeas', 'ig', true);
+    document.getElementById('igIntelConfig').style.display = 'none';
+    document.getElementById('igIntelOutput').style.display = 'block';
+    document.getElementById('igIntelOutTitle').textContent =
+      'Idee generate da Claude con ricerca web · ' + new Date().toLocaleDateString('it-IT');
+    status.textContent = '';
+  } catch(e) {
+    status.textContent = '❌ Errore: ' + e.message;
+  }
+  btn.disabled = false;
+}
+
+function buildIgPrompt(profiles, focus) {
+  return `Sei un esperto di content strategy per fantacalcio italiano su Instagram.
+
+Profili competitor da analizzare: ${profiles || '@sosfantacalcio, @fantarete, @seriousornot.fantacalcio'}
+Focus tematico: ${focus}
+
+Il profilo da aiutare è @esperti_profeta_fantacalcio: community con un cast di 20+ esperti uno per club di Serie A, ~2.200 follower. Formato di punta: TOP-LIST, analisi per club, caroselli informativi. Obiettivo: crescita verso i 10k.
+
+Cerca online le tendenze attuali di contenuto Instagram nel settore fantacalcio italiano (post virali, format di successo, argomenti in trend nei profili competitor) e genera 6 idee di contenuto Instagram originali e differenzianti.
+
+Per ogni idea rispondi SOLO con questo JSON (array di 6 oggetti):
+[
+  {
+    "num": 1,
+    "format": "CAROUSEL_ALBUM" oppure "IMAGE" oppure "REELS",
+    "title": "titolo/caption hook (max 80 char)",
+    "angle": "come sfrutta il cast di esperti e si differenzia dai competitor",
+    "body": "descrizione del contenuto in 2-3 frasi: slide per slide o struttura del reel",
+    "slot": "giorno e ora consigliati (es. Martedì 10:30)",
+    "tags": ["hashtag1", "hashtag2", "hashtag3"]
+  }
+]
+Rispondi SOLO con il JSON, nessun testo prima o dopo.`;
+}
+
+function igIntelReset() {
+  document.getElementById('igIntelConfig').style.display = 'block';
+  document.getElementById('igIntelOutput').style.display = 'none';
+  document.getElementById('igIdeas').innerHTML = '';
+}
+
+// ── Core: chiama Claude API e renderizza le idee ──
+async function callClaudeForIdeas(prompt, targetId, platform, useWebSearch = false) {
+  const box = document.getElementById(targetId);
+  box.innerHTML = '<div class="idea-card loading"><span class="material-symbols-rounded" style="animation:spin 1s linear infinite;font-size:20px;margin-right:8px;">progress_activity</span>Claude sta generando le idee…</div>';
+
+  const body = {
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1000,
+    messages: [{ role: 'user', content: prompt }]
+  };
+  if (useWebSearch) {
+    body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+  }
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message || 'Errore API Claude');
+
+  // Estraggo il testo dalla risposta (potrebbe contenere tool_use blocks)
+  const text = (data.content || [])
+    .filter(b => b.type === 'text')
+    .map(b => b.text)
+    .join('');
+
+  // Parso il JSON pulendo eventuali markdown fences
+  const clean = text.replace(/```json|```/g, '').trim();
+  let ideas;
+  try {
+    ideas = JSON.parse(clean);
+  } catch(e) {
+    // Fallback: provo a estrarre il JSON con regex
+    const m = clean.match(/\[[\s\S]*\]/);
+    if (m) ideas = JSON.parse(m[0]);
+    else throw new Error('Risposta AI non parsabile. Riprova.');
+  }
+  renderIdeas(ideas, targetId, platform);
+}
+
+function renderIdeas(ideas, targetId, platform) {
+  const box = document.getElementById(targetId);
+  if (!Array.isArray(ideas) || !ideas.length) {
+    box.innerHTML = '<div class="idea-card loading">Nessuna idea generata. Riprova.</div>';
+    return;
+  }
+  const fmtLabel = {
+    'CAROUSEL_ALBUM': 'Carosello', 'IMAGE': 'Foto', 'REELS': 'Reel',
+    'VIDEO': 'Video', 'SHORT': 'Short'
+  };
+  const fmtClass = {
+    'CAROUSEL_ALBUM': 'ig-post', 'IMAGE': 'ig-post', 'REELS': 'ig-reel',
+    'VIDEO': 'yt-vid', 'SHORT': 'yt-short'
+  };
+  box.innerHTML = ideas.map(idea => {
+    const fmt = idea.format || (platform === 'yt' ? 'VIDEO' : 'CAROUSEL_ALBUM');
+    const cls = fmtClass[fmt] || 'ig-post';
+    const lbl = fmtLabel[fmt] || fmt;
+    const tags = (idea.tags || []).map(t =>
+      `<span class="idea-tag">${t.startsWith('#')?t:'#'+t}</span>`
+    ).join('');
+    return `<div class="idea-card">
+      <div class="idea-header">
+        <span class="idea-num">${String(idea.num||'').padStart(2,'0')}</span>
+        <span class="idea-format ${cls}">${lbl}</span>
+        ${idea.slot ? `<span class="idea-slot">⏰ ${idea.slot}</span>` : ''}
+      </div>
+      <div class="idea-title">${idea.title||'—'}</div>
+      <div class="idea-body">${idea.body||''}</div>
+      ${idea.angle ? `<div style="margin-top:8px;font-size:11px;color:var(--accent);font-family:var(--font-mono);">💡 ${idea.angle}</div>` : ''}
+      ${tags ? `<div class="idea-tags">${tags}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
 async function init() {
+  // Avvio overlay di caricamento
+  loadingStart();
+  loadingStep('setup', 'Configurazione interfaccia…');
+
   // Attiva tab calendario subito
   document.querySelectorAll('section[data-tab="calendario"]').forEach(s => s.classList.add('tab-active'));
-  // I dati arrivano dal backend Vercel.
   updateOnboarding();
   setStatus('', 'Caricamento dati…');
   // CRITICAL: setup eventi PRIMA del fetch — così i bottoni funzionano anche se il backend fallisce
   calSetupEvents();
   calRender();
   gcalInit(); // Google Calendar init sempre
+  intelRestoreFields(); // ripristina API key e preferenze Intelligence
+  loadingDone('setup', 'Interfaccia pronta');
+  loadingProgress(10);
 
   try {
-    // === BACKEND VERCEL ===
-    // Una sola chiamata restituisce daily + posts + profile già uniti lato server.
+    // === FASE 1: Instagram Insights ===
+    loadingStep('ig', 'Connessione Instagram Graph API…');
+    loadingProgress(15);
     const ig = await fetchBackend('/api/instagram-insights');
     const daily = ig.daily || [];
     const posts = ig.posts || [];
     const profile = ig.profile || {};
     daily.sort((a,b) => new Date(a.date) - new Date(b.date));
     CACHED = { daily, posts, profile };
+    loadingDone('ig', `Instagram · ${posts.length} post · ${daily.length} giorni`);
+    loadingProgress(35);
+
     renderFreshness(daily);
     // Calendario: assegno i post pubblicati e re-render
     calPublishedPosts = posts;
     calRender();
 
-    // Fetch YouTube video pubblicati dal backend
+    // === FASE 2: YouTube ===
+    loadingStep('yt', 'Caricamento video YouTube…');
+    loadingProgress(40);
     try {
       const yt = await fetchBackend('/api/youtube-videos');
       const ytRaw = yt.data || yt.videos || [];
@@ -5167,14 +5803,16 @@ async function init() {
         if (r.video && !ytMap[key].videoId) ytMap[key].videoId = r.video;
       });
       window.ytPublishedVideos = Object.values(ytMap);
-      console.log('YT videos loaded:', window.ytPublishedVideos.length);
+      loadingDone('yt', `YouTube · ${window.ytPublishedVideos.length} video caricati`);
     } catch(e) {
-      console.log('YouTube fetch non disponibile:', e);
+      loadingWarn('yt', 'YouTube non disponibile (continuo)');
       window.ytPublishedVideos = [];
     }
     ytRender();
+    loadingProgress(55);
 
-    // Filtro robusto: tiene post con reach OPPURE engagement (non scarta post recenti)
+    // === FASE 3: Rendering KPI e grafici ===
+    loadingStep('render', 'Calcolo KPI e grafici…');
     const validPosts = posts.filter(p =>
       (p.media_reach != null && p.media_reach > 0) ||
       (p.media_engagement != null && p.media_engagement > 0) ||
@@ -5197,17 +5835,22 @@ async function init() {
     setupWowToggle(validPosts);
     renderDailyActions(daily, validPosts, profile);
     document.getElementById('compYou').textContent = numIt(profile.followers_count);
+    loadingDone('render', `KPI e grafici pronti · ${validPosts.length} post analizzati`);
+    loadingProgress(75);
 
-    // === DEMOGRAFIA REALE + ORARI ATTIVITÀ (nuovo da Meta) ===
-    // Caricata in modo non bloccante: se non disponibile, restano i dati di fallback.
+    // === FASE 4: Dati demografici ===
+    loadingStep('demo', 'Caricamento demografia e orari…');
     try {
       const demo = await fetchBackend('/api/instagram-demographics');
       window.CACHED_DEMO = demo;
       renderDemographics(demo);
       renderOnlineFollowers(demo);
+      loadingDone('demo', 'Dati demografici e orari attivi');
     } catch(e) {
-      console.log('Demografia non disponibile:', e);
+      loadingWarn('demo', 'Dati demografici non disponibili');
     }
+    loadingProgress(92);
+
     // Aggiorno barra mappa: scala log su max 100k (L4 medio)
     const mapBar = document.getElementById('mapYouBar');
     if (mapBar) {
@@ -5218,9 +5861,12 @@ async function init() {
     const now = new Date();
     document.getElementById('footTime').textContent = now.toLocaleString('it-IT');
     setStatus('live', 'Live · ' + now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}));
+    loadingFinish(true);
   } catch(e) {
     console.error('Backend error:', e);
     setStatus('error', 'Errore: ' + e.message.slice(0,60));
+    loadingStep('error', 'Errore connessione backend: ' + e.message.slice(0, 60), 'error');
+    loadingFinish(false);
   }
 }
 
