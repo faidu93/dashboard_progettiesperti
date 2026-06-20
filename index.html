@@ -2503,6 +2503,10 @@ body {
       <!-- Config -->
       <div class="intel-config" id="ytIntelConfig">
         <div class="intel-field">
+          <label>Password pubblicazione <span style="color:var(--ink-mute);font-weight:400;">(PUBLISH_SECRET)</span></label>
+          <input type="password" id="ytSecret" placeholder="La stessa password usata per pubblicare i post" oninput="intelSaveSecret('ytSecret')">
+        </div>
+        <div class="intel-field">
           <label>Canali competitor <span style="color:var(--ink-mute);font-weight:400;">(un ID o @handle per riga)</span></label>
           <textarea id="ytChannels" rows="4" placeholder="@sosfantacalcio&#10;@micheledanese&#10;@zonafanta&#10;UCxxxxxxxxxxxxxxxx" oninput="intelSaveField('ytChannels')"></textarea>
         </div>
@@ -2555,6 +2559,10 @@ body {
 
       <!-- Config -->
       <div class="intel-config" id="igIntelConfig">
+        <div class="intel-field">
+          <label>Password pubblicazione <span style="color:var(--ink-mute);font-weight:400;">(PUBLISH_SECRET — serve per chiamare il backend)</span></label>
+          <input type="password" id="igSecret" placeholder="La stessa password usata per pubblicare i post" oninput="intelSaveSecret('igSecret')">
+        </div>
         <div class="intel-field">
           <label>Profili competitor da monitorare <span style="color:var(--ink-mute);font-weight:400;">(uno per riga)</span></label>
           <textarea id="igProfiles" rows="3" placeholder="@sosfantacalcio&#10;@fantarete&#10;@seriousornot.fantacalcio" oninput="intelSaveField('igProfiles')">@sosfantacalcio
@@ -2686,15 +2694,19 @@ async function fetchBackend(path) {
 // PUBLISH SECRET: chiesto una volta e tenuto solo per la sessione corrente
 function getPublishSecret() {
   let s = '';
-  try { s = sessionStorage.getItem('publish_secret') || ''; } catch(e) {}
+  try { s = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
   if (!s) {
     s = (prompt('Inserisci la password di pubblicazione (PUBLISH_SECRET):') || '').trim();
-    if (s) { try { sessionStorage.setItem('publish_secret', s); } catch(e) {} }
+    if (s) {
+      try { sessionStorage.setItem('publish_secret', s); } catch(e) {}
+      try { localStorage.setItem('publish_secret', s); } catch(e) {}
+    }
   }
   return s;
 }
 function clearPublishSecret() {
   try { sessionStorage.removeItem('publish_secret'); } catch(e) {}
+  try { localStorage.removeItem('publish_secret'); } catch(e) {}
 }
 
 // Upload di un file su Vercel Blob tramite /api/upload → ritorna l'URL pubblico
@@ -5444,6 +5456,12 @@ function intelSaveField(id) {
   } catch(e) {}
 }
 
+function intelSaveSecret(fieldId) {
+  const val = document.getElementById(fieldId)?.value?.trim();
+  if (!val) return;
+  try { localStorage.setItem('publish_secret', val); sessionStorage.setItem('publish_secret', val); } catch(e) {}
+}
+
 function intelRestoreFields() {
   Object.entries(INTEL_KEYS).forEach(([id, key]) => {
     try {
@@ -5453,6 +5471,16 @@ function intelRestoreFields() {
       if (val !== null && el) el.value = val;
     } catch(e) {}
   });
+  // Ripristino anche i campi secret dai valori salvati
+  try {
+    const s = localStorage.getItem('publish_secret') || sessionStorage.getItem('publish_secret') || '';
+    if (s) {
+      const yt = document.getElementById('ytSecret');
+      const ig = document.getElementById('igSecret');
+      if (yt && !yt.value) yt.value = s;
+      if (ig && !ig.value) ig.value = s;
+    }
+  } catch(e) {}
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -5627,7 +5655,7 @@ async function runIgIntelligence() {
 
   try {
     const prompt = buildIgPrompt(profiles, focus);
-    await callClaudeForIdeas(prompt, 'igIdeas', 'ig', true);
+    await callClaudeForIdeas(prompt, 'igIdeas', 'ig');
     document.getElementById('igIntelConfig').style.display = 'none';
     document.getElementById('igIntelOutput').style.display = 'block';
     document.getElementById('igIntelOutTitle').textContent =
@@ -5661,6 +5689,14 @@ Per ogni idea rispondi SOLO con questo JSON (array di 6 oggetti):
     "tags": ["hashtag1", "hashtag2", "hashtag3"]
   }
 ]
+Contesto tendenze Instagram fantacalcio 2026 (usa queste info per generare idee più rilevanti):
+- I caroselli informativi (guida all'asta, schede giocatore, top modificatori) hanno ER medio 6-8%
+- I reel brevi (30-60 sec) con countdown e classifiche stanno crescendo
+- I post che coinvolgono più club in un'unica classifica (TOP10, TOP5) hanno reach 8-15x la mediana
+- L'asta di agosto è il momento di picco: massima domanda di contenuti
+- I collab con profili pari-tier portano +15-20% reach sui post condivisi
+- Hashtag che funzionano: #fantacalcio #fanta #seriea #consiglifanta #astafantacalcio
+
 Rispondi SOLO con il JSON, nessun testo prima o dopo.`;
 }
 
@@ -5670,27 +5706,32 @@ function igIntelReset() {
   document.getElementById('igIdeas').innerHTML = '';
 }
 
-// ── Core: chiama Claude API e renderizza le idee ──
+// ── Core: chiama Claude via proxy Vercel e renderizza le idee ──
 async function callClaudeForIdeas(prompt, targetId, platform, useWebSearch = false) {
   const box = document.getElementById(targetId);
   box.innerHTML = '<div class="idea-card loading"><span class="material-symbols-rounded" style="animation:spin 1s linear infinite;font-size:20px;margin-right:8px;">progress_activity</span>Claude sta generando le idee…</div>';
 
+  // Leggo la secret dal campo dedicato nel pannello, poi da storage
+  const secretFieldId = platform === 'yt' ? 'ytSecret' : 'igSecret';
+  const secretEl = document.getElementById(secretFieldId);
+  let secret = (secretEl && secretEl.value.trim()) || '';
+  if (!secret) {
+    try { secret = localStorage.getItem('publish_secret') || sessionStorage.getItem('publish_secret') || ''; } catch(e) {}
+  }
+  if (!secret) {
+    box.innerHTML = '<div class="idea-card loading" style="color:var(--neg);">⚠ Inserisci la password di pubblicazione nel campo qui sopra.</div>';
+    return;
+  }
+  // Salvo per uso futuro
+  try { localStorage.setItem('publish_secret', secret); sessionStorage.setItem('publish_secret', secret); } catch(e) {}
+  if (secretEl && !secretEl.value) secretEl.value = secret;
+
   const body = {
-    model: 'claude-sonnet-4-6',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 1000,
     messages: [{ role: 'user', content: prompt }]
   };
-  if (useWebSearch) {
-    body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
-  }
-
-  const secret = getPublishSecret();
-  if (!secret) {
-    box.innerHTML = '<div class="idea-card loading">Inserisci prima la password di pubblicazione (programma un post) per usare l\'AI.</div>';
-    return;
-  }
-
-  // Chiamo il proxy Vercel invece di Anthropic direttamente (CORS)
+  // Chiamo il proxy Vercel (non Anthropic direttamente — CORS)
   const res = await fetch(`${BACKEND_BASE}/api/claude`, {
     method: 'POST',
     headers: {
@@ -5700,7 +5741,10 @@ async function callClaudeForIdeas(prompt, targetId, platform, useWebSearch = fal
     body: JSON.stringify(body)
   });
   const data = await res.json();
-  if (data.error) throw new Error(data.error.message || 'Errore API Claude');
+  if (data.error) {
+    const msg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
+    throw new Error(msg);
+  }
 
   // Estraggo il testo dalla risposta (potrebbe contenere tool_use blocks)
   const text = (data.content || [])
