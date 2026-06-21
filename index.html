@@ -5777,34 +5777,26 @@ function renderYtRawTable(videos) {
 }
 
 function buildYtPrompt(videos, channels, formatFilter, ideaCount) {
-  const rows = videos.slice(0,10).map(v =>
-    v.channel + ': "' + v.title + '" (' + v.views + ' views, ' + v.likes + ' like)'
-  ).join(' | ');
+  // Limito a 5 video top per non gonfiare il prompt
+  const rows = videos.slice(0,5).map(v =>
+    '"' + v.title.slice(0,60) + '" (' + v.channel + ', ' + v.views + ' views)'
+  ).join(', ');
   const fmtHint = formatFilter === 'VIDEO'
-    ? 'Genera SOLO VIDEO lunghi (10-20 minuti): analisi approfondite con dati, statistiche, scenari. Struttura: intro con hook → analisi per sezioni → conclusione con consigli fanta pratici.'
+    ? 'Genera SOLO VIDEO lunghi (10-20 min): analisi approfondite con dati.'
     : formatFilter === 'SHORT'
-    ? 'Genera SOLO SHORT verticali (max 60 secondi): un dato sorprendente o un consiglio rapido. Hook nel primo secondo obbligatorio.'
-    : 'Mix: video lunghi per analisi approfondite (il formato principale del canale), short per teaser e contenuti rapidi.';
+    ? 'Genera SOLO SHORT (max 60 sec): un dato sorprendente o consiglio rapido, hook nel primo secondo.'
+    : 'Mix VIDEO lunghi e SHORT.';
+  return `Sei un content strategist fantacalcio italiano. Genera ${ideaCount} idee YouTube per @esperti_profeta_fantacalcio.
 
-  return `Sei un content strategist specializzato in fantacalcio italiano. Genera ${ideaCount} idee di contenuto YouTube SPECIFICHE e IMMEDIATAMENTE UTILIZZABILI per il canale di @esperti_profeta_fantacalcio.
-
-PROFILO DEL CANALE:
-- Video di analisi fantacalcio Serie A, approfonditi e tecnici
-- Cast di 25-30 esperti (uno per ogni club Serie A) che COMPAIONO nei video come protagonisti
-- Formato principale storico: analisi squadre pre-asta (quali giocatori prendere), focus allenatori (tattiche rilevanti per il fanta), classifiche modificatori/bonus
-- YouTube = PROFONDITÀ. Su Instagram si fa la sintesi in 30 secondi, su YouTube si va in profondità con dati, statistiche, scenari multipli
-
-IL VALORE UNICO:
-L'esperto di ogni club porta insider knowledge che non si trova altrove: amichevoli estive, ballottaggi aperti, cambi tattici in corso d'opera, giovani che stanno emergendo. Il fantaallenatore guarda questo video per avere un vantaggio informativo reale.
-
-COSA NON FARE: No contenuto generico ("i migliori giocatori della Serie A"), no intrattenimento puro, no clickbait. Il pubblico vuole informazione tecnica e approfondita.
-
-COMPETITOR e loro video più visti: ${rows || 'nessun dato disponibile'}.
+PROFILO: video analisi fantacalcio Serie A, cast 25-30 esperti (uno per club), tono tecnico. YouTube = profondità e analisi, non intrattenimento. Pubblico: fantaallenatori che vogliono vantaggio informativo.
+DIFFERENZIALE: l'esperto di ogni club porta insider knowledge non disponibile altrove (amichevoli, ballottaggi, cambi tattici, giovani che emergono).
+COSA NON FARE: no generici, no clickbait, no analisi senza dati specifici.
+TOP VIDEO COMPETITOR (${channels.join(', ')}): ${rows}.
 ${fmtHint}
 
-Rispondi SOLO con JSON array puro, zero testo prima o dopo, zero markdown:
-[{"num":1,"format":"VIDEO","title":"titolo SEO specifico con keyword fanta, max 70 char","angle":"come sfrutta l'esperto del club e l'insider knowledge vs competitor","body":"struttura dettagliata del video: hook iniziale (primo minuto), sezioni principali con dati/statistiche specifiche da includere, nomi di giocatori da analizzare, conclusione con top 3 consigli fanta pratici","slot":"Martedi 18:00","tags":["fantacalcio","seriea","asta"]}]
-Genera esattamente ${ideaCount} oggetti. Titoli e strutture PRONTI DA USARE, non generici.`;
+Rispondi SOLO con JSON array puro, zero markdown:
+[{"num":1,"format":"VIDEO","title":"titolo SEO specifico max 70 char","angle":"come sfrutta l'esperto del club vs competitor","body":"struttura: hook primo minuto, 3-4 sezioni con dati specifici, conclusione con top 3 consigli fanta pratici","slot":"Martedi 18:00","tags":["fantacalcio","seriea","asta"]}]
+Genera esattamente ${ideaCount} oggetti.`;
 }
 
 // ── Instagram Intelligence ──
