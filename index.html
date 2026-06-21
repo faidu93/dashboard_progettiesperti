@@ -2592,15 +2592,31 @@ body {
         </div>
         <div class="intel-row">
           <div class="intel-field">
+            <label>Topic di ricerca <span style="color:var(--ink-mute);font-weight:400;">(filtra per argomento)</span></label>
+            <input type="text" id="ytTopic" placeholder="es. mondiale 2026, asta fantacalcio, modificatori" oninput="intelSaveField('ytTopic')">
+          </div>
+          <div class="intel-field" style="max-width:150px;">
+            <label>Periodo</label>
+            <select id="ytPeriod" onchange="intelSaveField('ytPeriod')">
+              <option value="3">Ultimi 3 giorni</option>
+              <option value="7">Ultima settimana</option>
+              <option value="14">Ultime 2 settimane</option>
+              <option value="30" selected>Ultimi 30 giorni</option>
+              <option value="45">Ultimi 45 giorni</option>
+            </select>
+          </div>
+        </div>
+        <div class="intel-row">
+          <div class="intel-field">
             <label>API Key YouTube Data v3</label>
             <input type="password" id="ytApiKey" placeholder="AIza…" oninput="intelSaveField('ytApiKey')">
           </div>
           <div class="intel-field" style="max-width:140px;">
             <label>Video per canale</label>
             <select id="ytVideoCount" onchange="intelSaveField('ytVideoCount')">
-              <option value="5">5 video</option>
-              <option value="10" selected>10 video</option>
-              <option value="20">20 video</option>
+              <option value="3">Max 3 per canale</option>
+              <option value="5" selected>Max 5 per canale</option>
+              <option value="10">Max 10 per canale</option>
             </select>
           </div>
           <div class="intel-field" style="max-width:140px;">
@@ -5563,6 +5579,7 @@ function intelSaveSecret(fieldId) {
 const INTEL_KEYS = {
   ytApiKey:'intel_yt_apikey', ytChannels:'intel_yt_channels', ytVideoCount:'intel_yt_count',
   ytFormatFilter:'intel_yt_format', ytIdeaCount:'intel_yt_ideacount',
+  ytTopic:'intel_yt_topic', ytPeriod:'intel_yt_period',
   igProfiles:'intel_ig_profiles', igFocus:'intel_ig_focus',
   igFormatFilter:'intel_ig_format', igIdeaCount:'intel_ig_ideacount',
 };
@@ -5713,13 +5730,25 @@ async function runYtIntelligence() {
   const n = parseInt(document.getElementById('ytVideoCount').value) || 10;
   const formatFilter = document.getElementById('ytFormatFilter')?.value || 'ALL';
   const ideaCount = parseInt(document.getElementById('ytIdeaCount')?.value) || 6;
+  const topic = document.getElementById('ytTopic')?.value.trim() || '';
+  const periodDays = parseInt(document.getElementById('ytPeriod')?.value) || 30;
+
   if (!channelRaw) { alert('Inserisci almeno un canale.'); return; }
   if (!apiKey) { alert('Inserisci la API Key YouTube.'); return; }
+
   const channels = channelRaw.split('\n').map(s => s.trim()).filter(Boolean);
   const btn = document.getElementById('ytIntelRunBtn');
   const status = document.getElementById('ytIntelStatus');
   btn.disabled = true;
-  status.textContent = 'Recupero video…';
+
+  // Calcolo data minima: oggi - periodDays
+  const minDate = new Date();
+  minDate.setDate(minDate.getDate() - periodDays);
+  const minDateISO = minDate.toISOString();
+  const periodLabel = periodDays === 7 ? 'ultima settimana' : periodDays === 30 ? 'ultimi 30 giorni' : 'ultimi 45 giorni';
+
+  status.textContent = 'Recupero video degli ' + periodLabel + '…';
+
   try {
     const allVideos = [];
     for (const ch of channels) {
@@ -5733,30 +5762,87 @@ async function runYtIntelligence() {
           if (srData.error) throw new Error(srData.error.message);
           channelId = srData.items?.[0]?.id?.channelId || ch;
         }
-        const vidRes = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=' + channelId + '&order=date&maxResults=' + n + '&type=video&key=' + apiKey);
+
+        // Se c'è un topic, lo aggiungo alla query di ricerca
+        // publishedAfter filtra solo i video nel periodo scelto
+        let searchUrl = 'https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=' + channelId
+          + '&order=date&maxResults=' + n + '&type=video'
+          + '&publishedAfter=' + encodeURIComponent(minDateISO)
+          + '&key=' + apiKey;
+        if (topic) {
+          searchUrl += '&q=' + encodeURIComponent(topic);
+        }
+
+        const vidRes = await fetch(searchUrl);
         const vidData = await vidRes.json();
         if (vidData.error) throw new Error(vidData.error.message);
         const videoIds = (vidData.items||[]).map(i => i.id?.videoId).filter(Boolean);
         if (!videoIds.length) continue;
+
         const statsRes = await fetch('https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails,snippet&id=' + videoIds.join(',') + '&key=' + apiKey);
         const statsData = await statsRes.json();
         (statsData.items||[]).forEach(v => {
-          allVideos.push({ channel: ch, title: v.snippet?.title||'—', publishedAt: (v.snippet?.publishedAt||'').slice(0,10), views: parseInt(v.statistics?.viewCount||0), likes: parseInt(v.statistics?.likeCount||0), duration: v.contentDetails?.duration||'', videoId: v.id });
+          const vViews = parseInt(v.statistics?.viewCount||0);
+          const vLikes = parseInt(v.statistics?.likeCount||0);
+          const vComments = parseInt(v.statistics?.commentCount||0);
+          const vEngScore = vViews > 0 ? ((vLikes + vComments) / vViews * 100) : 0;
+          allVideos.push({
+            channel: ch,
+            title: v.snippet?.title||'—',
+            publishedAt: (v.snippet?.publishedAt||'').slice(0,10),
+            views: vViews,
+            likes: vLikes,
+            comments: vComments,
+            engScore: Math.round(vEngScore * 100) / 100, // % engagement
+            duration: v.contentDetails?.duration||'',
+            videoId: v.id,
+            description: (v.snippet?.description||'').slice(0,300).replace(/\n/g,' '),
+            tags: (v.snippet?.tags||[]).slice(0,8).join(', ')
+          });
         });
       } catch(e) { console.warn('Errore canale ' + ch + ':', e.message); }
     }
-    if (!allVideos.length) { status.textContent = '⚠ Nessun video trovato.'; btn.disabled=false; return; }
-    status.textContent = allVideos.length + ' video · Genero idee…';
-    renderYtRawTable(allVideos);
-    const topVideos = [...allVideos].sort((a,b)=>b.views-a.views).slice(0,15);
-    const prompt = buildYtPrompt(topVideos, channels, formatFilter, ideaCount);
+
+    if (!allVideos.length) {
+      const hint = topic ? ' con topic "' + topic + '"' : '';
+      status.textContent = '⚠ Nessun video trovato negli ' + periodLabel + hint + '. Prova ad allargare il periodo.';
+      btn.disabled = false;
+      return;
+    }
+
+    // Bilanciamento automatico: se un canale ha pubblicato molto e altri poco,
+    // limito i canali prolifici a max 2x la media per non farli dominare.
+    // Es: 3 canali con 8/1/1 video → li porto a max 3/1/1 invece di 8/1/1.
+    const byChannel = {};
+    allVideos.forEach(v => { byChannel[v.channel] = (byChannel[v.channel] || 0) + 1; });
+    const channelCounts = Object.values(byChannel);
+    const avgPerChannel = channelCounts.reduce((s,c) => s+c, 0) / channelCounts.length;
+    const maxPerChannel = Math.max(Math.ceil(avgPerChannel * 2), 3); // almeno 3 per canale attivo
+    const balancedVideos = [];
+    const channelUsed = {};
+    // Prima passo: prendo i più visti di ogni canale fino al limite bilanciato
+    const sortedByViews = [...allVideos].sort((a,b) => b.views - a.views);
+    sortedByViews.forEach(v => {
+      channelUsed[v.channel] = (channelUsed[v.channel] || 0);
+      if (channelUsed[v.channel] < maxPerChannel) {
+        balancedVideos.push(v);
+        channelUsed[v.channel]++;
+      }
+    });
+
+    status.textContent = balancedVideos.length + ' video (' + periodLabel + ') · Genero idee…';
+    renderYtRawTable(balancedVideos);
+
+    const prompt = buildYtPrompt(balancedVideos, channels, formatFilter, ideaCount, topic, periodLabel);
     const ideas = await callClaudeForIdeas(prompt, 'ytIdeas', 'yt');
-    const label = channels.slice(0,2).join(', ') + (channels.length>2?' +altri':'');
-    const sessionId = intelHistoryAdd('yt', label, ideas, { channels: channelRaw, formatFilter, ideaCount });
+
+    const label = channels.slice(0,2).join(', ') + (channels.length>2?' +altri':'') + ' · ' + periodLabel;
+    const sessionId = intelHistoryAdd('yt', label, ideas, { channels: channelRaw, formatFilter, ideaCount, topic, periodDays });
     renderIdeas(ideas, 'ytIdeas', 'yt', sessionId, {});
+
     document.getElementById('ytIntelConfig').style.display = 'none';
     document.getElementById('ytIntelOutput').style.display = 'block';
-    document.getElementById('ytIntelOutTitle').textContent = allVideos.length + ' video da ' + channels.length + ' canali · ' + ideaCount + ' idee';
+    document.getElementById('ytIntelOutTitle').textContent = balancedVideos.length + ' video · ' + periodLabel + (topic ? ' · "' + topic + '"' : '') + ' · ' + ideaCount + ' idee';
     intelRenderHistoryBar('yt', sessionId);
     status.textContent = '';
   } catch(e) { status.textContent = '❌ ' + e.message; }
@@ -5766,36 +5852,79 @@ async function runYtIntelligence() {
 function renderYtRawTable(videos) {
   const box = document.getElementById('ytRawData');
   const fmt = n => n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n);
-  const sorted = [...videos].sort((a,b)=>b.views-a.views);
-  let h = '<div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);margin-bottom:8px;">Top video per views</div><table class="yt-comp-table"><thead><tr><th>Canale</th><th>Titolo</th><th>Data</th><th>Views</th><th>Like</th></tr></thead><tbody>';
-  sorted.slice(0,15).forEach(v => {
+  // Ordino per engagement score (non solo views) — video che hanno fatto discutere
+  const sorted = [...videos].sort((a,b) => b.engScore - a.engScore);
+  const byChannel = {};
+  videos.forEach(v => { byChannel[v.channel] = (byChannel[v.channel]||0) + 1; });
+  const channelSummary = Object.entries(byChannel).map(([ch,n]) => ch + ' (' + n + ')').join(', ');
+  let h = '<div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);margin-bottom:8px;">'
+    + videos.length + ' video analizzati · ordinati per engagement · ' + channelSummary + '</div>'
+    + '<table class="yt-comp-table"><thead><tr>'
+    + '<th>Canale</th><th>Titolo</th><th>Descrizione</th><th>Data</th>'
+    + '<th title="Visualizzazioni">Views</th><th title="Like">👍</th>'
+    + '<th title="Commenti">💬</th><th title="(Like+Commenti)/Views %">Eng%</th>'
+    + '</tr></thead><tbody>';
+  sorted.forEach(v => {
     const url = 'https://youtube.com/watch?v=' + v.videoId;
-    h += '<tr><td><span class="yt-comp-channel">' + v.channel + '</span></td><td><a href="' + url + '" target="_blank" rel="noopener" style="color:var(--ink);text-decoration:none;">' + v.title.slice(0,55) + (v.title.length>55?'…':'') + '</a></td><td style="font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);">' + v.publishedAt + '</td><td style="font-family:var(--font-mono);font-weight:700;color:var(--accent);">' + fmt(v.views) + '</td><td style="font-family:var(--font-mono);color:var(--ink-mute);">' + fmt(v.likes) + '</td></tr>';
+    const desc = v.description ? v.description.slice(0,70) + (v.description.length > 70 ? '…' : '') : '—';
+    const engColor = v.engScore >= 5 ? 'var(--pos)' : v.engScore >= 2 ? 'var(--accent)' : 'var(--ink-mute)';
+    h += '<tr>'
+      + '<td><span class="yt-comp-channel">' + v.channel + '</span></td>'
+      + '<td><a href="' + url + '" target="_blank" rel="noopener" style="color:var(--ink);text-decoration:none;" title="' + v.title + '">' + v.title.slice(0,40) + (v.title.length>40?'…':'') + '</a></td>'
+      + '<td style="font-size:10px;color:var(--ink-mute);">' + desc + '</td>'
+      + '<td style="font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);">' + v.publishedAt + '</td>'
+      + '<td style="font-family:var(--font-mono);font-weight:700;color:var(--accent);">' + fmt(v.views) + '</td>'
+      + '<td style="font-family:var(--font-mono);color:var(--ink-mute);">' + fmt(v.likes) + '</td>'
+      + '<td style="font-family:var(--font-mono);color:var(--ink-mute);">' + fmt(v.comments) + '</td>'
+      + '<td style="font-family:var(--font-mono);font-weight:700;color:' + engColor + ';">' + v.engScore.toFixed(1) + '%</td>'
+      + '</tr>';
   });
-  h += '</tbody></table>';
+  h += '</tbody></table>'
+    + '<div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);margin-top:6px;">'
+    + 'Eng% = (like + commenti) / visualizzazioni × 100. Verde ≥ 5%, arancione ≥ 2%. '
+    + 'Video con alto engagement = topic che ha generato discussione, non solo passività.</div>';
   box.innerHTML = h;
 }
 
-function buildYtPrompt(videos, channels, formatFilter, ideaCount) {
-  // Limito a 5 video top per non gonfiare il prompt
-  const rows = videos.slice(0,5).map(v =>
-    '"' + v.title.slice(0,60) + '" (' + v.channel + ', ' + v.views + ' views)'
-  ).join(', ');
+function buildYtPrompt(videos, channels, formatFilter, ideaCount, topic, periodLabel) {
+  // Passo tutti i video (non solo top 5) con titolo + descrizione per permettere
+  // il clustering per topic. Limito a 15 per non superare i token.
+  const rows = videos.slice(0,15).map(v => {
+    const eng = v.engScore ? ' [eng:' + v.engScore.toFixed(1) + '%]' : '';
+    const comments = v.comments ? ' 💬' + (v.comments >= 1000 ? (v.comments/1000).toFixed(1)+'k' : v.comments) : '';
+    let row = '"' + v.title.slice(0,70) + '" (' + v.channel + ', ' + v.views + ' views' + comments + eng + ', ' + v.publishedAt + ')';
+    if (v.description) row += ' — ' + v.description.slice(0,120);
+    if (v.tags) row += ' [tag: ' + v.tags + ']';
+    return row;
+  }).join('\n');
+
   const fmtHint = formatFilter === 'VIDEO'
     ? 'Genera SOLO VIDEO lunghi (10-20 min): analisi approfondite con dati.'
     : formatFilter === 'SHORT'
     ? 'Genera SOLO SHORT (max 60 sec): un dato sorprendente o consiglio rapido, hook nel primo secondo.'
     : 'Mix VIDEO lunghi e SHORT.';
-  return `Sei un content strategist fantacalcio italiano. Genera ${ideaCount} idee YouTube per @esperti_profeta_fantacalcio.
+  const topicCtx = topic ? 'TOPIC RICHIESTO: ' + topic + '. Concentrati su questo argomento.' : '';
+  const periodCtx = periodLabel ? 'Analisi degli ' + periodLabel + '.' : '';
 
-PROFILO: video analisi fantacalcio Serie A, cast 25-30 esperti (uno per club), tono tecnico. YouTube = profondità e analisi, non intrattenimento. Pubblico: fantaallenatori che vogliono vantaggio informativo.
-DIFFERENZIALE: l'esperto di ogni club porta insider knowledge non disponibile altrove (amichevoli, ballottaggi, cambi tattici, giovani che emergono).
-COSA NON FARE: no generici, no clickbait, no analisi senza dati specifici.
-TOP VIDEO COMPETITOR (${channels.join(', ')}): ${rows}.
+  return `Sei un analista di contenuti YouTube specializzato in fantacalcio italiano. Il tuo compito è identificare i TOPIC IN TENDENZA tra i canali competitor e trasformarli in idee originali per @esperti_profeta_fantacalcio.
+
+ISTRUZIONI:
+1. Leggi tutti i video elencati (titoli, descrizioni, tag, views, commenti, eng%)
+2. Identifica i TOPIC IN TENDENZA: se 2+ canali parlano dello stesso argomento È una tendenza. Dai priorità ai video con alto engagement% (ha generato discussione) oltre che alle views.
+3. Genera ${ideaCount} idee YouTube ORIGINALI per @esperti_profeta_fantacalcio ispirate a queste tendenze, con angolo unico legato al cast di esperti
+4. Nel campo "angle" indica esplicitamente: quale topic è in tendenza, quanti canali ne parlano, e come lo differenzia il cast
+
+PROFILO: analisi fantacalcio Serie A, cast 25-30 esperti (uno per club), tono tecnico. Pubblico: fantaallenatori che vogliono vantaggio informativo insider.
+${topicCtx}
+${periodCtx}
+
+VIDEO COMPETITOR DA ANALIZZARE (${channels.join(', ')}):
+${rows}
+
 ${fmtHint}
 
 Rispondi SOLO con JSON array puro, zero markdown:
-[{"num":1,"format":"VIDEO","title":"titolo SEO specifico max 70 char","angle":"come sfrutta l'esperto del club vs competitor","body":"struttura: hook primo minuto, 3-4 sezioni con dati specifici, conclusione con top 3 consigli fanta pratici","slot":"Martedi 18:00","tags":["fantacalcio","seriea","asta"]}]
+[{"num":1,"format":"VIDEO","title":"titolo SEO specifico max 70 char","angle":"topic identificato come tendenza + come lo differenzia il cast di esperti","body":"struttura dettagliata: hook primo minuto, 3-4 sezioni con dati specifici, conclusione con top 3 consigli fanta pratici","slot":"Martedi 18:00","tags":["fantacalcio","seriea","asta"]}]
 Genera esattamente ${ideaCount} oggetti.`;
 }
 
