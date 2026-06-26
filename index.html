@@ -3532,7 +3532,7 @@ function renderKPIs(daily, profile, posts) {
   const elSubStep = document.getElementById('fb-subscribers-step');
   const elFunnelBar = document.querySelector('.funnel-bar');
   
-  if (window.CACHED_SUBSCRIBERS && !window.CACHED_SUBSCRIBERS.unauthorized && !window.CACHED_SUBSCRIBERS.error) {
+  if (window.CACHED_SUBSCRIBERS && !window.CACHED_SUBSCRIBERS.unauthorized && !window.CACHED_SUBSCRIBERS.error && Array.isArray(window.CACHED_SUBSCRIBERS.subscribers)) {
     if (elFollowArrow) elFollowArrow.style.display = 'flex';
     if (elSubStep) elSubStep.style.display = 'flex';
     if (elFunnelBar) elFunnelBar.style.gridTemplateColumns = 'repeat(4, 1fr)';
@@ -3753,16 +3753,24 @@ async function unlockSubscribers() {
     });
     if (res.ok) {
       const data = await res.json();
-      try {
-        sessionStorage.setItem('publish_secret', pw);
-        localStorage.setItem('publish_secret', pw);
-      } catch(e) {}
-      
-      window.CACHED_SUBSCRIBERS = data;
-      
-      resetSubscribersHTML();
-      renderSubscribersKPIs(data);
-      renderSubscribersChart();
+      if (data && Array.isArray(data.subscribers)) {
+        try {
+          sessionStorage.setItem('publish_secret', pw);
+          localStorage.setItem('publish_secret', pw);
+        } catch(e) {}
+        
+        window.CACHED_SUBSCRIBERS = data;
+        
+        resetSubscribersHTML();
+        renderSubscribersKPIs(data);
+        renderSubscribersChart();
+      } else {
+        if (errDiv) {
+          errDiv.textContent = 'Dati non validi dal server. Verifica di aver installato il nuovo Apps Script nel Google Sheet degli iscritti.';
+          errDiv.style.display = 'block';
+        }
+        if (btn) { btn.textContent = 'Sblocca dati'; btn.disabled = false; }
+      }
     } else {
       if (errDiv) {
         errDiv.textContent = res.status === 401 ? 'Password errata. Riprova.' : 'Errore del server durante il caricamento.';
@@ -6949,9 +6957,16 @@ async function init() {
         });
         if (subRes.ok) {
           const subData = await subRes.json();
-          window.CACHED_SUBSCRIBERS = subData;
-          renderSubscribersKPIs(subData);
-          loadingDone('subscribers', `Iscritti · ${subData.subscribers.length} totali`);
+          if (subData && Array.isArray(subData.subscribers)) {
+            window.CACHED_SUBSCRIBERS = subData;
+            renderSubscribersKPIs(subData);
+            loadingDone('subscribers', `Iscritti · ${subData.subscribers.length} totali`);
+          } else {
+            console.warn('Dati iscritti non validi (manca array subscribers):', subData);
+            window.CACHED_SUBSCRIBERS = { error: true };
+            renderSubscribersError();
+            loadingWarn('subscribers', 'Iscritti · dati non validi');
+          }
         } else if (subRes.status === 401) {
           window.CACHED_SUBSCRIBERS = { unauthorized: true };
           renderSubscribersUnauthorized();
