@@ -1797,6 +1797,10 @@ body {
       <span class="material-symbols-rounded">travel_explore</span>
       <span class="tab-label">Intelligence</span>
     </button>
+    <button class="tab-btn" data-tab="acquisizioni" onclick="tabSwitch(this)" role="tab">
+      <span class="material-symbols-rounded">groups</span>
+      <span class="tab-label">Iscritti</span>
+    </button>
   </nav>
 
   <!-- TAB: SUMMARY (daily action + funnel + KPI) -->
@@ -1836,10 +1840,16 @@ body {
       <span class="funnel-step-conv" id="fb-engaged-conv">—</span>
       <span class="funnel-step-arrow"><span class="material-symbols-rounded">arrow_forward</span></span>
     </div>
-    <div class="funnel-step warn">
+    <div class="funnel-step">
       <span class="funnel-step-label">Nuovi follower netti</span>
       <span class="funnel-step-value" id="fb-follow">—</span>
       <span class="funnel-step-conv" id="fb-follow-conv">—</span>
+      <span class="funnel-step-arrow" id="fb-follow-arrow" style="display:none;"><span class="material-symbols-rounded">arrow_forward</span></span>
+    </div>
+    <div class="funnel-step warn" id="fb-subscribers-step" style="display:none;">
+      <span class="funnel-step-label">Iscritti paganti</span>
+      <span class="funnel-step-value" id="fb-subscribers">—</span>
+      <span class="funnel-step-conv" id="fb-subscribers-conv">—</span>
     </div>
   </div>
 
@@ -2726,6 +2736,74 @@ body {
     </div>
   </section>
 
+  <!-- TAB: ACQUISIZIONI -->
+  <section class="section" data-tab="acquisizioni">
+    <!-- KPI -->
+    <div class="kpi-band" style="grid-template-columns: repeat(4, 1fr); margin-bottom:24px;" id="subKpiBand">
+      <div class="kpi">
+        <div class="kpi-label">👥 Iscritti Totali</div>
+        <div class="kpi-value" id="sub-total">—</div>
+        <div class="kpi-target">Registrati da modulo Tally</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">💳 Iscritti Paganti</div>
+        <div class="kpi-value" id="sub-paying">—</div>
+        <div class="kpi-target">Screenshot PayPal allegato</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">📈 Conversione Iscritti</div>
+        <div class="kpi-value" id="sub-conversion">—</div>
+        <div class="kpi-target">Percentuale paganti confermati</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">💰 Entrate Stimate</div>
+        <div class="kpi-value accent" id="sub-revenue">—</div>
+        <div class="kpi-target">Quota fissa 15€ / utente</div>
+      </div>
+    </div>
+
+    <!-- GRIGLIA PANNELLI (Grafico + Recenti) -->
+    <div class="panel-grid two-col">
+      <!-- Grafico Acquisizioni -->
+      <div class="panel">
+        <div class="panel-title">
+          <span class="material-symbols-rounded" style="color:var(--accent);">insights</span>
+          Andamento mensile iscritti
+        </div>
+        <div class="panel-sub">Registrazioni totali vs paganti confermati suddivisi per mese</div>
+        <div style="position:relative;height:300px;margin-top:20px;">
+          <canvas id="chartSubscribers"></canvas>
+        </div>
+      </div>
+
+      <!-- Iscritti Recenti -->
+      <div class="panel">
+        <div class="panel-title">
+          <span class="material-symbols-rounded" style="color:var(--info);">history</span>
+          Iscrizioni recenti
+        </div>
+        <div class="panel-sub">Ultimi 10 utenti registrati dal sito</div>
+        <div style="margin-top:20px;overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px;text-align:left;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--line);color:var(--ink-soft);font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;">
+                <th style="padding:8px 0;font-weight:600;">Data</th>
+                <th style="padding:8px 0;font-weight:600;">Nome</th>
+                <th style="padding:8px 0;font-weight:600;">Telegram</th>
+                <th style="padding:8px 0;font-weight:600;text-align:right;">Stato</th>
+              </tr>
+            </thead>
+            <tbody id="subscribersTableBody">
+              <tr>
+                <td colspan="4" style="padding:16px 0;color:var(--ink-mute);text-align:center;">Caricamento dati...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- LOADING OVERLAY -->
   <div id="loadingOverlay">
     <div id="loadingBox">
@@ -3407,6 +3485,30 @@ function renderKPIs(daily, profile, posts) {
   document.getElementById('fb-follow').textContent = `${foll>=0?'+':''}${foll}`;
   document.getElementById('fb-follow-conv').textContent = `${pct1(conv)} reach→follower · target 1,2%`;
 
+  // Integrazione dinamica degli iscritti nel funnel
+  const elFollowArrow = document.getElementById('fb-follow-arrow');
+  const elSubStep = document.getElementById('fb-subscribers-step');
+  const elFunnelBar = document.querySelector('.funnel-bar');
+  
+  if (window.CACHED_SUBSCRIBERS && !window.CACHED_SUBSCRIBERS.unauthorized && !window.CACHED_SUBSCRIBERS.error) {
+    if (elFollowArrow) elFollowArrow.style.display = 'flex';
+    if (elSubStep) elSubStep.style.display = 'flex';
+    if (elFunnelBar) elFunnelBar.style.gridTemplateColumns = 'repeat(4, 1fr)';
+    
+    const paying = window.CACHED_SUBSCRIBERS.stats.payingSubscribers;
+    const revenue = window.CACHED_SUBSCRIBERS.stats.estimatedRevenue;
+    
+    const elSubVal = document.getElementById('fb-subscribers');
+    const elSubConv = document.getElementById('fb-subscribers-conv');
+    
+    if (elSubVal) elSubVal.textContent = paying.toLocaleString('it-IT');
+    if (elSubConv) elSubConv.textContent = `${revenue.toLocaleString('it-IT')} € entrate totali`;
+  } else {
+    if (elFollowArrow) elFollowArrow.style.display = 'none';
+    if (elSubStep) elSubStep.style.display = 'none';
+    if (elFunnelBar) elFunnelBar.style.gridTemplateColumns = 'repeat(3, 1fr)';
+  }
+
   return { period, dStart, dEnd };
 }
 
@@ -3544,6 +3646,312 @@ function renderReachChart(period) {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1c212b', borderColor: '#ff8c1e', borderWidth: 1, titleColor: '#ffa53c', bodyColor: '#f5f5f5', titleFont: { family: 'Inter', size: 11 }, bodyFont: { family: 'Inter', size: 12 }, padding: 10, displayColors: false, callbacks: { label: c => 'Reach: ' + c.parsed.y.toLocaleString('it-IT') } } },
       scales: { x: { ticks: { maxTicksLimit: 10, font: { size: 10, family: 'Inter' }, color: '#5a5c64' }, grid: { display: false }, border: { color: 'rgba(255,255,255,0.06)' } }, y: { ticks: { font: { size: 10, family: 'Inter' }, color: '#5a5c64', callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v }, grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false }, border: { display: false } } }
+    }
+  });
+}
+
+// ============================================================================
+// LOGICA ISCRITTI & ACQUISIZIONI
+// ============================================================================
+
+// Renderizza lo stato Non Autorizzato (richiesta password)
+function renderSubscribersUnauthorized() {
+  const container = document.querySelector('section[data-tab="acquisizioni"]');
+  if (!container) return;
+  
+  container.innerHTML = `
+    <div style="max-width:480px;margin:80px auto;text-align:center;padding:40px 30px;background:var(--bg-elev);border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 40px rgba(0,0,0,0.3);">
+      <span class="material-symbols-rounded" style="font-size:56px;color:var(--accent);margin-bottom:20px;display:block;">lock</span>
+      <h3 style="font-size:18px;font-weight:600;color:var(--ink);margin-bottom:12px;">Sezione protetta</h3>
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.5;margin-bottom:24px;">Inserisci la password di pubblicazione (PUBLISH_SECRET) per sbloccare i dati degli iscritti e delle entrate del progetto.</p>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <input type="password" id="subPassField" placeholder="Inserisci PUBLISH_SECRET" style="width:100%;padding:11px 14px;background:var(--bg-elev-2);border:1px solid var(--line-strong);border-radius:6px;color:var(--ink);font-size:13.5px;text-align:center;" onkeydown="if(event.key==='Enter') unlockSubscribers()">
+        <button class="nav-btn" onclick="unlockSubscribers()" style="width:100%;justify-content:center;padding:11px 0;background:var(--accent);border-color:var(--accent);color:#000;font-weight:600;font-size:13.5px;">Sblocca dati</button>
+      </div>
+      <div id="subUnlockError" style="margin-top:12px;font-size:12px;color:var(--neg);display:none;">Password errata. Riprova.</div>
+    </div>
+  `;
+}
+
+// Gestisce lo sblocco tramite password
+async function unlockSubscribers() {
+  const pw = document.getElementById('subPassField').value.trim();
+  if (!pw) return;
+  
+  const errDiv = document.getElementById('subUnlockError');
+  if (errDiv) errDiv.style.display = 'none';
+  
+  // Mostra caricamento locale nel bottone
+  const btn = document.querySelector('section[data-tab="acquisizioni"] button');
+  if (btn) { btn.textContent = 'Verifica in corso...'; btn.disabled = true; }
+  
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/subscribers`, {
+      headers: { 'X-Publish-Secret': pw }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      // Salva la password nelle sessioni e nel localStorage
+      try {
+        sessionStorage.setItem('publish_secret', pw);
+        localStorage.setItem('publish_secret', pw);
+      } catch(e) {}
+      
+      window.CACHED_SUBSCRIBERS = data;
+      
+      // Ripristina l'HTML originario della sezione iscritti
+      resetSubscribersHTML();
+      renderSubscribersKPIs(data);
+      renderSubscribersChart();
+    } else {
+      if (errDiv) {
+        errDiv.textContent = res.status === 401 ? 'Password errata. Riprova.' : 'Errore del server durante il caricamento.';
+        errDiv.style.display = 'block';
+      }
+      if (btn) { btn.textContent = 'Sblocca dati'; btn.disabled = false; }
+    }
+  } catch(e) {
+    if (errDiv) {
+      errDiv.textContent = 'Errore di rete: ' + e.message;
+      errDiv.style.display = 'block';
+    }
+    if (btn) { btn.textContent = 'Sblocca dati'; btn.disabled = false; }
+  }
+}
+
+// Ripristina l'HTML strutturato del tab acquisizioni dopo lo sblocco
+function resetSubscribersHTML() {
+  const container = document.querySelector('section[data-tab="acquisizioni"]');
+  if (!container) return;
+  
+  container.innerHTML = `
+    <div class="kpi-band" style="grid-template-columns: repeat(4, 1fr); margin-bottom:24px;" id="subKpiBand">
+      <div class="kpi">
+        <div class="kpi-label">👥 Iscritti Totali</div>
+        <div class="kpi-value" id="sub-total">—</div>
+        <div class="kpi-target">Registrati da modulo Tally</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">💳 Iscritti Paganti</div>
+        <div class="kpi-value" id="sub-paying">—</div>
+        <div class="kpi-target">Screenshot PayPal allegato</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">📈 Conversione Iscritti</div>
+        <div class="kpi-value" id="sub-conversion">—</div>
+        <div class="kpi-target">Percentuale paganti confermati</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">💰 Entrate Stimate</div>
+        <div class="kpi-value accent" id="sub-revenue">—</div>
+        <div class="kpi-target">Quota fissa 15€ / utente</div>
+      </div>
+    </div>
+
+    <div class="panel-grid two-col">
+      <div class="panel">
+        <div class="panel-title">
+          <span class="material-symbols-rounded" style="color:var(--accent);">insights</span>
+          Andamento mensile iscritti
+        </div>
+        <div class="panel-sub">Registrazioni totali vs paganti confermati suddivisi per mese</div>
+        <div style="position:relative;height:300px;margin-top:20px;">
+          <canvas id="chartSubscribers"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">
+          <span class="material-symbols-rounded" style="color:var(--info);">history</span>
+          Iscrizioni recenti
+        </div>
+        <div class="panel-sub">Ultimi 10 utenti registrati dal sito</div>
+        <div style="margin-top:20px;overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px;text-align:left;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--line);color:var(--ink-soft);font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;">
+                <th style="padding:8px 0;font-weight:600;">Data</th>
+                <th style="padding:8px 0;font-weight:600;">Nome</th>
+                <th style="padding:8px 0;font-weight:600;">Telegram</th>
+                <th style="padding:8px 0;font-weight:600;text-align:right;">Stato</th>
+              </tr>
+            </thead>
+            <tbody id="subscribersTableBody">
+              <tr>
+                <td colspan="4" style="padding:16px 0;color:var(--ink-mute);text-align:center;">Caricamento dati...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Renderizza lo stato di Errore Generico
+function renderSubscribersError() {
+  const container = document.querySelector('section[data-tab="acquisizioni"]');
+  if (!container) return;
+  
+  container.innerHTML = `
+    <div style="max-width:480px;margin:80px auto;text-align:center;padding:40px 30px;background:var(--bg-elev);border:1px solid var(--line);border-radius:12px;">
+      <span class="material-symbols-rounded" style="font-size:56px;color:var(--neg);margin-bottom:20px;display:block;">error</span>
+      <h3 style="font-size:18px;font-weight:600;color:var(--ink);margin-bottom:12px;">Errore caricamento dati</h3>
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.5;margin-bottom:24px;">Si è verificato un errore nel recupero delle informazioni degli iscritti da Google Sheets. Verifica la configurazione del backend o riprova più tardi.</p>
+      <button class="nav-btn" onclick="location.reload()" style="width:100%;justify-content:center;padding:11px 0;">Ricarica la pagina</button>
+    </div>
+  `;
+}
+
+// Popola i KPI della sezione iscritti
+function renderSubscribersKPIs(data) {
+  if (!data || !data.stats) return;
+  const stats = data.stats;
+  
+  const elTotal = document.getElementById('sub-total');
+  const elPaying = document.getElementById('sub-paying');
+  const elConversion = document.getElementById('sub-conversion');
+  const elRevenue = document.getElementById('sub-revenue');
+  
+  if (elTotal) elTotal.textContent = stats.totalSubscribers.toLocaleString('it-IT');
+  if (elPaying) elPaying.textContent = stats.payingSubscribers.toLocaleString('it-IT');
+  
+  if (elConversion) {
+    const rate = stats.totalSubscribers > 0 ? (stats.payingSubscribers / stats.totalSubscribers * 100) : 0;
+    elConversion.textContent = rate.toFixed(1) + '%';
+  }
+  
+  if (elRevenue) elRevenue.textContent = stats.estimatedRevenue.toLocaleString('it-IT') + ' €';
+  
+  // Renderizza anche la tabella dei recenti
+  renderSubscribersTable(data.recent);
+}
+
+// Popola la tabella delle iscrizioni recenti
+function renderSubscribersTable(recent) {
+  const tbody = document.getElementById('subscribersTableBody');
+  if (!tbody) return;
+  
+  if (!recent || recent.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="padding:16px 0;color:var(--ink-mute);text-align:center;">Nessun iscritto registrato.</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = recent.map(s => {
+    const dateStr = s.date ? new Date(s.date).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
+    const tgUsername = s.telegram ? s.telegram : 'Non inserito';
+    const statusHtml = s.paid 
+      ? `<span style="padding:2px 6px;background:var(--pos-soft);color:var(--pos);border-radius:4px;font-size:10px;font-weight:600;text-transform:uppercase;">Pagato</span>`
+      : `<span style="padding:2px 6px;background:var(--neg-soft);color:var(--neg);border-radius:4px;font-size:10px;font-weight:600;text-transform:uppercase;">In attesa</span>`;
+      
+    return `
+      <tr style="border-bottom:1px solid var(--line);transition:background 0.15s;">
+        <td style="padding:11px 0;color:var(--ink-soft);font-family:var(--font-mono);font-size:11.5px;">${dateStr}</td>
+        <td style="padding:11px 0;color:var(--ink);font-weight:500;">${s.name}</td>
+        <td style="padding:11px 0;color:var(--info);font-family:var(--font-mono);font-size:12px;">${tgUsername}</td>
+        <td style="padding:11px 0;text-align:right;">${statusHtml}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// Disegna il grafico dell'andamento mensile
+function renderSubscribersChart() {
+  const canvas = document.getElementById('chartSubscribers');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  
+  if (window.subscribersChartInstance) {
+    window.subscribersChartInstance.destroy();
+    window.subscribersChartInstance = null;
+  }
+  
+  const data = window.CACHED_SUBSCRIBERS;
+  if (!data || !data.stats || !data.stats.monthly || data.unauthorized || data.error) return;
+  
+  const monthly = data.stats.monthly;
+  // Ordina i mesi in ordine cronologico
+  const sortedMonths = Object.keys(monthly).sort();
+  
+  // Nomi leggibili dei mesi in italiano
+  const monthNames = {
+    '01': 'Gen', '02': 'Feb', '03': 'Mar', '04': 'Apr', '05': 'Mag', '06': 'Giu',
+    '07': 'Lug', '08': 'Ago', '09': 'Set', '10': 'Ott', '11': 'Nov', '12': 'Dic'
+  };
+  
+  const labels = sortedMonths.map(m => {
+    const parts = m.split('-');
+    return monthNames[parts[1]] + ' ' + parts[0].slice(-2);
+  });
+  
+  const totalData = sortedMonths.map(m => monthly[m].total);
+  const payingData = sortedMonths.map(m => monthly[m].paying);
+  
+  window.subscribersChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Iscritti Totali',
+          data: totalData,
+          backgroundColor: 'rgba(90,174,240,0.3)', // var(--info)
+          borderColor: '#5aaef0',
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          label: 'Paganti Confermati',
+          data: payingData,
+          backgroundColor: 'rgba(255,140,30,0.5)', // var(--accent)
+          borderColor: '#ff8c1e',
+          borderWidth: 1,
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            color: '#a0a0a8',
+            font: { family: 'Inter', size: 11 }
+          }
+        },
+        tooltip: {
+          backgroundColor: '#1c212b',
+          borderColor: '#ff8c1e',
+          borderWidth: 1,
+          titleColor: '#ffa53c',
+          bodyColor: '#f5f5f5',
+          titleFont: { family: 'Inter', size: 11 },
+          bodyFont: { family: 'Inter', size: 12 },
+          padding: 10
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            font: { size: 10.5, family: 'Inter' },
+            color: '#5a5c64'
+          },
+          grid: { display: false },
+          border: { color: 'rgba(255,255,255,0.06)' }
+        },
+        y: {
+          ticks: {
+            font: { size: 10.5, family: 'Inter' },
+            color: '#5a5c64',
+            stepSize: 1
+          },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { display: false }
+        }
+      }
     }
   });
 }
@@ -4328,6 +4736,7 @@ function tabSwitch(btn) {
   }
   if (tabId === 'calendario') { calRender(); ytRender(); }
   if (tabId === 'intelligence') { intelInitHistoryBars(); }
+  if (tabId === 'acquisizioni') { renderSubscribersChart(); }
 }
 
 // ============================================================================
@@ -6321,6 +6730,43 @@ async function init() {
       loadingWarn('demo', 'Dati demografici non disponibili');
     }
     loadingProgress(92);
+
+    // === FASE 5: Dati iscritti ===
+    loadingStep('subscribers', 'Caricamento dati iscritti…');
+    try {
+      let savedSecret = '';
+      try { savedSecret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
+      
+      if (savedSecret) {
+        const subRes = await fetch(`${BACKEND_BASE}/api/subscribers`, {
+          headers: { 'X-Publish-Secret': savedSecret }
+        });
+        if (subRes.ok) {
+          const subData = await subRes.json();
+          window.CACHED_SUBSCRIBERS = subData;
+          renderSubscribersKPIs(subData);
+          loadingDone('subscribers', `Iscritti · ${subData.stats.payingSubscribers} paganti di ${subData.stats.totalSubscribers}`);
+        } else if (subRes.status === 401) {
+          window.CACHED_SUBSCRIBERS = { unauthorized: true };
+          renderSubscribersUnauthorized();
+          loadingDone('subscribers', 'Iscritti · sbloccare con password');
+        } else {
+          window.CACHED_SUBSCRIBERS = { error: true };
+          renderSubscribersError();
+          loadingWarn('subscribers', 'Iscritti · errore caricamento');
+        }
+      } else {
+        window.CACHED_SUBSCRIBERS = { unauthorized: true };
+        renderSubscribersUnauthorized();
+        loadingDone('subscribers', 'Iscritti · inserire password per sbloccare');
+      }
+    } catch(e) {
+      console.warn('Errore iscritti:', e);
+      window.CACHED_SUBSCRIBERS = { error: true };
+      renderSubscribersError();
+      loadingWarn('subscribers', 'Iscritti non disponibili');
+    }
+    loadingProgress(98);
 
     // Aggiorno barra mappa: scala log su max 100k (L4 medio)
     const mapBar = document.getElementById('mapYouBar');
