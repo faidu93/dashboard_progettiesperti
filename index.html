@@ -4948,7 +4948,15 @@ function tabSwitch(btn) {
   if (tabId === 'performance' && CACHED && CACHED.period) {
     renderReachChart(CACHED.period);
   }
-  if (tabId === 'calendario') { calRender(); ytRender(); }
+  if (tabId === 'calendario') {
+    calRender();
+    ytRender();
+    let savedSecret = '';
+    try { savedSecret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
+    if (savedSecret) {
+      loadPublishQueue();
+    }
+  }
   if (tabId === 'intelligence') { intelInitHistoryBars(); }
   if (tabId === 'acquisizioni') { renderSubscribersChart(); }
 }
@@ -5188,16 +5196,16 @@ function calRender() {
       const isAutoPub = /✅/.test(p.title || '') || /Pubblicazione automatica/i.test(p.notes || '');
       posts += `<div class="cal-post plan ${p.type}${isAutoPub ? ' autopub' : ''}"
         draggable="true"
-        data-evid="${p.id}" data-platform="ig" data-evtype="${p.type}" data-evtitle="${p.title.replace(/"/g,'&quot;')}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}"
+        data-evid="${p.id}" data-platform="ig" data-evtype="${p.type}" data-evtitle="${(p.title||'').replace(/"/g,'&quot;')}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}"
         onclick="calEditPlanned(event,'${p.id}','ig')"
-        title="${isAutoPub ? '✅ Pubblicazione automatica · ' : ''}IG · ${p.time||''} ${p.title} (trascina per spostare)">${calPostChip('ig', p.type, (p.time?p.time.slice(0,5)+' ':'')+p.title)}</div>`;
+        title="${isAutoPub ? '✅ Pubblicazione automatica · ' : ''}IG · ${p.time||''} ${p.title||''} (trascina per spostare)">${calPostChip('ig', p.type, (p.time?p.time.slice(0,5)+' ':'')+(p.title||''))}</div>`;
     });
     ytPlanned.forEach(p => {
       posts += `<div class="cal-post plan ${p.type||'VIDEO'}"
         draggable="true"
-        data-evid="${p.id}" data-platform="yt" data-evtype="${p.type}" data-evtitle="${p.title.replace(/"/g,'&quot;')}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}"
+        data-evid="${p.id}" data-platform="yt" data-evtype="${p.type}" data-evtitle="${(p.title||'').replace(/"/g,'&quot;')}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}"
         onclick="calEditPlanned(event,'${p.id}','yt')"
-        title="YT · ${p.time||''} ${p.title} (trascina per spostare)">${calPostChip('yt', p.type||'VIDEO', (p.time?p.time.slice(0,5)+' ':'')+p.title)}</div>`;
+        title="YT · ${p.time||''} ${p.title||''} (trascina per spostare)">${calPostChip('yt', p.type||'VIDEO', (p.time?p.time.slice(0,5)+' ':'')+(p.title||''))}</div>`;
     });
 
     h += `<div class="cal-day${cls}" data-date="${ds}"
@@ -6649,7 +6657,7 @@ async function callClaudeForIdeas(prompt, targetId, platform) {
   const res = await fetch(BACKEND_BASE + '/api/claude', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret },
-    body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 4000, messages: [{ role: 'user', content: prompt }] })
+    body: JSON.stringify({ model: 'claude-3-5-haiku-20241022', max_tokens: 4000, messages: [{ role: 'user', content: prompt }] })
   });
   const data = await res.json();
   if (data.error) {
