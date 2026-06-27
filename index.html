@@ -6861,6 +6861,11 @@ async function init() {
   // CRITICAL: setup eventi PRIMA del fetch — così i bottoni funzionano anche se il backend fallisce
   calSetupEvents();
   calRender();
+  let savedSecret = '';
+  try { savedSecret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
+  if (savedSecret) {
+    loadPublishQueue();
+  }
   gcalInit(); // Google Calendar init sempre
   intelRestoreFields(); // ripristina API key e preferenze Intelligence
   loadingDone('setup', 'Interfaccia pronta');
