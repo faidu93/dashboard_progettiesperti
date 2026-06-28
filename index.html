@@ -6848,6 +6848,68 @@ function intelInitHistoryBars() {
   intelRenderHistoryBar('ig', null);
 }
 
+function generateMockInstagramData() {
+  const profile = {
+    account_name: 'esperti_profeta_mock',
+    username: 'esperti_profeta_mock',
+    followers_count: 12450,
+    media_count: 142,
+    profile_picture_url: ''
+  };
+
+  const daily = [];
+  const now = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(now.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    daily.push({
+      date: dateStr,
+      reach: Math.floor(Math.random() * 2000) + 1500,
+      views: Math.floor(Math.random() * 2000) + 1500,
+      follower_count_1d: Math.floor(Math.random() * 30) - 5,
+      accounts_engaged: 0,
+      total_interactions: 0,
+      follows_and_unfollows: 0,
+      likes: 0, comments: 0, saves: 0, shares: 0
+    });
+  }
+
+  const posts = [];
+  const types = ['REELS', 'CAROUSEL_ALBUM', 'IMAGE'];
+  const captions = [
+    '🔥 CONSIGLI FANTACALCIO 11a GIORNATA! Chi schierare e chi evitare!',
+    '⚽️ ANALISI UDINESE - LECCE: Scopriamo le gerarchie di Runjaic.',
+    '🧠 I 5 SCOMMESSE da bonus per questa giornata di Serie A!',
+    '📸 I top voti di giornata secondo i nostri esperti di squadra.',
+    '🎥 Reels speciale scambi: ecco chi dare via subito!'
+  ];
+
+  for (let i = 0; i < 20; i++) {
+    const d = new Date();
+    d.setDate(now.getDate() - i * 1.5);
+    const likes = Math.floor(Math.random() * 200) + 50;
+    const comments = Math.floor(Math.random() * 20) + 5;
+    const saved = Math.floor(Math.random() * 30) + 5;
+    const shares = Math.floor(Math.random() * 15) + 2;
+    const reach = likes * 15 + Math.floor(Math.random() * 500);
+    posts.push({
+      media_id: 'mock_' + (100000000000 + i),
+      media_caption: captions[i % captions.length],
+      media_type: types[i % types.length],
+      media_permalink: 'https://instagram.com',
+      timestamp: d.toISOString(),
+      media_like_count: likes,
+      media_comments_count: comments,
+      media_reach: reach,
+      media_engagement: likes + comments + saved + shares,
+      media_saved: saved,
+      media_shares: shares
+    });
+  }
+
+  return { profile, daily, posts };
+}
 
 async function init() {
   // Avvio overlay di caricamento
@@ -6875,13 +6937,26 @@ async function init() {
     // === FASE 1: Instagram Insights ===
     loadingStep('ig', 'Connessione Instagram Graph API…');
     loadingProgress(15);
-    const ig = await fetchBackend('/api/instagram-insights');
+    let ig = null;
+    let isMockIg = false;
+    try {
+      ig = await fetchBackend('/api/instagram-insights');
+    } catch(e) {
+      console.warn('Errore connessione backend Instagram, uso dati di test:', e);
+      loadingWarn('ig', 'Instagram non disponibile (uso dati di test)');
+      ig = generateMockInstagramData();
+      isMockIg = true;
+    }
     const daily = ig.daily || [];
     const posts = ig.posts || [];
     const profile = ig.profile || {};
     daily.sort((a,b) => new Date(a.date) - new Date(b.date));
     CACHED = { daily, posts, profile };
-    loadingDone('ig', `Instagram · ${posts.length} post · ${daily.length} giorni`);
+    if (isMockIg) {
+      window.IS_USING_MOCK_IG = true;
+    } else {
+      loadingDone('ig', `Instagram · ${posts.length} post · ${daily.length} giorni`);
+    }
     loadingProgress(35);
 
     renderFreshness(daily);
@@ -7011,7 +7086,11 @@ async function init() {
     }
     const now = new Date();
     document.getElementById('footTime').textContent = now.toLocaleString('it-IT');
-    setStatus('live', 'Live · ' + now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}));
+    if (window.IS_USING_MOCK_IG) {
+      setStatus('error', 'Offline (Dati di test) · ' + now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}));
+    } else {
+      setStatus('live', 'Live · ' + now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}));
+    }
     loadingFinish(true);
   } catch(e) {
     console.error('Backend error:', e);
