@@ -2825,6 +2825,7 @@ body {
               <tr style="border-bottom:1px solid var(--line); color:var(--ink-soft); font-family:var(--font-mono); font-size:10px; text-transform:uppercase;">
                 <th style="padding:8px 0; font-weight:600;">Data</th>
                 <th style="padding:8px 0; font-weight:600;">Nome & Cognome</th>
+                <th style="padding:8px 0; font-weight:600; text-align:center;">Donazione</th>
                 <th style="padding:8px 0; font-weight:600; text-align:right;">Telegram</th>
               </tr>
             </thead>
@@ -3538,7 +3539,7 @@ function renderKPIs(daily, profile, posts) {
     if (elFunnelBar) elFunnelBar.style.gridTemplateColumns = 'repeat(4, 1fr)';
     
     const paying = window.CACHED_SUBSCRIBERS.subscribers.length;
-    const revenue = paying * 15;
+    const revenue = window.CACHED_SUBSCRIBERS.subscribers.reduce((acc, s) => acc + (s.amount !== undefined ? s.amount : 15), 0);
     
     const elSubVal = document.getElementById('fb-subscribers');
     const elSubConv = document.getElementById('fb-subscribers-conv');
@@ -3880,6 +3881,7 @@ function resetSubscribersHTML() {
               <tr style="border-bottom:1px solid var(--line); color:var(--ink-soft); font-family:var(--font-mono); font-size:10px; text-transform:uppercase;">
                 <th style="padding:8px 0; font-weight:600;">Data</th>
                 <th style="padding:8px 0; font-weight:600;">Nome & Cognome</th>
+                <th style="padding:8px 0; font-weight:600; text-align:center;">Donazione</th>
                 <th style="padding:8px 0; font-weight:600; text-align:right;">Telegram</th>
               </tr>
             </thead>
@@ -3923,7 +3925,7 @@ function renderSubscribersKPIs(data) {
   const list = data.subscribers;
   
   const total = list.length;
-  const revenue = total * 15;
+  const revenue = list.reduce((acc, s) => acc + (s.amount !== undefined ? s.amount : 15), 0);
   
   // Media mensile
   const monthlyCounts = {};
@@ -3972,7 +3974,7 @@ function renderSubscribersTablePage() {
   const pageItems = subFilteredList.slice(startIdx, endIdx);
   
   if (totalItems === 0) {
-    tbody.innerHTML = `<tr><td colspan="3" style="padding:16px 0;color:var(--ink-mute);text-align:center;">Nessun iscritto corrisponde ai filtri di ricerca.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" style="padding:16px 0;color:var(--ink-mute);text-align:center;">Nessun iscritto corrisponde ai filtri di ricerca.</td></tr>`;
     document.getElementById('subPaginationInfo').textContent = `Mostrando 0-0 di 0`;
     document.getElementById('subPrevBtn').disabled = true;
     document.getElementById('subNextBtn').disabled = true;
@@ -3982,10 +3984,12 @@ function renderSubscribersTablePage() {
   tbody.innerHTML = pageItems.map(s => {
     const dateStr = s.date ? new Date(s.date).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—';
     const tgUsername = s.telegram ? `<a href="https://t.me/${s.telegram.replace('@','')}" target="_blank" style="color:var(--info);text-decoration:none;">${s.telegram}</a>` : 'Non inserito';
+    const amountVal = s.amount !== undefined ? `${s.amount.toLocaleString('it-IT')} €` : '15 €';
     return `
       <tr style="border-bottom:1px solid var(--line); transition:background 0.15s;">
         <td style="padding:11px 0;color:var(--ink-soft);font-family:var(--font-mono);font-size:11.5px;">${dateStr}</td>
         <td style="padding:11px 0;color:var(--ink);font-weight:500;">${s.name}</td>
+        <td style="padding:11px 0;text-align:center;color:var(--ink);font-family:var(--font-mono);">${amountVal}</td>
         <td style="padding:11px 0;text-align:right;font-family:var(--font-mono);font-size:12px;">${tgUsername}</td>
       </tr>
     `;
@@ -4053,12 +4057,14 @@ function renderSubscribersChart() {
   const viewType = document.getElementById('subPeriodType').value; // 'monthly' | 'weekly'
   
   const groups = {}; // Raggruppamento dati
+  const groupRevenues = {}; // Somma entrate per gruppo
   
   if (viewType === 'monthly') {
     list.forEach(s => {
       if (!s.date) return;
       const mKey = s.date.slice(0, 7); // YYYY-MM
       groups[mKey] = (groups[mKey] || 0) + 1;
+      groupRevenues[mKey] = (groupRevenues[mKey] || 0) + (s.amount !== undefined ? s.amount : 15);
     });
   } else {
     list.forEach(s => {
@@ -4067,6 +4073,7 @@ function renderSubscribersChart() {
       const wk = getSubWeekNumber(d);
       const wKey = `${wk.year}-W${String(wk.week).padStart(2,'0')}`;
       groups[wKey] = (groups[wKey] || 0) + 1;
+      groupRevenues[wKey] = (groupRevenues[wKey] || 0) + (s.amount !== undefined ? s.amount : 15);
     });
   }
   
@@ -4118,7 +4125,12 @@ function renderSubscribersChart() {
           bodyFont: { family: 'Inter', size: 12 },
           padding: 10,
           callbacks: {
-            label: c => `Nuovi Iscritti: ${c.parsed.y} (${c.parsed.y * 15} €)`
+            label: c => {
+              const period = sortedPeriods[c.dataIndex];
+              const count = counts[c.dataIndex];
+              const rev = groupRevenues[period] || 0;
+              return `Nuovi Iscritti: ${count} (${rev.toLocaleString('it-IT')} €)`;
+            }
           }
         }
       },
@@ -4157,7 +4169,7 @@ function renderSubscribersChart() {
         ? SUB_MONTHS_IT[p.split('-')[1]] + ' ' + p.split('-')[0]
         : `Settimana ${p.split('-W')[1]} (${p.split('-')[0]})`;
       const count = groups[p];
-      const revenue = count * 15;
+      const revenue = groupRevenues[p] || 0;
       
       return `
         <tr style="border-bottom:1px solid var(--line); font-size:12px;">
