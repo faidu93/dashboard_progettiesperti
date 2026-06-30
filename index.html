@@ -2739,11 +2739,11 @@ body {
   <!-- TAB: ACQUISIZIONI -->
   <section class="section" data-tab="acquisizioni">
     <!-- KPI -->
-    <div class="kpi-band" style="grid-template-columns: repeat(4, 1fr); margin-bottom:24px;" id="subKpiBand">
+    <div class="kpi-band" style="grid-template-columns: repeat(5, 1fr); margin-bottom:24px;" id="subKpiBand">
       <div class="kpi">
         <div class="kpi-label">👥 Iscritti totali</div>
         <div class="kpi-value" id="sub-total">—</div>
-        <div class="kpi-target">Membri paganti registrati</div>
+        <div class="kpi-target">Membri registrati</div>
       </div>
       <div class="kpi">
         <div class="kpi-label">💰 Entrate Totali</div>
@@ -2751,14 +2751,19 @@ body {
         <div class="kpi-target">Fatturato complessivo</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">📅 Media Mensile</div>
-        <div class="kpi-value" id="sub-avg-monthly">—</div>
-        <div class="kpi-target">Nuovi iscritti al mese</div>
+        <div class="kpi-label">📅 Entrate Oggi</div>
+        <div class="kpi-value" id="sub-today">—</div>
+        <div class="kpi-target">Fatturato giornaliero</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">📈 Nuovi 7 Giorni</div>
-        <div class="kpi-value" id="sub-this-week">—</div>
-        <div class="kpi-target">Iscrizioni nell'ultima settimana</div>
+        <div class="kpi-label">📈 Entrate Settimana</div>
+        <div class="kpi-value" id="sub-week">—</div>
+        <div class="kpi-target">Lun - Dom corrente</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">📊 Entrate Mese</div>
+        <div class="kpi-value" id="sub-month">—</div>
+        <div class="kpi-target">Mese corrente</div>
       </div>
     </div>
 
@@ -2773,8 +2778,9 @@ body {
               Economics & Andamento
             </span>
             <select id="subPeriodType" onchange="onSubscribersPeriodChange()" style="padding:6px 10px; background:var(--bg-elev-2); border:1px solid var(--line-strong); border-radius:5px; color:var(--ink-soft); font-size:12px; font-family:var(--font-body); cursor:pointer;">
-              <option value="monthly">Distribuzione Mensile</option>
+              <option value="daily">Distribuzione Giornaliera</option>
               <option value="weekly">Distribuzione Settimanale</option>
+              <option value="monthly">Distribuzione Mensile</option>
             </select>
           </div>
           <div class="panel-sub">Statistiche di acquisizione e fatturato ripartite nel tempo</div>
@@ -3795,11 +3801,11 @@ function resetSubscribersHTML() {
   
   container.innerHTML = `
     <!-- KPI -->
-    <div class="kpi-band" style="grid-template-columns: repeat(4, 1fr); margin-bottom:24px;" id="subKpiBand">
+    <div class="kpi-band" style="grid-template-columns: repeat(5, 1fr); margin-bottom:24px;" id="subKpiBand">
       <div class="kpi">
         <div class="kpi-label">👥 Iscritti totali</div>
         <div class="kpi-value" id="sub-total">—</div>
-        <div class="kpi-target">Membri paganti registrati</div>
+        <div class="kpi-target">Membri registrati</div>
       </div>
       <div class="kpi">
         <div class="kpi-label">💰 Entrate Totali</div>
@@ -3807,14 +3813,19 @@ function resetSubscribersHTML() {
         <div class="kpi-target">Fatturato complessivo</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">📅 Media Mensile</div>
-        <div class="kpi-value" id="sub-avg-monthly">—</div>
-        <div class="kpi-target">Nuovi iscritti al mese</div>
+        <div class="kpi-label">📅 Entrate Oggi</div>
+        <div class="kpi-value" id="sub-today">—</div>
+        <div class="kpi-target">Fatturato giornaliero</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">📈 Nuovi 7 Giorni</div>
-        <div class="kpi-value" id="sub-this-week">—</div>
-        <div class="kpi-target">Iscrizioni nell'ultima settimana</div>
+        <div class="kpi-label">📈 Entrate Settimana</div>
+        <div class="kpi-value" id="sub-week">—</div>
+        <div class="kpi-target">Lun - Dom corrente</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">📊 Entrate Mese</div>
+        <div class="kpi-value" id="sub-month">—</div>
+        <div class="kpi-target">Mese corrente</div>
       </div>
     </div>
 
@@ -3829,8 +3840,9 @@ function resetSubscribersHTML() {
               Economics & Andamento
             </span>
             <select id="subPeriodType" onchange="onSubscribersPeriodChange()" style="padding:6px 10px; background:var(--bg-elev-2); border:1px solid var(--line-strong); border-radius:5px; color:var(--ink-soft); font-size:12px; font-family:var(--font-body); cursor:pointer;">
-              <option value="monthly">Distribuzione Mensile</option>
+              <option value="daily">Distribuzione Giornaliera</option>
               <option value="weekly">Distribuzione Settimanale</option>
+              <option value="monthly">Distribuzione Mensile</option>
             </select>
           </div>
           <div class="panel-sub">Statistiche di acquisizione e fatturato ripartite nel tempo</div>
@@ -3927,30 +3939,55 @@ function renderSubscribersKPIs(data) {
   const total = list.length;
   const revenue = list.reduce((acc, s) => acc + (s.amount !== undefined ? s.amount : 15), 0);
   
-  // Media mensile
-  const monthlyCounts = {};
-  list.forEach(s => {
-    if (!s.date) return;
-    const m = s.date.slice(0, 7); // YYYY-MM
-    monthlyCounts[m] = (monthlyCounts[m] || 0) + 1;
-  });
-  const monthsCount = Object.keys(monthlyCounts).length || 1;
-  const avgMonthly = total / monthsCount;
+  const today = new Date();
   
-  // Iscrizioni negli ultimi 7 giorni
-  const now = new Date();
-  const sevenDaysAgo = now.getTime() - (7 * 24 * 3600 * 1000);
-  const newThisWeek = list.filter(s => s.date && new Date(s.date).getTime() >= sevenDaysAgo).length;
+  // 1. Entrate oggi (giornaliero)
+  const dailyRevenue = list.filter(s => {
+    if (!s.date) return false;
+    const d = new Date(s.date);
+    return d.getDate() === today.getDate() &&
+           d.getMonth() === today.getMonth() &&
+           d.getFullYear() === today.getFullYear();
+  }).reduce((acc, s) => acc + (s.amount !== undefined ? s.amount : 15), 0);
   
+  // 2. Entrate settimana (Lun - Dom corrente)
+  const dayOfWeek = today.getDay();
+  const distanceToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const mondayOfThisWeek = new Date(today);
+  mondayOfThisWeek.setDate(today.getDate() - distanceToMonday);
+  mondayOfThisWeek.setHours(0, 0, 0, 0);
+  
+  const sundayOfThisWeek = new Date(mondayOfThisWeek);
+  sundayOfThisWeek.setDate(mondayOfThisWeek.getDate() + 6);
+  sundayOfThisWeek.setHours(23, 59, 59, 999);
+  
+  const weeklyRevenue = list.filter(s => {
+    if (!s.date) return false;
+    const d = new Date(s.date);
+    return d.getTime() >= mondayOfThisWeek.getTime() && d.getTime() <= sundayOfThisWeek.getTime();
+  }).reduce((acc, s) => acc + (s.amount !== undefined ? s.amount : 15), 0);
+  
+  // 3. Entrate mese (mese corrente)
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  const monthlyRevenue = list.filter(s => {
+    if (!s.date) return false;
+    const d = new Date(s.date);
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+  }).reduce((acc, s) => acc + (s.amount !== undefined ? s.amount : 15), 0);
+  
+  // Assegnazione valori agli elementi
   const elTotal = document.getElementById('sub-total');
   const elRevenue = document.getElementById('sub-revenue');
-  const elAvg = document.getElementById('sub-avg-monthly');
-  const elWeek = document.getElementById('sub-this-week');
+  const elToday = document.getElementById('sub-today');
+  const elWeek = document.getElementById('sub-week');
+  const elMonth = document.getElementById('sub-month');
   
   if (elTotal) elTotal.textContent = total.toLocaleString('it-IT');
   if (elRevenue) elRevenue.textContent = revenue.toLocaleString('it-IT') + ' €';
-  if (elAvg) elAvg.textContent = avgMonthly.toFixed(1);
-  if (elWeek) elWeek.textContent = newThisWeek.toLocaleString('it-IT');
+  if (elToday) elToday.textContent = dailyRevenue.toLocaleString('it-IT') + ' €';
+  if (elWeek) elWeek.textContent = weeklyRevenue.toLocaleString('it-IT') + ' €';
+  if (elMonth) elMonth.textContent = monthlyRevenue.toLocaleString('it-IT') + ' €';
   
   subFilteredList = [...list];
   subCurrentPage = 1;
@@ -4054,12 +4091,19 @@ function renderSubscribersChart() {
   if (!data || !data.subscribers || data.unauthorized || data.error) return;
   
   const list = data.subscribers;
-  const viewType = document.getElementById('subPeriodType').value; // 'monthly' | 'weekly'
+  const viewType = document.getElementById('subPeriodType').value; // 'daily' | 'weekly' | 'monthly'
   
-  const groups = {}; // Raggruppamento dati
-  const groupRevenues = {}; // Somma entrate per gruppo
+  const groups = {}; // Raggruppamento dati (conteggi)
+  const groupRevenues = {}; // Somma entrate per periodo
   
-  if (viewType === 'monthly') {
+  if (viewType === 'daily') {
+    list.forEach(s => {
+      if (!s.date) return;
+      const dKey = s.date.slice(0, 10); // YYYY-MM-DD
+      groups[dKey] = (groups[dKey] || 0) + 1;
+      groupRevenues[dKey] = (groupRevenues[dKey] || 0) + (s.amount !== undefined ? s.amount : 15);
+    });
+  } else if (viewType === 'monthly') {
     list.forEach(s => {
       if (!s.date) return;
       const mKey = s.date.slice(0, 7); // YYYY-MM
@@ -4077,10 +4121,21 @@ function renderSubscribersChart() {
     });
   }
   
-  const sortedPeriods = Object.keys(groups).sort();
+  let sortedPeriods = Object.keys(groups).sort();
+  if (viewType === 'daily' && sortedPeriods.length > 30) {
+    // Limitiamo agli ultimi 30 giorni sul grafico per leggibilità
+    sortedPeriods = sortedPeriods.slice(-30);
+  }
   
   const labels = sortedPeriods.map(p => {
-    if (viewType === 'monthly') {
+    if (viewType === 'daily') {
+      const parts = p.split('-'); // [YYYY, MM, DD]
+      const monthsAbbr = {
+        '01': 'Gen', '02': 'Feb', '03': 'Mar', '04': 'Apr', '05': 'Mag', '06': 'Giu',
+        '07': 'Lug', '08': 'Ago', '09': 'Set', '10': 'Ott', '11': 'Nov', '12': 'Dic'
+      };
+      return `${parts[2]} ${monthsAbbr[parts[1]] || parts[1]}`;
+    } else if (viewType === 'monthly') {
       const parts = p.split('-');
       return SUB_MONTHS_IT[parts[1]] + ' ' + parts[0].slice(-2);
     } else {
@@ -4165,9 +4220,19 @@ function renderSubscribersChart() {
     
     const reversedPeriods = [...sortedPeriods].reverse();
     ecoBody.innerHTML = reversedPeriods.map(p => {
-      const label = viewType === 'monthly' 
-        ? SUB_MONTHS_IT[p.split('-')[1]] + ' ' + p.split('-')[0]
-        : `Settimana ${p.split('-W')[1]} (${p.split('-')[0]})`;
+      let label = '';
+      if (viewType === 'daily') {
+        const parts = p.split('-');
+        const monthsNames = {
+          '01': 'Gennaio', '02': 'Febbraio', '03': 'Marzo', '04': 'Aprile', '05': 'Maggio', '06': 'Giugno',
+          '07': 'Luglio', '08': 'Agosto', '09': 'Settembre', '10': 'Ottobre', '11': 'Novembre', '12': 'Dicembre'
+        };
+        label = `${parts[2]} ${monthsNames[parts[1]] || parts[1]} ${parts[0]}`;
+      } else if (viewType === 'monthly') {
+        label = SUB_MONTHS_IT[p.split('-')[1]] + ' ' + p.split('-')[0];
+      } else {
+        label = `Settimana ${p.split('-W')[1]} (${p.split('-')[0]})`;
+      }
       const count = groups[p];
       const revenue = groupRevenues[p] || 0;
       
