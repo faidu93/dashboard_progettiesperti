@@ -1699,6 +1699,18 @@ body {
   .conv-npost, .conv-detail { display: none; }
 }
 
+@media (max-width: 1200px) {
+  #navStatus { display: none !important; }
+}
+@media (max-width: 992px) {
+  #navPeriodContainer { display: none !important; }
+}
+@media (max-width: 768px) {
+  #freshnessText { display: none !important; }
+  #freshness { padding: 8px !important; border-radius: 50% !important; width: 28px; height: 28px; justify-content: center; }
+  #subRefreshBtnTop span:not(.material-symbols-rounded) { display: none !important; }
+  #subRefreshBtnTop { padding: 8px !important; min-width: 32px; border-radius: 50% !important; }
+}
 </style>
 </head>
 <body>
@@ -1709,21 +1721,30 @@ body {
       <div class="brand-logo"><div role="img" aria-label="Esperti del Profeta" style="width:100%;height:100%;background:var(--logo-url) center/contain no-repeat;"></div></div>
       <div class="brand-text">
         <div class="brand-name">Progetto Esperti Profeta</div>
-        <div class="brand-tag">Dashboard Instagram</div>
+        <div class="brand-tag">@esperti_profeta_fantacalcio</div>
       </div>
     </div>
     <div class="nav-cluster">
       <span class="nav-status" id="navStatus"><span class="nav-dot"></span><span id="navStatusText">Caricamento…</span></span>
+      
+      <!-- Periodo dei Dati -->
+      <div id="navPeriodContainer" style="display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft); font-family:var(--font-mono); background:var(--bg-elev-2); border:1px solid var(--line); padding:6px 12px; border-radius:6px;">
+        <span class="material-symbols-rounded" style="font-size:15px; color:var(--ink-mute);">calendar_month</span>
+        <span id="metaPeriod">—</span>
+      </div>
+
+      <!-- Freschezza Dati (Meta) -->
+      <div class="nav-status live" id="freshness" style="display:inline-flex; align-items:center; gap:6px;" title="Ultimo allineamento dati da Meta">
+        <span class="nav-dot"></span>
+        <span id="freshnessText">Verifica freschezza...</span>
+      </div>
+
       <!-- Pulsante Aggiorna Iscritti -->
       <button class="nav-btn" id="subRefreshBtnTop" onclick="onSubscribersRefresh()" style="display:inline-flex; align-items:center; gap:6px; background:rgba(90,174,240,0.12); border:1px solid rgba(90,174,240,0.25); color:var(--info); font-weight:600; cursor:pointer;">
         <span class="material-symbols-rounded" style="font-size:16px; transition: transform 0.5s ease;" id="subRefreshIconTop">sync</span>
-        Aggiorna Iscritti
+        <span>Aggiorna Iscritti</span>
       </button>
-      <!-- Pulsante Aggiorna Tutto -->
-      <button class="nav-btn" id="btnForceRefreshAllTop" onclick="forceRefreshAllAnalytics(event)" style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,140,30,0.12); border:1px solid rgba(255,140,30,0.25); color:var(--accent); font-weight:600; cursor:pointer;">
-        <span class="material-symbols-rounded" style="font-size:16px; transition: transform 0.5s ease;" id="iconForceRefreshAllTop">refresh</span>
-        Aggiorna Tutto
-      </button>
+
       <button class="nav-btn" id="btnConfig"><span class="material-symbols-rounded">settings</span>Configura</button>
     </div>
   </div>
@@ -1768,23 +1789,6 @@ body {
       </div>
     </div>
   </div>
-
-  <section class="hero">
-    <div class="hero-meta">
-      <span><span class="material-symbols-rounded">calendar_month</span><span id="metaPeriod">—</span></span>
-      <span><span class="material-symbols-rounded">cloud_sync</span><span>Dati ufficiali Meta · Instagram Graph API</span></span>
-      <span><span class="material-symbols-rounded">verified</span><span>@esperti_profeta_fantacalcio</span></span>
-    </div>
-    <div class="freshness" id="freshness" title="Quando sono stati aggiornati gli ultimi dati da Meta" style="display:flex; align-items:center; gap:8px;">
-      <span class="freshness-dot"></span>
-      <span id="freshnessText">Verifica freschezza dati…</span>
-      <span style="color:var(--ink-mute); margin:0 4px;">|</span>
-      <a href="#" onclick="forceRefreshAllAnalytics(event)" style="color:var(--accent); text-decoration:none; display:inline-flex; align-items:center; gap:4px; font-weight:500;" id="btnForceRefreshAll">
-        <span class="material-symbols-rounded" style="font-size:14px; transition: transform 0.5s ease;" id="iconForceRefreshAll">refresh</span>
-        Aggiorna Tutto
-      </a>
-    </div>
-  </section>
 
   <!-- TAB NAVIGATOR -->
   <nav class="tab-nav" role="tablist" aria-label="Sezioni dashboard">
