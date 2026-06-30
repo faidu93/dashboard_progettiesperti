@@ -1759,9 +1759,12 @@ body {
 <div class="container">
 
   <!-- Banner onboarding 2-step -->
-  <div id="onboardingBanner" style="display:none; padding:18px 20px;
+  <div id="onboardingBanner" style="position:relative; display:none; padding:18px 20px;
     background:linear-gradient(135deg,rgba(255,140,30,0.10),rgba(90,174,240,0.06));
     border:1px solid rgba(255,140,30,0.35); border-radius:12px; margin-bottom:22px;">
+    <button onclick="dismissOnboardingBanner()" style="position:absolute; right:12px; top:12px; background:transparent; border:none; color:var(--ink-mute); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:4px; border-radius:50%; transition:all 0.15s;" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--ink-mute)'" title="Nascondi permanentemente">
+      <span class="material-symbols-rounded" style="font-size:18px;">close</span>
+    </button>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
       <span class="material-symbols-rounded" style="color:var(--accent);font-size:24px;">rocket_launch</span>
       <strong style="font-size:15px;color:var(--ink);">Benvenuto · Configura la dashboard in 2 step</strong>
@@ -6399,12 +6402,27 @@ function gcalGetYtPlanned() {
 }
 
 
-// ============================================================================
-// ONBOARDING 2-STEP
-// ============================================================================
+// Nasconde permanentemente il banner di onboarding salvando la preferenza
+function dismissOnboardingBanner() {
+  const banner = document.getElementById('onboardingBanner');
+  if (banner) banner.style.display = 'none';
+  try {
+    localStorage.setItem('dismissed_onboarding_banner', 'true');
+  } catch(e) {}
+}
+
 function updateOnboarding() {
   const banner = document.getElementById('onboardingBanner');
   if (!banner) return;
+  
+  // Se l'utente ha chiuso il banner in passato, non mostrarlo
+  try {
+    if (localStorage.getItem('dismissed_onboarding_banner') === 'true') {
+      banner.style.display = 'none';
+      return;
+    }
+  } catch(e) {}
+
   const hasGoogle = gcalSignedIn;
   // I dati IG/YT arrivano dal backend (sempre configurato). Il banner serve ora
   // solo a guidare la connessione di Google Calendar.
