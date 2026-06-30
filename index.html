@@ -1765,9 +1765,14 @@ body {
       <span><span class="material-symbols-rounded">cloud_sync</span><span>Dati ufficiali Meta · Instagram Graph API</span></span>
       <span><span class="material-symbols-rounded">verified</span><span>@esperti_profeta_fantacalcio</span></span>
     </div>
-    <div class="freshness" id="freshness" title="Quando sono stati aggiornati gli ultimi dati da Meta">
+    <div class="freshness" id="freshness" title="Quando sono stati aggiornati gli ultimi dati da Meta" style="display:flex; align-items:center; gap:8px;">
       <span class="freshness-dot"></span>
       <span id="freshnessText">Verifica freschezza dati…</span>
+      <span style="color:var(--ink-mute); margin:0 4px;">|</span>
+      <a href="#" onclick="forceRefreshAllAnalytics(event)" style="color:var(--accent); text-decoration:none; display:inline-flex; align-items:center; gap:4px; font-weight:500;" id="btnForceRefreshAll">
+        <span class="material-symbols-rounded" style="font-size:14px; transition: transform 0.5s ease;" id="iconForceRefreshAll">refresh</span>
+        Aggiorna Tutto
+      </a>
     </div>
   </section>
 
@@ -2947,6 +2952,77 @@ async function fetchBackend(path) {
   return j;
 }
 
+// Caching helper per velocizzare il caricamento della dashboard
+async function fetchCachedBackend(endpoint, cacheKey, ttlMs = 3600 * 1000) {
+  const now = Date.now();
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (now - parsed.timestamp < ttlMs) {
+        console.log(`Caricato da cache: ${endpoint}`);
+        return parsed.data;
+      }
+    }
+  } catch(e) {
+    console.warn(`Errore cache per ${endpoint}:`, e);
+  }
+  
+  const freshData = await fetchBackend(endpoint);
+  try {
+    localStorage.setItem(cacheKey, JSON.stringify({
+      timestamp: now,
+      data: freshData
+    }));
+  } catch(e) {
+    console.warn(`Errore scrittura cache per ${endpoint}:`, e);
+  }
+  return freshData;
+}
+
+// Forza il ricaricamento completo svuotando la cache locale
+async function forceRefreshAllAnalytics(event) {
+  if (event) event.preventDefault();
+  
+  const link = document.getElementById('btnForceRefreshAll');
+  const icon = document.getElementById('iconForceRefreshAll');
+  if (link && link.dataset.loading === 'true') return;
+  
+  if (link) {
+    link.dataset.loading = 'true';
+    link.style.opacity = '0.7';
+    link.style.pointerEvents = 'none';
+  }
+  if (icon) {
+    if (!document.getElementById('sub-spin-style')) {
+      const style = document.createElement('style');
+      style.id = 'sub-spin-style';
+      style.innerHTML = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
+      document.head.appendChild(style);
+    }
+    icon.style.animation = 'spin 1s linear infinite';
+  }
+  
+  localStorage.removeItem('cache_ig_insights');
+  localStorage.removeItem('cache_yt_videos');
+  localStorage.removeItem('cache_ig_demo');
+  
+  try {
+    await init();
+  } catch(e) {
+    console.error('Errore durante il refresh forzato:', e);
+  } finally {
+    if (link) {
+      link.dataset.loading = 'false';
+      link.style.opacity = '1';
+      link.style.pointerEvents = 'auto';
+    }
+    if (icon) {
+      icon.style.animation = 'none';
+    }
+  }
+}
+
 // ============================================================================
 // PUBBLICAZIONE INSTAGRAM (upload media + coda programmata)
 // ============================================================================
@@ -3873,9 +3949,15 @@ function resetSubscribersHTML() {
       <!-- Anagrafica & Ricerca -->
       <div class="panel" style="display:flex; flex-direction:column; gap:16px;">
         <div>
-          <div class="panel-title">
-            <span class="material-symbols-rounded" style="color:var(--info);">search</span>
-            Anagrafica Iscritti
+          <div class="panel-title" style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="display:flex; align-items:center; gap:8px;">
+              <span class="material-symbols-rounded" style="color:var(--info);">search</span>
+              Anagrafica Iscritti
+            </span>
+            <button id="subRefreshBtn" onclick="onSubscribersRefresh()" style="display:flex; align-items:center; gap:6px; padding:6px 10px; background:var(--bg-elev-2); border:1px solid var(--line-strong); border-radius:5px; color:var(--ink-soft); font-size:11.5px; font-family:var(--font-body); cursor:pointer; transition:all 0.15s; font-weight:500;">
+              <span class="material-symbols-rounded" style="font-size:15px; transition: transform 0.5s ease;" id="subRefreshIcon">sync</span>
+              <span>Aggiorna Dati</span>
+            </button>
           </div>
           <div class="panel-sub">Elenco completo e ricerca degli iscritti al progetto</div>
         </div>
@@ -4074,6 +4156,65 @@ function onSubscribersNextPage() {
 // Cambio tipo di visualizzazione Economics (Mensile vs Settimanale)
 function onSubscribersPeriodChange() {
   renderSubscribersChart();
+}
+
+// Aggiorna solo la parte degli iscritti interrogando l'API
+async function onSubscribersRefresh() {
+  const btn = document.getElementById('subRefreshBtn');
+  const icon = document.getElementById('subRefreshIcon');
+  if (!btn || btn.disabled) return;
+  
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+  if (icon) {
+    if (!document.getElementById('sub-spin-style')) {
+      const style = document.createElement('style');
+      style.id = 'sub-spin-style';
+      style.innerHTML = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
+      document.head.appendChild(style);
+    }
+    icon.style.animation = 'spin 1s linear infinite';
+  }
+  
+  let savedSecret = '';
+  try { savedSecret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
+  
+  try {
+    const subRes = await fetch(`${BACKEND_BASE}/api/subscribers`, {
+      headers: { 'X-Publish-Secret': savedSecret }
+    });
+    if (subRes.ok) {
+      const subData = await subRes.json();
+      if (subData && Array.isArray(subData.subscribers)) {
+        window.CACHED_SUBSCRIBERS = subData;
+        renderSubscribersKPIs(subData);
+        renderSubscribersChart();
+        
+        // Animazione successo sul bottone
+        const textSpan = btn.querySelector('span:not(.material-symbols-rounded)');
+        if (textSpan) {
+          const oldText = textSpan.textContent;
+          textSpan.textContent = 'Aggiornato!';
+          btn.style.borderColor = 'var(--pos)';
+          btn.style.color = 'var(--pos)';
+          setTimeout(() => {
+            textSpan.textContent = oldText;
+            btn.style.borderColor = 'var(--line-strong)';
+            btn.style.color = 'var(--ink-soft)';
+          }, 2000);
+        }
+      }
+    }
+  } catch(e) {
+    console.error('Errore durante l\'aggiornamento degli iscritti:', e);
+  } finally {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    if (icon) {
+      icon.style.animation = 'none';
+      icon.style.transform = 'none';
+    }
+  }
 }
 
 // Renderizza il grafico e la tabella Economics per periodo
@@ -7017,7 +7158,7 @@ async function init() {
     let ig = null;
     let isMockIg = false;
     try {
-      ig = await fetchBackend('/api/instagram-insights');
+      ig = await fetchCachedBackend('/api/instagram-insights', 'cache_ig_insights');
     } catch(e) {
       console.warn('Errore connessione backend Instagram, uso dati di test:', e);
       loadingWarn('ig', 'Instagram non disponibile (uso dati di test)');
@@ -7045,7 +7186,7 @@ async function init() {
     loadingStep('yt', 'Caricamento video YouTube…');
     loadingProgress(40);
     try {
-      const yt = await fetchBackend('/api/youtube-videos');
+      const yt = await fetchCachedBackend('/api/youtube-videos', 'cache_yt_videos');
       const ytRaw = yt.data || yt.videos || [];
       // Deduplicazione per titolo: ogni video ha una sola published_at reale
       const ytMap = {};
@@ -7100,7 +7241,7 @@ async function init() {
     // === FASE 4: Dati demografici ===
     loadingStep('demo', 'Caricamento demografia e orari…');
     try {
-      const demo = await fetchBackend('/api/instagram-demographics');
+      const demo = await fetchCachedBackend('/api/instagram-demographics', 'cache_ig_demo');
       window.CACHED_DEMO = demo;
       renderDemographics(demo);
       renderOnlineFollowers(demo);
