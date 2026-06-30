@@ -1714,6 +1714,16 @@ body {
     </div>
     <div class="nav-cluster">
       <span class="nav-status" id="navStatus"><span class="nav-dot"></span><span id="navStatusText">Caricamento…</span></span>
+      <!-- Pulsante Aggiorna Iscritti -->
+      <button class="nav-btn" id="subRefreshBtnTop" onclick="onSubscribersRefresh()" style="display:inline-flex; align-items:center; gap:6px; background:rgba(90,174,240,0.12); border:1px solid rgba(90,174,240,0.25); color:var(--info); font-weight:600; cursor:pointer;">
+        <span class="material-symbols-rounded" style="font-size:16px; transition: transform 0.5s ease;" id="subRefreshIconTop">sync</span>
+        Aggiorna Iscritti
+      </button>
+      <!-- Pulsante Aggiorna Tutto -->
+      <button class="nav-btn" id="btnForceRefreshAllTop" onclick="forceRefreshAllAnalytics(event)" style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,140,30,0.12); border:1px solid rgba(255,140,30,0.25); color:var(--accent); font-weight:600; cursor:pointer;">
+        <span class="material-symbols-rounded" style="font-size:16px; transition: transform 0.5s ease;" id="iconForceRefreshAllTop">refresh</span>
+        Aggiorna Tutto
+      </button>
       <button class="nav-btn" id="btnConfig"><span class="material-symbols-rounded">settings</span>Configura</button>
     </div>
   </div>
@@ -2984,16 +2994,18 @@ async function fetchCachedBackend(endpoint, cacheKey, ttlMs = 3600 * 1000) {
 async function forceRefreshAllAnalytics(event) {
   if (event) event.preventDefault();
   
-  const link = document.getElementById('btnForceRefreshAll');
-  const icon = document.getElementById('iconForceRefreshAll');
-  if (link && link.dataset.loading === 'true') return;
+  const links = [document.getElementById('btnForceRefreshAll'), document.getElementById('btnForceRefreshAllTop')].filter(Boolean);
+  const icons = [document.getElementById('iconForceRefreshAll'), document.getElementById('iconForceRefreshAllTop')].filter(Boolean);
   
-  if (link) {
+  if (links.length > 0 && links[0].dataset.loading === 'true') return;
+  
+  links.forEach(link => {
     link.dataset.loading = 'true';
     link.style.opacity = '0.7';
     link.style.pointerEvents = 'none';
-  }
-  if (icon) {
+  });
+  
+  icons.forEach(icon => {
     if (!document.getElementById('sub-spin-style')) {
       const style = document.createElement('style');
       style.id = 'sub-spin-style';
@@ -3001,7 +3013,7 @@ async function forceRefreshAllAnalytics(event) {
       document.head.appendChild(style);
     }
     icon.style.animation = 'spin 1s linear infinite';
-  }
+  });
   
   localStorage.removeItem('cache_ig_insights');
   localStorage.removeItem('cache_yt_videos');
@@ -3012,14 +3024,14 @@ async function forceRefreshAllAnalytics(event) {
   } catch(e) {
     console.error('Errore durante il refresh forzato:', e);
   } finally {
-    if (link) {
+    links.forEach(link => {
       link.dataset.loading = 'false';
       link.style.opacity = '1';
       link.style.pointerEvents = 'auto';
-    }
-    if (icon) {
+    });
+    icons.forEach(icon => {
       icon.style.animation = 'none';
-    }
+    });
   }
 }
 
@@ -4160,13 +4172,17 @@ function onSubscribersPeriodChange() {
 
 // Aggiorna solo la parte degli iscritti interrogando l'API
 async function onSubscribersRefresh() {
-  const btn = document.getElementById('subRefreshBtn');
-  const icon = document.getElementById('subRefreshIcon');
-  if (!btn || btn.disabled) return;
+  const btns = [document.getElementById('subRefreshBtn'), document.getElementById('subRefreshBtnTop')].filter(Boolean);
+  const icons = [document.getElementById('subRefreshIcon'), document.getElementById('subRefreshIconTop')].filter(Boolean);
   
-  btn.disabled = true;
-  btn.style.opacity = '0.7';
-  if (icon) {
+  if (btns.length > 0 && btns[0].disabled) return;
+  
+  btns.forEach(btn => {
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+  });
+  
+  icons.forEach(icon => {
     if (!document.getElementById('sub-spin-style')) {
       const style = document.createElement('style');
       style.id = 'sub-spin-style';
@@ -4174,7 +4190,7 @@ async function onSubscribersRefresh() {
       document.head.appendChild(style);
     }
     icon.style.animation = 'spin 1s linear infinite';
-  }
+  });
   
   let savedSecret = '';
   try { savedSecret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
@@ -4190,30 +4206,36 @@ async function onSubscribersRefresh() {
         renderSubscribersKPIs(subData);
         renderSubscribersChart();
         
-        // Animazione successo sul bottone
-        const textSpan = btn.querySelector('span:not(.material-symbols-rounded)');
-        if (textSpan) {
-          const oldText = textSpan.textContent;
-          textSpan.textContent = 'Aggiornato!';
-          btn.style.borderColor = 'var(--pos)';
-          btn.style.color = 'var(--pos)';
-          setTimeout(() => {
-            textSpan.textContent = oldText;
-            btn.style.borderColor = 'var(--line-strong)';
-            btn.style.color = 'var(--ink-soft)';
-          }, 2000);
-        }
+        // Animazione successo sui bottoni
+        btns.forEach(btn => {
+          const textSpan = btn.querySelector('span:not(.material-symbols-rounded)');
+          if (textSpan) {
+            const oldText = textSpan.textContent;
+            textSpan.textContent = 'Aggiornato!';
+            const oldBorder = btn.style.borderColor;
+            const oldColor = btn.style.color;
+            btn.style.borderColor = 'var(--pos)';
+            btn.style.color = 'var(--pos)';
+            setTimeout(() => {
+              textSpan.textContent = oldText;
+              btn.style.borderColor = oldBorder;
+              btn.style.color = oldColor;
+            }, 2000);
+          }
+        });
       }
     }
   } catch(e) {
     console.error('Errore durante l\'aggiornamento degli iscritti:', e);
   } finally {
-    btn.disabled = false;
-    btn.style.opacity = '1';
-    if (icon) {
+    btns.forEach(btn => {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    });
+    icons.forEach(icon => {
       icon.style.animation = 'none';
       icon.style.transform = 'none';
-    }
+    });
   }
 }
 
