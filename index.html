@@ -2716,9 +2716,16 @@ body {
         </div>
         <div class="intel-field">
           <label>Profili competitor <span style="color:var(--ink-mute);font-weight:400;">(uno per riga)</span></label>
-          <textarea id="igProfiles" rows="3" placeholder="@sosfantacalcio&#10;@fantarete&#10;@seriousornot.fantacalcio" oninput="intelSaveField('igProfiles')">@sosfantacalcio
+          <textarea id="igProfiles" rows="10" placeholder="@sosfantacalcio&#10;@fantarete&#10;@seriousornot.fantacalcio" oninput="intelSaveField('igProfiles')">@fantamantra_
+@fantaverso_official
+@fantacalciotattico
+@euroleghefc
+@fantacalcioaddicted
+@laboratoriocalcistico
+@fantagoal_fantacalcio
+@ilcalcioverticale
 @fantarete
-@seriousornot.fantacalcio</textarea>
+@nic.cariglia_</textarea>
         </div>
         <div class="intel-row">
           <div class="intel-field">
@@ -6490,7 +6497,10 @@ const INTEL_KEYS = {
   igProfiles:'intel_ig_profiles', igFocus:'intel_ig_focus',
   igFormatFilter:'intel_ig_format', igIdeaCount:'intel_ig_ideacount',
 };
-const INTEL_LOCAL = new Set(['ytApiKey']);
+const INTEL_LOCAL = new Set([
+  'ytApiKey', 'ytChannels', 'ytVideoCount', 'ytFormatFilter', 'ytIdeaCount', 'ytTopic', 'ytPeriod',
+  'igProfiles', 'igFocus', 'igFormatFilter', 'igIdeaCount'
+]);
 
 function intelSaveField(id) {
   try {
@@ -6861,7 +6871,7 @@ async function runIgIntelligence() {
 }
 
 function buildIgPrompt(profiles, focus, formatFilter, ideaCount) {
-  const p = profiles || '@sosfantacalcio, @fantarete, @seriousornot.fantacalcio';
+  const p = profiles || '@fantamantra_, @fantaverso_official, @fantacalciotattico, @euroleghefc, @fantacalcioaddicted, @laboratoriocalcistico, @fantagoal_fantacalcio, @ilcalcioverticale, @fantarete, @nic.cariglia_';
 
   const fmtHint = formatFilter === 'CAROUSEL_ALBUM'
     ? `Genera SOLO caroselli (CAROUSEL_ALBUM).
