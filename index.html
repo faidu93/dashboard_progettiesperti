@@ -6729,6 +6729,16 @@ function intelGetSecret(platform) {
   return s;
 }
 
+function parseIsoDuration(duration) {
+  if (!duration) return 0;
+  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) return 0;
+  const hours = parseInt(match[1] || 0);
+  const minutes = parseInt(match[2] || 0);
+  const seconds = parseInt(match[3] || 0);
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
 // ── YouTube Intelligence ──
 async function runYtIntelligence() {
   const channelRaw = document.getElementById('ytChannels').value.trim();
@@ -6788,6 +6798,11 @@ async function runYtIntelligence() {
         const statsRes = await fetch('https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails,snippet&id=' + videoIds.join(',') + '&key=' + apiKey);
         const statsData = await statsRes.json();
         (statsData.items||[]).forEach(v => {
+          const durationStr = v.contentDetails?.duration || '';
+          const durationSec = parseIsoDuration(durationStr);
+          // Esclude gli Shorts (video con durata <= 60 secondi)
+          if (durationSec > 0 && durationSec <= 60) return;
+
           const vViews = parseInt(v.statistics?.viewCount||0);
           const vLikes = parseInt(v.statistics?.likeCount||0);
           const vComments = parseInt(v.statistics?.commentCount||0);
@@ -7619,5 +7634,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 5 -->
+<!-- build trigger: 6 -->
 </html>
