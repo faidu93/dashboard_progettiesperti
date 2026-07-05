@@ -2731,14 +2731,6 @@ body {
               <option value="10">Max 10 per canale</option>
             </select>
           </div>
-          <div class="intel-field" style="max-width:140px;">
-            <label>Tipo contenuto</label>
-            <select id="ytFormatFilter" onchange="intelSaveField('ytFormatFilter')">
-              <option value="ALL">Tutti</option>
-              <option value="VIDEO">Solo video</option>
-              <option value="SHORT">Solo short</option>
-            </select>
-          </div>
           <div class="intel-field" style="max-width:120px;">
             <label>N° idee</label>
             <select id="ytIdeaCount" onchange="intelSaveField('ytIdeaCount')">
@@ -6744,7 +6736,7 @@ async function runYtIntelligence() {
   const channelRaw = document.getElementById('ytChannels').value.trim();
   const apiKey = document.getElementById('ytApiKey').value.trim();
   const n = parseInt(document.getElementById('ytVideoCount').value) || 10;
-  const formatFilter = document.getElementById('ytFormatFilter')?.value || 'ALL';
+  const formatFilter = 'VIDEO';
   const ideaCount = parseInt(document.getElementById('ytIdeaCount')?.value) || 6;
   const topic = document.getElementById('ytTopic')?.value.trim() || '';
   const periodDays = parseInt(document.getElementById('ytPeriod')?.value) || 30;
@@ -6930,11 +6922,7 @@ function buildYtPrompt(videos, channels, formatFilter, ideaCount, topic, periodL
     return row;
   }).join('\n');
 
-  const fmtHint = formatFilter === 'VIDEO'
-    ? 'Genera SOLO VIDEO lunghi (10-20 min): analisi approfondite con dati.'
-    : formatFilter === 'SHORT'
-    ? 'Genera SOLO SHORT (max 60 sec): un dato sorprendente o consiglio rapido, hook nel primo secondo.'
-    : 'Mix VIDEO lunghi e SHORT.';
+  const fmtHint = 'Genera SOLO VIDEO standard/lunghi (10-20 minuti) con analisi approfondite e dati. Non considerare o generare Shorts.';
   const topicCtx = topic ? 'TOPIC RICHIESTO: ' + topic + '. Concentrati su questo argomento.' : '';
   const periodCtx = periodLabel ? 'Analisi degli ' + periodLabel + '.' : '';
 
@@ -7634,5 +7622,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 6 -->
+<!-- build trigger: 7 -->
 </html>
