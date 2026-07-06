@@ -6894,20 +6894,43 @@ async function runYtCompetitorAnalysis() {
     for (const ch of channels) {
       try {
         let channelId = ch;
-        if (ch.startsWith('@') || !ch.startsWith('UC')) {
-          const q = encodeURIComponent(ch.replace('@',''));
-          const srRes = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=' + q + '&maxResults=1&key=' + apiKey);
-          const srData = await srRes.json();
-          if (srData.error) throw new Error(srData.error.message);
-          channelId = srData.items?.[0]?.id?.channelId || ch;
-        }
-
         let subscriberCount = 0;
-        try {
+
+        if (ch.startsWith('@') || !ch.startsWith('UC')) {
+          const handle = ch.startsWith('@') ? ch : '@' + ch;
+          try {
+            const chRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&forHandle=' + encodeURIComponent(handle) + '&key=' + apiKey);
+            const chData = await chRes.json();
+            if (chData.error) throw new Error(chData.error.message);
+            
+            if (chData.items && chData.items.length > 0) {
+              channelId = chData.items[0].id;
+              subscriberCount = parseInt(chData.items[0].statistics?.subscriberCount || 0);
+            } else {
+              // Fallback sulla ricerca classica se forHandle non restituisce nulla
+              const q = encodeURIComponent(ch.replace('@',''));
+              const srRes = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=' + q + '&maxResults=1&key=' + apiKey);
+              const srData = await srRes.json();
+              if (srData.error) throw new Error(srData.error.message);
+              channelId = srData.items?.[0]?.id?.channelId || ch;
+              
+              const fallbackRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=statistics&id=' + channelId + '&key=' + apiKey);
+              const fallbackData = await fallbackRes.json();
+              subscriberCount = parseInt(fallbackData.items?.[0]?.statistics?.subscriberCount || 0);
+            }
+          } catch(err) {
+            console.warn('Errore forHandle, tento fallback ricerca:', err);
+            const q = encodeURIComponent(ch.replace('@',''));
+            const srRes = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=' + q + '&maxResults=1&key=' + apiKey);
+            const srData = await srRes.json();
+            channelId = srData.items?.[0]?.id?.channelId || ch;
+          }
+        } else {
           const chRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=statistics&id=' + channelId + '&key=' + apiKey);
           const chData = await chRes.json();
           subscriberCount = parseInt(chData.items?.[0]?.statistics?.subscriberCount || 0);
-        } catch(err) { console.warn('Errore stats canale:', err); }
+        }
+
         window.ytChannelSubs = window.ytChannelSubs || {};
         window.ytChannelSubs[ch] = subscriberCount;
 
@@ -7845,5 +7868,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 13 -->
+<!-- build trigger: 14 -->
 </html>
