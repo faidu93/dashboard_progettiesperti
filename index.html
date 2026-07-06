@@ -1683,6 +1683,24 @@ body {
   margin-left: auto;
   font-weight: 700;
 }
+/* Sotto-Tab Intelligence */
+.intel-sub-tabs button {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink-soft);
+  transition: all 0.2s ease;
+}
+.intel-sub-tabs button:hover {
+  background: var(--bg-elev-2) !important;
+  color: var(--ink) !important;
+}
+.intel-sub-tabs button.active {
+  background: var(--bg-elev-3) !important;
+  border-color: var(--line-strong) !important;
+  color: var(--ink) !important;
+  font-weight: 600 !important;
+}
+
 /* Idee generate da Claude */
 .intel-ideas { display: flex; flex-direction: column; gap: 12px; }
 .idea-card { background: var(--bg-elev-2); border: 1px solid var(--line);
@@ -2687,20 +2705,32 @@ body {
         <span class="material-symbols-rounded" style="color:#f08080;">smart_display</span>
         YouTube Intelligence · analisi canali competitor
       </div>
-      <div class="panel-sub">Analizza i video recenti dei competitor YouTube e genera idee · i risultati vengono salvati e accumulati</div>
+      <div class="panel-sub">Monitora i video dei competitor ed elabora idee contenuto basate sui dati reali del settore.</div>
 
       <!-- Storia ricerche YT -->
       <div id="ytHistoryBar" style="display:none;margin-bottom:14px;"></div>
 
-      <!-- Config -->
-      <div class="intel-config" id="ytIntelConfig">
-        <div class="intel-field">
-          <label>Password pubblicazione <span style="color:var(--ink-mute);font-weight:400;">(PUBLISH_SECRET)</span></label>
-          <input type="password" id="ytSecret" placeholder="La stessa password usata per pubblicare i post" oninput="intelSaveSecret('ytSecret')">
-        </div>
-        <div class="intel-field">
-          <label>Canali competitor <span style="color:var(--ink-mute);font-weight:400;">(un @handle per riga)</span></label>
-          <textarea id="ytChannels" rows="6" oninput="intelSaveField('ytChannels')">@CarmySpecial
+      <!-- Navigazione Sotto-Tab (Novità) -->
+      <div class="intel-sub-tabs" style="display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:10px;">
+        <button class="cal-btn active" id="btnSubYtComp" onclick="ytSwitchSubTab('comp')" style="font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:6px;">
+          <span class="material-symbols-rounded" style="font-size:16px;">smart_display</span>1. Video Competitor
+        </button>
+        <button class="cal-btn" id="btnSubYtIdeas" onclick="ytSwitchSubTab('ideas')" style="font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:6px;">
+          <span class="material-symbols-rounded" style="font-size:16px;">lightbulb</span>2. Generatore Idee
+        </button>
+      </div>
+
+      <!-- ────── SUB-TAB 1: Competitor ────── -->
+      <div id="panelYtComp">
+        <!-- Configurazione Competitor -->
+        <div class="intel-config" id="ytCompConfig">
+          <div class="intel-field">
+            <label>API Key YouTube Data v3</label>
+            <input type="password" id="ytApiKey" placeholder="AIza…" oninput="intelSaveField('ytApiKey')">
+          </div>
+          <div class="intel-field">
+            <label>Canali competitor <span style="color:var(--ink-mute);font-weight:400;">(un @handle per riga)</span></label>
+            <textarea id="ytChannels" rows="6" oninput="intelSaveField('ytChannels')">@CarmySpecial
 @ludovicorossini
 @micheledanese
 @niccariglia
@@ -2710,82 +2740,140 @@ body {
 @ILPROFETAFANTACALCIO
 @RECOSTA
 @fantamasterapp</textarea>
-        </div>
-        <div class="intel-row">
-          <div class="intel-field">
-            <label>Topic di ricerca <span style="color:var(--ink-mute);font-weight:400;">(filtra per argomento)</span></label>
-            <input type="text" id="ytTopic" placeholder="es. mondiale 2026, asta fantacalcio, modificatori" oninput="intelSaveField('ytTopic')">
           </div>
-          <div class="intel-field" style="max-width:150px;">
-            <label>Periodo</label>
-            <select id="ytPeriod" onchange="intelSaveField('ytPeriod')">
-              <option value="3">Ultimi 3 giorni</option>
-              <option value="7">Ultima settimana</option>
-              <option value="14">Ultime 2 settimane</option>
-              <option value="30" selected>Ultimi 30 giorni</option>
-              <option value="45">Ultimi 45 giorni</option>
-            </select>
+          <div class="intel-row">
+            <div class="intel-field">
+              <label>Periodo temporale di analisi</label>
+              <select id="ytPeriod" onchange="intelSaveField('ytPeriod')">
+                <option value="3">Ultimi 3 giorni</option>
+                <option value="7">Ultima settimana</option>
+                <option value="14">Ultime 2 settimane</option>
+                <option value="30" selected>Ultimi 30 giorni</option>
+                <option value="45">Ultimi 45 giorni</option>
+              </select>
+            </div>
+            <div class="intel-field" style="max-width:160px;">
+              <label>Video per canale</label>
+              <select id="ytVideoCount" onchange="intelSaveField('ytVideoCount')">
+                <option value="3">Max 3 video</option>
+                <option value="5" selected>Max 5 video</option>
+                <option value="10">Max 10 video</option>
+              </select>
+            </div>
           </div>
-        </div>
-        <div class="intel-row">
-          <div class="intel-field">
-            <label>API Key YouTube Data v3</label>
-            <input type="password" id="ytApiKey" placeholder="AIza…" oninput="intelSaveField('ytApiKey')">
-          </div>
-          <div class="intel-field" style="max-width:140px;">
-            <label>Video per canale</label>
-            <select id="ytVideoCount" onchange="intelSaveField('ytVideoCount')">
-              <option value="3">Max 3 per canale</option>
-              <option value="5" selected>Max 5 per canale</option>
-              <option value="10">Max 10 per canale</option>
-            </select>
-          </div>
-          <div class="intel-field" style="max-width:120px;">
-            <label>N° idee</label>
-            <select id="ytIdeaCount" onchange="intelSaveField('ytIdeaCount')">
-              <option value="3">3 idee</option>
-              <option value="6" selected>6 idee</option>
-              <option value="10">10 idee</option>
-            </select>
+          <div class="intel-actions">
+            <button class="cal-btn primary" id="ytIntelRunBtn" onclick="runYtCompetitorAnalysis()">
+              <span class="material-symbols-rounded">travel_explore</span>Carica e Analizza Competitor
+            </button>
+            <span id="ytIntelStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
           </div>
         </div>
-        <div class="intel-actions">
-          <button class="cal-btn primary" id="ytIntelRunBtn" onclick="runYtCompetitorAnalysis()">
-            <span class="material-symbols-rounded">travel_explore</span>1. Analizza competitor
-          </button>
-          <span id="ytIntelStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
+
+        <!-- Output Competitor -->
+        <div id="ytCompOutput" style="display:none;">
+          <div class="intel-out-header" style="margin-top:0;">
+            <span id="ytCompOutTitle" style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mid);"></span>
+            <button class="cal-btn" onclick="ytCompNewSearch()" style="font-size:11px;padding:5px 10px;">
+              <span class="material-symbols-rounded" style="font-size:14px;">settings</span>Riconfigura
+            </button>
+          </div>
+
+          <!-- KPIs Dashboard -->
+          <div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:12px;margin-bottom:18px;">
+            <div class="kpi-card" style="background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:9.5px;text-transform:uppercase;color:var(--ink-mute);font-family:var(--font-mono);margin-bottom:4px;">Video Trovati</div>
+              <div id="kpiTotalVideos" style="font-size:22px;font-weight:700;color:var(--accent);">0</div>
+            </div>
+            <div class="kpi-card" style="background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:9.5px;text-transform:uppercase;color:var(--ink-mute);font-family:var(--font-mono);margin-bottom:4px;">Canale Più Attivo</div>
+              <div id="kpiMostActive" style="font-size:13px;font-weight:700;color:var(--ink);text-overflow:ellipsis;overflow:hidden;white-space:nowrap;margin-top:4px;">—</div>
+            </div>
+            <div class="kpi-card" style="background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:9.5px;text-transform:uppercase;color:var(--ink-mute);font-family:var(--font-mono);margin-bottom:4px;">Engagement Medio</div>
+              <div id="kpiAvgEng" style="font-size:22px;font-weight:700;color:#2ec4b6;">0.0%</div>
+            </div>
+          </div>
+
+          <!-- Attività per Canale (Tabella KPI) -->
+          <div style="background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:18px;">
+            <div style="font-size:11px;font-weight:600;color:var(--ink);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+              <span class="material-symbols-rounded" style="font-size:16px;color:var(--accent);">monitoring</span>
+              Analisi Attività Competitor
+            </div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%;font-size:11.5px;border-collapse:collapse;" id="ytChannelKpiTable">
+                <thead>
+                  <tr style="border-bottom:1px solid var(--line);color:var(--ink-mute);font-family:var(--font-mono);font-size:9px;text-transform:uppercase;">
+                    <th style="text-align:left;padding:6px;font-weight:600;">Canale</th>
+                    <th style="text-align:center;padding:6px;font-weight:600;">Video Pubblicati</th>
+                    <th style="text-align:right;padding:6px;font-weight:600;">Visualizzazioni Medie</th>
+                    <th style="text-align:right;padding:6px;font-weight:600;">Engagement Medio</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Generata Dinamicamente -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Titolo Feed e CTA Comunicante -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;margin-top:24px;flex-wrap:wrap;gap:8px;">
+            <h4 style="font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px;margin:0;">
+              <span class="material-symbols-rounded" style="color:#ff5e5e;font-size:18px;">smart_display</span>
+              Feed Video Competitor
+            </h4>
+            <button class="cal-btn primary" onclick="ytSwitchSubTab('ideas')" style="font-size:11px;padding:6px 12px;background:var(--accent);border-color:var(--accent);">
+              <span class="material-symbols-rounded" style="font-size:14px;">lightbulb</span>Genera idee da questi video →
+            </button>
+          </div>
+
+          <!-- Feed delle Copertine -->
+          <div id="ytRawData" style="display:flex;flex-direction:column;gap:12px;"></div>
         </div>
       </div>
 
-      <!-- Output -->
-      <div id="ytIntelOutput" style="display:none;">
-        <div class="intel-out-header">
-          <span id="ytIntelOutTitle" style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mid);"></span>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <button class="cal-btn primary" id="ytIntelGenBtn" onclick="runYtIdeaGeneration()" style="font-size:11px;padding:5px 10px;background:var(--accent);border-color:var(--accent);">
-              <span class="material-symbols-rounded" style="font-size:14px;">lightbulb</span>2. Genera idee con l'IA
+      <!-- ────── SUB-TAB 2: Idee Generatore ────── -->
+      <div id="panelYtIdeas" style="display:none;">
+        <!-- Configurazione Idee -->
+        <div class="intel-config" id="ytIdeasConfig">
+          <div class="intel-field">
+            <label>Password pubblicazione <span style="color:var(--ink-mute);font-weight:400;">(PUBLISH_SECRET)</span></label>
+            <input type="password" id="ytSecret" placeholder="La stessa password usata per pubblicare i post" oninput="intelSaveSecret('ytSecret')">
+          </div>
+          <div class="intel-row">
+            <div class="intel-field">
+              <label>Topic di ricerca / Parola chiave <span style="color:var(--ink-mute);font-weight:400;">(opzionale)</span></label>
+              <input type="text" id="ytTopic" placeholder="es. mondiale 2026, asta, scambi..." oninput="intelSaveField('ytTopic')">
+            </div>
+            <div class="intel-field" style="max-width:130px;">
+              <label>Numero di idee</label>
+              <select id="ytIdeaCount" onchange="intelSaveField('ytIdeaCount')">
+                <option value="3">3 idee</option>
+                <option value="6" selected>6 idee</option>
+                <option value="10">10 idee</option>
+              </select>
+            </div>
+          </div>
+          <div class="intel-actions">
+            <button class="cal-btn primary" id="ytIntelGenBtn" onclick="runYtIdeaGeneration()" style="background:var(--accent);border-color:var(--accent);">
+              <span class="material-symbols-rounded">lightbulb</span>Genera idee con l'IA
             </button>
-            <button class="cal-btn" onclick="ytIntelNewSearch()" style="font-size:11px;padding:5px 10px;">
-              <span class="material-symbols-rounded" style="font-size:14px;">add</span>Nuova analisi
-            </button>
+            <span id="ytIntelGenStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
           </div>
         </div>
-        
-        <div class="yt-intel-layout" id="ytIntelLayout">
-          <div>
-            <h4 style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--ink);display:flex;align-items:center;gap:6px;">
-              <span class="material-symbols-rounded" style="color:var(--accent);font-size:18px;">lightbulb</span>
-              Idee AI Generate
-            </h4>
-            <div class="intel-ideas" id="ytIdeas"></div>
+
+        <!-- Output Idee -->
+        <div id="ytIdeasOutput" style="display:none;">
+          <div class="intel-out-header" style="margin-top:0;">
+            <span id="ytIdeasOutTitle" style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mid);">Idee AI Generate</span>
+            <button class="cal-btn" onclick="ytIdeasNewSearch()" style="font-size:11px;padding:5px 10px;">
+              <span class="material-symbols-rounded" style="font-size:14px;">settings</span>Configura idee
+            </button>
           </div>
-          <div id="ytCompetitorCol">
-            <h4 style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--ink);display:flex;align-items:center;gap:6px;">
-              <span class="material-symbols-rounded" style="color:#ff5e5e;font-size:18px;">smart_display</span>
-              Video Recenti Competitor
-            </h4>
-            <div id="ytRawData" style="display:flex;flex-direction:column;gap:12px;"></div>
-          </div>
+
+          <!-- Feed delle Idee AI -->
+          <div class="intel-ideas" id="ytIdeas"></div>
         </div>
       </div>
     </div>
@@ -6680,22 +6768,22 @@ function intelLoadSession(sessionId, platform) {
   const s = sessions.find(x => x.id === sessionId);
   if (!s) return;
   const ideasBox = platform === 'yt' ? 'ytIdeas' : 'igIdeas';
-  const outDiv = platform === 'yt' ? 'ytIntelOutput' : 'igIntelOutput';
-  const titleEl = platform === 'yt' ? 'ytIntelOutTitle' : 'igIntelOutTitle';
-  const cfgDiv = platform === 'yt' ? 'ytIntelConfig' : 'igIntelConfig';
-  document.getElementById(cfgDiv).style.display = 'none';
-  document.getElementById(outDiv).style.display = 'block';
-  const d = new Date(s.timestamp);
-  document.getElementById(titleEl).textContent = s.label + ' · ' + d.toLocaleString('it-IT');
   
   if (platform === 'yt') {
-    // Nascondi bottone genera idee e colonna competitor per sessioni storiche
-    const genBtn = document.getElementById('ytIntelGenBtn');
-    if (genBtn) genBtn.style.display = 'none';
-    const compCol = document.getElementById('ytCompetitorCol');
-    if (compCol) compCol.style.display = 'none';
-    const layout = document.getElementById('ytIntelLayout');
-    if (layout) layout.style.gridTemplateColumns = '1fr';
+    ytSwitchSubTab('ideas');
+    document.getElementById('ytIdeasConfig').style.display = 'none';
+    document.getElementById('ytIdeasOutput').style.display = 'block';
+    const titleEl = document.getElementById('ytIdeasOutTitle');
+    const d = new Date(s.timestamp);
+    if (titleEl) titleEl.textContent = s.label + ' · ' + d.toLocaleString('it-IT');
+  } else {
+    const outDiv = 'igIntelOutput';
+    const titleEl = 'igIntelOutTitle';
+    const cfgDiv = 'igIntelConfig';
+    document.getElementById(cfgDiv).style.display = 'none';
+    document.getElementById(outDiv).style.display = 'block';
+    const d = new Date(s.timestamp);
+    document.getElementById(titleEl).textContent = s.label + ' · ' + d.toLocaleString('it-IT');
   }
   
   renderIdeas(s.ideas, ideasBox, platform, sessionId, s.votes || {});
@@ -6706,30 +6794,15 @@ function intelDeleteSession(sessionId, platform) {
   if (!confirm('Eliminare questa ricerca dalla storia?')) return;
   intelHistoryDelete(sessionId);
   intelRenderHistoryBar(platform, null);
-  // Se era quella attiva, torno al form
-  const sessions = intelHistoryLoad().filter(x => x.platform === platform);
-  if (!sessions.length) {
-    const outDiv = platform === 'yt' ? 'ytIntelOutput' : 'igIntelOutput';
-    const cfgDiv = platform === 'yt' ? 'ytIntelConfig' : 'igIntelConfig';
-    document.getElementById(outDiv).style.display = 'none';
-    document.getElementById(cfgDiv).style.display = 'block';
+  
+  if (platform === 'yt') {
+    document.getElementById('ytIdeasOutput').style.display = 'none';
+    document.getElementById('ytIdeasConfig').style.display = 'block';
+  } else {
+    document.getElementById('igIntelOutput').style.display = 'none';
+    document.getElementById('igIntelConfig').style.display = 'block';
   }
 }
-
-// ── Nuova ricerca: NON cancella i risultati, mostra il form ──
-function ytIntelNewSearch() {
-  document.getElementById('ytIntelConfig').style.display = 'block';
-  document.getElementById('ytIntelOutput').style.display = 'none';
-  intelRenderHistoryBar('yt', null);
-}
-function igIntelNewSearch() {
-  document.getElementById('igIntelConfig').style.display = 'block';
-  document.getElementById('igIntelOutput').style.display = 'none';
-  intelRenderHistoryBar('ig', null);
-}
-// Alias retrocompatibilità
-function ytIntelReset() { ytIntelNewSearch(); }
-function igIntelReset() { igIntelNewSearch(); }
 
 // ── Helper: legge la secret senza prompt bloccante ──
 function intelGetSecret(platform) {
@@ -6756,13 +6829,47 @@ function parseIsoDuration(duration) {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
-// ── YouTube Intelligence ──
+function ytSwitchSubTab(tab) {
+  const btnComp = document.getElementById('btnSubYtComp');
+  const btnIdeas = document.getElementById('btnSubYtIdeas');
+  const panelComp = document.getElementById('panelYtComp');
+  const panelIdeas = document.getElementById('panelYtIdeas');
+  
+  if (!btnComp || !btnIdeas || !panelComp || !panelIdeas) return;
+
+  if (tab === 'comp') {
+    btnComp.classList.add('active');
+    btnIdeas.classList.remove('active');
+    panelComp.style.display = 'block';
+    panelIdeas.style.display = 'none';
+  } else {
+    btnComp.classList.remove('active');
+    btnIdeas.classList.add('active');
+    panelComp.style.display = 'none';
+    panelIdeas.style.display = 'block';
+  }
+}
+
+function ytCompNewSearch() {
+  document.getElementById('ytCompConfig').style.display = 'block';
+  document.getElementById('ytCompOutput').style.display = 'none';
+}
+
+function ytIdeasNewSearch() {
+  document.getElementById('ytIdeasConfig').style.display = 'block';
+  document.getElementById('ytIdeasOutput').style.display = 'none';
+}
+
+function igIntelNewSearch() {
+  document.getElementById('igIntelConfig').style.display = 'block';
+  document.getElementById('igIntelOutput').style.display = 'none';
+  intelRenderHistoryBar('ig', null);
+}
+
 async function runYtCompetitorAnalysis() {
   const channelRaw = document.getElementById('ytChannels').value.trim();
   const apiKey = document.getElementById('ytApiKey').value.trim();
   const n = parseInt(document.getElementById('ytVideoCount').value) || 10;
-  const ideaCount = parseInt(document.getElementById('ytIdeaCount')?.value) || 6;
-  const topic = document.getElementById('ytTopic')?.value.trim() || '';
   const periodDays = parseInt(document.getElementById('ytPeriod')?.value) || 30;
 
   if (!channelRaw) { alert('Inserisci almeno un canale.'); return; }
@@ -6773,19 +6880,17 @@ async function runYtCompetitorAnalysis() {
   const status = document.getElementById('ytIntelStatus');
   btn.disabled = true;
 
-  // Calcolo data minima: oggi - periodDays
   const minDate = new Date();
   minDate.setDate(minDate.getDate() - periodDays);
   const minDateISO = minDate.toISOString();
   const periodLabel = periodDays === 7 ? 'ultima settimana' : periodDays === 30 ? 'ultimi 30 giorni' : 'ultimi 45 giorni';
 
-  status.textContent = 'Recupero video degli ' + periodLabel + '…';
+  status.textContent = 'Recupero video…';
 
   try {
     const allVideos = [];
     for (const ch of channels) {
       try {
-        status.textContent = 'Analisi ' + ch + '…';
         let channelId = ch;
         if (ch.startsWith('@') || !ch.startsWith('UC')) {
           const q = encodeURIComponent(ch.replace('@',''));
@@ -6795,15 +6900,10 @@ async function runYtCompetitorAnalysis() {
           channelId = srData.items?.[0]?.id?.channelId || ch;
         }
 
-        // Se c'è un topic, lo aggiungo alla query di ricerca
-        // publishedAfter filtra solo i video nel periodo scelto
         let searchUrl = 'https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=' + channelId
           + '&order=date&maxResults=' + n + '&type=video'
           + '&publishedAfter=' + encodeURIComponent(minDateISO)
           + '&key=' + apiKey;
-        if (topic) {
-          searchUrl += '&q=' + encodeURIComponent(topic);
-        }
 
         const vidRes = await fetch(searchUrl);
         const vidData = await vidRes.json();
@@ -6814,9 +6914,7 @@ async function runYtCompetitorAnalysis() {
         const statsRes = await fetch('https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails,snippet&id=' + videoIds.join(',') + '&key=' + apiKey);
         const statsData = await statsRes.json();
         (statsData.items||[]).forEach(v => {
-          const durationStr = v.contentDetails?.duration || '';
-          const durationSec = parseIsoDuration(durationStr);
-          // Esclude gli Shorts (video con durata <= 60 secondi)
+          const durationSec = parseIsoDuration(v.contentDetails?.duration || '');
           if (durationSec > 0 && durationSec <= 60) return;
 
           const vViews = parseInt(v.statistics?.viewCount||0);
@@ -6824,40 +6922,28 @@ async function runYtCompetitorAnalysis() {
           const vComments = parseInt(v.statistics?.commentCount||0);
           const vEngScore = vViews > 0 ? ((vLikes + vComments) / vViews * 100) : 0;
           allVideos.push({
-            channel: ch,
-            title: v.snippet?.title||'—',
-            publishedAt: (v.snippet?.publishedAt||'').slice(0,10),
-            views: vViews,
-            likes: vLikes,
-            comments: vComments,
-            engScore: Math.round(vEngScore * 100) / 100, // % engagement
-            duration: v.contentDetails?.duration||'',
-            videoId: v.id,
-            description: (v.snippet?.description||'').slice(0,300).replace(/\n/g,' '),
-            tags: (v.snippet?.tags||[]).slice(0,8).join(', '),
-            thumbnail: v.snippet?.thumbnails?.medium?.url || v.snippet?.thumbnails?.default?.url || ''
+            channel: ch, title: v.snippet?.title||'—', publishedAt: (v.snippet?.publishedAt||'').slice(0,10),
+            views: vViews, likes: vLikes, comments: vComments, engScore: Math.round(vEngScore * 100) / 100,
+            videoId: v.id, description: (v.snippet?.description||'').slice(0,300).replace(/\n/g,' '),
+            tags: (v.snippet?.tags||[]).slice(0,8).join(', '), thumbnail: v.snippet?.thumbnails?.medium?.url || v.snippet?.thumbnails?.default?.url || ''
           });
         });
       } catch(e) { console.warn('Errore canale ' + ch + ':', e.message); }
     }
 
     if (!allVideos.length) {
-      const hint = topic ? ' con topic "' + topic + '"' : '';
-      status.textContent = '⚠ Nessun video trovato negli ' + periodLabel + hint + '. Prova ad allargare il periodo o verifica gli handle.';
+      status.textContent = '⚠ Nessun video trovato negli ' + periodLabel + '. Verifica gli handle.';
       btn.disabled = false;
       return;
     }
 
-    // Bilanciamento automatico: se un canale ha pubblicato molto e altri poco,
-    // limito i canali prolifici a max 2x la media per non farli dominare.
     const byChannel = {};
     allVideos.forEach(v => { byChannel[v.channel] = (byChannel[v.channel] || 0) + 1; });
     const channelCounts = Object.values(byChannel);
     const avgPerChannel = channelCounts.reduce((s,c) => s+c, 0) / channelCounts.length;
-    const maxPerChannel = Math.max(Math.ceil(avgPerChannel * 2), 3); // almeno 3 per canale attivo
+    const maxPerChannel = Math.max(Math.ceil(avgPerChannel * 2), 3);
     const balancedVideos = [];
     const channelUsed = {};
-    // Prima passo: prendo i più visti di ogni canale fino al limite bilanciato
     const sortedByViews = [...allVideos].sort((a,b) => b.views - a.views);
     sortedByViews.forEach(v => {
       channelUsed[v.channel] = (channelUsed[v.channel] || 0);
@@ -6867,43 +6953,64 @@ async function runYtCompetitorAnalysis() {
       }
     });
 
-    // Salva lo stato globale per la generazione delle idee
     window.lastFetchedYtVideos = balancedVideos;
     window.lastFetchedYtChannels = channels;
     window.lastFetchedYtPeriodLabel = periodLabel;
-    window.lastFetchedYtTopic = topic;
-    window.lastFetchedYtIdeaCount = ideaCount;
     window.lastFetchedYtPeriodDays = periodDays;
     window.lastFetchedYtChannelsRaw = channelRaw;
 
-    renderYtRawTable(balancedVideos);
-    
-    // Ripristiniamo la griglia a due colonne e il bottone per l'IA
-    const genBtn = document.getElementById('ytIntelGenBtn');
-    if (genBtn) {
-      genBtn.style.display = 'inline-flex';
-      genBtn.disabled = false;
-      genBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">lightbulb</span>2. Genera idee con l\'IA';
-    }
-    const compCol = document.getElementById('ytCompetitorCol');
-    if (compCol) compCol.style.display = 'block';
-    const layout = document.getElementById('ytIntelLayout');
-    if (layout) layout.style.gridTemplateColumns = ''; // resetta per usare il CSS (griglia a 2 colonne su desktop)
+    document.getElementById('kpiTotalVideos').textContent = balancedVideos.length;
+    const counts = {};
+    balancedVideos.forEach(v => { counts[v.channel] = (counts[v.channel] || 0) + 1; });
+    let mostActive = '—', maxC = 0;
+    Object.entries(counts).forEach(([ch, c]) => { if (c > maxC) { maxC = c; mostActive = ch; } });
+    document.getElementById('kpiMostActive').textContent = mostActive;
+    const avgEngVal = balancedVideos.reduce((sum, v) => sum + v.engScore, 0) / balancedVideos.length;
+    document.getElementById('kpiAvgEng').textContent = avgEngVal.toFixed(1) + '%';
 
-    // Mostriamo un placeholder amichevole per le idee da generare
+    const channelKpis = {};
+    channels.forEach(ch => { channelKpis[ch] = { count: 0, totalViews: 0, totalEng: 0 }; });
+    balancedVideos.forEach(v => {
+      if (channelKpis[v.channel]) {
+        channelKpis[v.channel].count++;
+        channelKpis[v.channel].totalViews += v.views;
+        channelKpis[v.channel].totalEng += v.engScore;
+      }
+    });
+    
+    const sortedChs = Object.entries(channelKpis).sort((a, b) => b[1].count - a[1].count);
+    let tableHtml = '';
+    sortedChs.forEach(([ch, stat]) => {
+      const avgViews = stat.count > 0 ? Math.round(stat.totalViews / stat.count) : 0;
+      const avgEng = stat.count > 0 ? (stat.totalEng / stat.count).toFixed(1) : '0.0';
+      const engColor = parseFloat(avgEng) >= 5 ? '#2ec4b6' : parseFloat(avgEng) >= 2 ? '#ff9f1c' : 'var(--ink-mute)';
+      const fmtViews = avgViews >= 1000 ? (avgViews / 1000).toFixed(1) + 'k' : avgViews;
+      tableHtml += `<tr style="border-bottom:1px solid var(--line);color:var(--ink-mid);">
+          <td style="padding:8px 6px;text-align:left;font-weight:600;font-family:var(--font-mono);font-size:10px;">${ch}</td>
+          <td style="padding:8px 6px;text-align:center;">${stat.count}</td>
+          <td style="padding:8px 6px;text-align:right;font-family:var(--font-mono);font-weight:600;color:var(--accent);">${fmtViews}</td>
+          <td style="padding:8px 6px;text-align:right;font-family:var(--font-mono);font-weight:700;color:${engColor};">${avgEng}%</td>
+        </tr>`;
+    });
+    document.querySelector('#ytChannelKpiTable tbody').innerHTML = tableHtml;
+
+    renderYtRawTable(balancedVideos);
+    document.getElementById('ytCompConfig').style.display = 'none';
+    document.getElementById('ytCompOutput').style.display = 'block';
+    document.getElementById('ytCompOutTitle').textContent = balancedVideos.length + ' video analizzati · ' + periodLabel;
+    
     document.getElementById('ytIdeas').innerHTML = `
       <div class="idea-card loading" style="border-style:dashed;background:transparent;flex-direction:column;gap:12px;padding:24px;text-align:center;min-height:120px;justify-content:center;">
         <span class="material-symbols-rounded" style="font-size:32px;color:var(--accent);">lightbulb</span>
         <div>
           <strong style="display:block;margin-bottom:4px;color:var(--ink);">Competitor analizzati!</strong>
-          <span style="font-size:12px;color:var(--ink-mute);">Ora clicca su <strong>"2. Genera idee con l'IA"</strong> in alto a destra per creare idee di contenuto basate su questi video.</span>
+          <span style="font-size:12px;color:var(--ink-mute);">Ora clicca sulla scheda <strong>"2. Generatore Idee"</strong> in alto per creare idee con l'IA.</span>
         </div>
       </div>
     `;
+    document.getElementById('ytIdeasConfig').style.display = 'block';
+    document.getElementById('ytIdeasOutput').style.display = 'none';
 
-    document.getElementById('ytIntelConfig').style.display = 'none';
-    document.getElementById('ytIntelOutput').style.display = 'block';
-    document.getElementById('ytIntelOutTitle').textContent = balancedVideos.length + ' video competitor · ' + periodLabel + (topic ? ' · "' + topic + '"' : '');
     status.textContent = '';
   } catch(e) { status.textContent = '❌ ' + e.message; }
   btn.disabled = false;
@@ -6913,21 +7020,24 @@ async function runYtIdeaGeneration() {
   const videos = window.lastFetchedYtVideos;
   const channels = window.lastFetchedYtChannels;
   const periodLabel = window.lastFetchedYtPeriodLabel;
-  const topic = window.lastFetchedYtTopic;
-  const ideaCount = window.lastFetchedYtIdeaCount;
   const periodDays = window.lastFetchedYtPeriodDays;
   const channelsRaw = window.lastFetchedYtChannelsRaw;
 
   if (!videos || !videos.length) {
-    alert('Nessun video competitor caricato. Esegui prima l\'analisi competitor.');
+    alert('Nessun video competitor caricato. Torna alla scheda "1. Video Competitor" ed esegui prima l\'analisi.');
     return;
   }
 
+  const topic = document.getElementById('ytTopic')?.value.trim() || '';
+  const ideaCount = parseInt(document.getElementById('ytIdeaCount')?.value) || 6;
+  const status = document.getElementById('ytIntelGenStatus');
   const genBtn = document.getElementById('ytIntelGenBtn');
+
   if (genBtn) {
     genBtn.disabled = true;
     genBtn.innerHTML = '<span class="material-symbols-rounded" style="animation:spin 1s linear infinite;font-size:14px;margin-right:4px;">progress_activity</span>Generazione idee…';
   }
+  if (status) status.textContent = 'Claude sta elaborando le idee…';
 
   try {
     const prompt = buildYtPrompt(videos, channels, 'VIDEO', ideaCount, topic, periodLabel);
@@ -6935,12 +7045,17 @@ async function runYtIdeaGeneration() {
 
     const label = channels.slice(0,2).join(', ') + (channels.length>2?' +altri':'') + ' · ' + periodLabel;
     const sessionId = intelHistoryAdd('yt', label, ideas, { channels: channelsRaw, formatFilter: 'VIDEO', ideaCount, topic, periodDays });
+    
     renderIdeas(ideas, 'ytIdeas', 'yt', sessionId, {});
-
-    document.getElementById('ytIntelOutTitle').textContent = videos.length + ' video · ' + periodLabel + (topic ? ' · "' + topic + '"' : '') + ' · ' + ideaCount + ' idee';
     intelRenderHistoryBar('yt', sessionId);
+    
+    document.getElementById('ytIdeasConfig').style.display = 'none';
+    document.getElementById('ytIdeasOutput').style.display = 'block';
+    document.getElementById('ytIdeasOutTitle').textContent = videos.length + ' video · ' + periodLabel + (topic ? ' · "' + topic + '"' : '') + ' · ' + ideaCount + ' idee generate';
+    if (status) status.textContent = '';
   } catch(e) {
     alert('Errore durante la generazione delle idee: ' + e.message);
+    if (status) status.textContent = '❌ Errore';
   } finally {
     if (genBtn) {
       genBtn.disabled = false;
@@ -7708,5 +7823,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 8 -->
+<!-- build trigger: 9 -->
 </html>
