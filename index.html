@@ -6915,7 +6915,10 @@ async function runYtCompetitorAnalysis() {
         const statsData = await statsRes.json();
         (statsData.items||[]).forEach(v => {
           const durationSec = parseIsoDuration(v.contentDetails?.duration || '');
-          if (durationSec > 0 && durationSec <= 60) return;
+          const title = (v.snippet?.title || '').toLowerCase();
+          const desc = (v.snippet?.description || '').toLowerCase();
+          const isShortTag = title.includes('#short') || desc.includes('#short') || (v.snippet?.tags || []).some(t => t.toLowerCase().includes('short'));
+          if (durationSec > 0 && (durationSec <= 180 || isShortTag)) return;
 
           const vViews = parseInt(v.statistics?.viewCount||0);
           const vLikes = parseInt(v.statistics?.likeCount||0);
@@ -7823,5 +7826,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 10 -->
+<!-- build trigger: 11 -->
 </html>
