@@ -2806,7 +2806,8 @@ body {
                 <thead>
                   <tr style="border-bottom:1px solid var(--line);color:var(--ink-mute);font-family:var(--font-mono);font-size:9px;text-transform:uppercase;">
                     <th style="text-align:left;padding:6px;font-weight:600;">Canale</th>
-                    <th style="text-align:center;padding:6px;font-weight:600;">Video Pubblicati</th>
+                    <th style="text-align:right;padding:6px;font-weight:600;">Iscritti</th>
+                    <th style="text-align:center;padding:6px;font-weight:600;">Video / Sett.</th>
                     <th style="text-align:right;padding:6px;font-weight:600;">Visualizzazioni Medie</th>
                     <th style="text-align:right;padding:6px;font-weight:600;">Engagement Medio</th>
                   </tr>
@@ -6901,6 +6902,15 @@ async function runYtCompetitorAnalysis() {
           channelId = srData.items?.[0]?.id?.channelId || ch;
         }
 
+        let subscriberCount = 0;
+        try {
+          const chRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=statistics&id=' + channelId + '&key=' + apiKey);
+          const chData = await chRes.json();
+          subscriberCount = parseInt(chData.items?.[0]?.statistics?.subscriberCount || 0);
+        } catch(err) { console.warn('Errore stats canale:', err); }
+        window.ytChannelSubs = window.ytChannelSubs || {};
+        window.ytChannelSubs[ch] = subscriberCount;
+
         let searchUrl = 'https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=' + channelId
           + '&order=date&maxResults=' + n + '&type=video'
           + '&publishedAfter=' + encodeURIComponent(minDateISO)
@@ -6989,9 +6999,17 @@ async function runYtCompetitorAnalysis() {
       const avgEng = stat.count > 0 ? (stat.totalEng / stat.count).toFixed(1) : '0.0';
       const engColor = parseFloat(avgEng) >= 5 ? '#2ec4b6' : parseFloat(avgEng) >= 2 ? '#ff9f1c' : 'var(--ink-mute)';
       const fmtViews = avgViews >= 1000 ? (avgViews / 1000).toFixed(1) + 'k' : avgViews;
+      
+      const subs = window.ytChannelSubs?.[ch] || 0;
+      const fmtSubs = subs >= 1000000 ? (subs/1000000).toFixed(1) + 'M' : (subs >= 1000 ? (subs/1000).toFixed(1) + 'k' : subs);
+      
+      const videosPerWeek = periodDays > 0 ? (stat.count / (periodDays / 7)) : 0;
+      const fmtRate = videosPerWeek.toFixed(1);
+      
       tableHtml += `<tr style="border-bottom:1px solid var(--line);color:var(--ink-mid);">
           <td style="padding:8px 6px;text-align:left;font-weight:600;font-family:var(--font-mono);font-size:10px;">${ch}</td>
-          <td style="padding:8px 6px;text-align:center;">${stat.count}</td>
+          <td style="padding:8px 6px;text-align:right;font-family:var(--font-mono);color:var(--ink-soft);">${fmtSubs || '—'}</td>
+          <td style="padding:8px 6px;text-align:center;font-weight:600;font-family:var(--font-mono);">${fmtRate}</td>
           <td style="padding:8px 6px;text-align:right;font-family:var(--font-mono);font-weight:600;color:var(--accent);">${fmtViews}</td>
           <td style="padding:8px 6px;text-align:right;font-family:var(--font-mono);font-weight:700;color:${engColor};">${avgEng}%</td>
         </tr>`;
@@ -7827,5 +7845,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 12 -->
+<!-- build trigger: 13 -->
 </html>
