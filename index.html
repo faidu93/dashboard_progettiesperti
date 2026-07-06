@@ -6868,6 +6868,17 @@ function igIntelNewSearch() {
   intelRenderHistoryBar('ig', null);
 }
 
+function checkYtResponse(resData) {
+  if (resData && resData.error) {
+    const msg = resData.error.message || 'Errore API sconosciuto';
+    const code = resData.error.code;
+    const reason = resData.error.errors?.[0]?.reason || '';
+    if (code === 400 || code === 403 || reason === 'quotaExceeded' || reason === 'keyInvalid') {
+      throw new Error(`YouTube API Error [${code}]: ${msg}`);
+    }
+  }
+}
+
 async function runYtCompetitorAnalysis() {
   const channelRaw = document.getElementById('ytChannels').value.trim();
   const apiKey = document.getElementById('ytApiKey').value.trim();
@@ -6885,12 +6896,19 @@ async function runYtCompetitorAnalysis() {
   const minDate = new Date();
   minDate.setDate(minDate.getDate() - periodDays);
   const minDateISO = minDate.toISOString();
-  const periodLabel = periodDays === 7 ? 'ultima settimana' : periodDays === 30 ? 'ultimi 30 giorni' : 'ultimi 45 giorni';
+  
+  const periodLabel = periodDays === 3 ? 'ultimi 3 giorni'
+                    : periodDays === 7 ? 'ultima settimana'
+                    : periodDays === 14 ? 'ultime 2 settimane'
+                    : periodDays === 30 ? 'ultimi 30 giorni'
+                    : 'ultimi 45 giorni';
 
   status.textContent = 'Recupero video…';
 
   try {
     const allVideos = [];
+    const errors = [];
+    
     for (const ch of channels) {
       try {
         let channelId = ch;
@@ -6898,36 +6916,48 @@ async function runYtCompetitorAnalysis() {
 
         if (ch.startsWith('@') || !ch.startsWith('UC')) {
           const handle = ch.startsWith('@') ? ch : '@' + ch;
+          const handleName = handle.replace('@', '');
+          
           try {
-            const chRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&forHandle=' + encodeURIComponent(handle) + '&key=' + apiKey);
+            const chRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&forHandle=' + encodeURIComponent(handleName) + '&key=' + apiKey);
             const chData = await chRes.json();
-            if (chData.error) throw new Error(chData.error.message);
+            checkYtResponse(chData);
             
             if (chData.items && chData.items.length > 0) {
               channelId = chData.items[0].id;
               subscriberCount = parseInt(chData.items[0].statistics?.subscriberCount || 0);
             } else {
-              // Fallback sulla ricerca classica se forHandle non restituisce nulla
-              const q = encodeURIComponent(ch.replace('@',''));
+              // Fallback sulla ricerca classica con chiocciola per precisione
+              const q = encodeURIComponent(handle);
               const srRes = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=' + q + '&maxResults=1&key=' + apiKey);
               const srData = await srRes.json();
-              if (srData.error) throw new Error(srData.error.message);
-              channelId = srData.items?.[0]?.id?.channelId || ch;
+              checkYtResponse(srData);
               
-              const fallbackRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=statistics&id=' + channelId + '&key=' + apiKey);
-              const fallbackData = await fallbackRes.json();
-              subscriberCount = parseInt(fallbackData.items?.[0]?.statistics?.subscriberCount || 0);
+              if (srData.items && srData.items.length > 0) {
+                channelId = srData.items[0].id?.channelId || ch;
+                
+                const fallbackRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=statistics&id=' + channelId + '&key=' + apiKey);
+                const fallbackData = await fallbackRes.json();
+                checkYtResponse(fallbackData);
+                subscriberCount = parseInt(fallbackData.items?.[0]?.statistics?.subscriberCount || 0);
+              }
             }
           } catch(err) {
+            // Se l'errore è globale (quota/chiave), lo rilanciamo per fermare tutto
+            if (err.message.includes('YouTube API Error') || err.message.includes('quota') || err.message.includes('key')) {
+              throw err;
+            }
             console.warn('Errore forHandle, tento fallback ricerca:', err);
-            const q = encodeURIComponent(ch.replace('@',''));
+            const q = encodeURIComponent(handle);
             const srRes = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=' + q + '&maxResults=1&key=' + apiKey);
             const srData = await srRes.json();
+            checkYtResponse(srData);
             channelId = srData.items?.[0]?.id?.channelId || ch;
           }
         } else {
           const chRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=statistics&id=' + channelId + '&key=' + apiKey);
           const chData = await chRes.json();
+          checkYtResponse(chData);
           subscriberCount = parseInt(chData.items?.[0]?.statistics?.subscriberCount || 0);
         }
 
@@ -6941,12 +6971,15 @@ async function runYtCompetitorAnalysis() {
 
         const vidRes = await fetch(searchUrl);
         const vidData = await vidRes.json();
-        if (vidData.error) throw new Error(vidData.error.message);
+        checkYtResponse(vidData);
+        
         const videoIds = (vidData.items||[]).map(i => i.id?.videoId).filter(Boolean);
         if (!videoIds.length) continue;
 
         const statsRes = await fetch('https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails,snippet&id=' + videoIds.join(',') + '&key=' + apiKey);
         const statsData = await statsRes.json();
+        checkYtResponse(statsData);
+        
         (statsData.items||[]).forEach(v => {
           const durationSec = parseIsoDuration(v.contentDetails?.duration || '');
           const title = (v.snippet?.title || '').toLowerCase();
@@ -6958,6 +6991,7 @@ async function runYtCompetitorAnalysis() {
           const vLikes = parseInt(v.statistics?.likeCount||0);
           const vComments = parseInt(v.statistics?.commentCount||0);
           const vEngScore = vViews > 0 ? ((vLikes + vComments) / vViews * 100) : 0;
+          
           allVideos.push({
             channel: ch, title: v.snippet?.title||'—', publishedAt: (v.snippet?.publishedAt||'').slice(0,10),
             views: vViews, likes: vLikes, comments: vComments, engScore: Math.round(vEngScore * 100) / 100,
@@ -6965,11 +6999,22 @@ async function runYtCompetitorAnalysis() {
             tags: (v.snippet?.tags||[]).slice(0,8).join(', '), thumbnail: v.snippet?.thumbnails?.medium?.url || v.snippet?.thumbnails?.default?.url || ''
           });
         });
-      } catch(e) { console.warn('Errore canale ' + ch + ':', e.message); }
+      } catch(e) {
+        console.warn('Errore canale ' + ch + ':', e.message);
+        errors.push(ch + ': ' + e.message);
+        // Se è un errore globale, lo rilanciamo per fermare il loop
+        if (e.message.includes('YouTube API Error') || e.message.includes('quota') || e.message.includes('key')) {
+          throw e;
+        }
+      }
     }
 
     if (!allVideos.length) {
-      status.textContent = '⚠ Nessun video trovato negli ' + periodLabel + '. Verifica gli handle.';
+      if (errors.length > 0) {
+        status.textContent = '❌ Errore API riscontrato:\n' + errors.slice(0, 2).join('\n');
+      } else {
+        status.textContent = '⚠ Nessun video trovato negli ' + periodLabel + '. Verifica gli handle.';
+      }
       btn.disabled = false;
       return;
     }
@@ -7868,5 +7913,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 15 -->
+<!-- build trigger: 16 -->
 </html>
