@@ -6915,11 +6915,66 @@ async function runYtCompetitorAnalysis() {
         let subscriberCount = 0;
 
         if (ch.startsWith('@') || !ch.startsWith('UC')) {
-          const q = encodeURIComponent(ch.startsWith('@') ? ch : '@' + ch);
-          const srRes = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=' + q + '&maxResults=1&key=' + apiKey);
-          const srData = await srRes.json();
-          checkYtResponse(srData);
-          channelId = srData.items?.[0]?.id?.channelId || ch;
+          const handle = ch.startsWith('@') ? ch : '@' + ch;
+          const handleName = handle.replace('@', '');
+          
+          // 1. Tenta con channels?forHandle (esatto)
+          try {
+            const chRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=statistics,contentDetails&forHandle=' + encodeURIComponent(handleName) + '&key=' + apiKey);
+            const chData = await chRes.json();
+            checkYtResponse(chData);
+            
+            if (chData.items && chData.items.length > 0) {
+              channelId = chData.items[0].id;
+              subscriberCount = parseInt(chData.items[0].statistics?.subscriberCount || 0);
+            }
+          } catch(err) {
+            if (err.message.includes('YouTube API Error') || err.message.includes('quota') || err.message.includes('key')) {
+              throw err;
+            }
+            console.warn('Errore forHandle per ' + ch + ':', err);
+          }
+          
+          // 2. Fallback ricerca classica con @
+          if (!channelId.startsWith('UC')) {
+            try {
+              const q = encodeURIComponent(handle);
+              const srRes = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=' + q + '&maxResults=1&key=' + apiKey);
+              const srData = await srRes.json();
+              checkYtResponse(srData);
+              if (srData.items && srData.items.length > 0) {
+                channelId = srData.items[0].id?.channelId || ch;
+              }
+            } catch(err) {
+              if (err.message.includes('YouTube API Error') || err.message.includes('quota') || err.message.includes('key')) {
+                throw err;
+              }
+              console.warn('Errore ricerca con @ per ' + ch + ':', err);
+            }
+          }
+          
+          // 3. Fallback ricerca classica senza @
+          if (!channelId.startsWith('UC')) {
+            try {
+              const q = encodeURIComponent(handleName);
+              const srRes = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=' + q + '&maxResults=1&key=' + apiKey);
+              const srData = await srRes.json();
+              checkYtResponse(srData);
+              if (srData.items && srData.items.length > 0) {
+                channelId = srData.items[0].id?.channelId || ch;
+              }
+            } catch(err) {
+              if (err.message.includes('YouTube API Error') || err.message.includes('quota') || err.message.includes('key')) {
+                throw err;
+              }
+              console.warn('Errore ricerca senza @ per ' + ch + ':', err);
+            }
+          }
+        }
+
+        // Verifica finale di correttezza dell'ID
+        if (!channelId.startsWith('UC')) {
+          throw new Error(`Non è stato possibile risolvere l'ID del canale per l'handle "${ch}". Verifica che sia scritto correttamente.`);
         }
 
         const chRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=statistics,contentDetails&id=' + channelId + '&key=' + apiKey);
@@ -7886,5 +7941,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 17 -->
+<!-- build trigger: 18 -->
 </html>
