@@ -7004,11 +7004,14 @@ async function runYtCompetitorAnalysis() {
 
         if (!videoIds.length) continue;
 
-        const statsRes = await fetch('https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails,snippet&id=' + videoIds.join(',') + '&key=' + apiKey);
+        const statsRes = await fetch('https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails,snippet,liveStreamingDetails&id=' + videoIds.join(',') + '&key=' + apiKey);
         const statsData = await statsRes.json();
         checkYtResponse(statsData);
         
         (statsData.items||[]).forEach(v => {
+          const isLiveStream = v.liveStreamingDetails !== undefined || v.snippet?.liveBroadcastContent === 'completed' || v.snippet?.liveBroadcastContent === 'live';
+          if (isLiveStream) return;
+
           const durationSec = parseIsoDuration(v.contentDetails?.duration || '');
           const title = (v.snippet?.title || '').toLowerCase();
           const desc = (v.snippet?.description || '').toLowerCase();
@@ -7942,5 +7945,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 19 -->
+<!-- build trigger: 20 -->
 </html>
