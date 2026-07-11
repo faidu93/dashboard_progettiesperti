@@ -6909,12 +6909,32 @@ async function runYtCompetitorAnalysis() {
     const allVideos = [];
     const errors = [];
     
+    window.ytChannelErrors = window.ytChannelErrors || {};
     for (const ch of channels) {
       try {
+        delete window.ytChannelErrors[ch];
         let channelId = ch;
         let subscriberCount = 0;
 
-        if (ch.startsWith('@') || !ch.startsWith('UC')) {
+        const handleClean = ch.trim().toLowerCase();
+        const handleLower = handleClean.startsWith('@') ? handleClean : '@' + handleClean;
+        const KNOWN_YT_CHANNELS = {
+          '@carmyspecial': 'UCMtH10Af4F5xshHdTEbpb0w',
+          '@ludovicorossini': 'UC6fTpzA1EHqGYnQ3U_d-FQg',
+          '@lucadiddi': 'UCAP6ktxXuHQA-VUkCY991xA',
+          '@fantavirus': 'UCJ-Ov8s3eN6m_BKURClAqoA',
+          '@ilprofetafantacalcio': 'UC0sjUSHxZxsE2eakZ-HBvMg',
+          '@recosta': 'UCvAYdLxV5_xxigfJB5L6yJA',
+          '@lorenzocantarini': 'UC70c-ffIIpEW_-DVpKIKbiA',
+          '@fantalab_official': 'UCbEvmTFMG6zBeraU8475lTQ',
+          '@andreamarinozziyt': 'UCC4uAMotqxQM0akswEuizNg',
+          '@stefanoborghi296': 'UCCmRCjR_A5GEdHV3Iv7Y0hg',
+          '@marcellobaldigiornalista': 'UCXxyju1QEkYHAMrd1snK7Yw'
+        };
+
+        if (KNOWN_YT_CHANNELS[handleLower]) {
+          channelId = KNOWN_YT_CHANNELS[handleLower];
+        } else if (ch.startsWith('@') || !ch.startsWith('UC')) {
           const handle = ch.startsWith('@') ? ch : '@' + ch;
           const handleName = handle.replace('@', '');
           
@@ -7033,6 +7053,8 @@ async function runYtCompetitorAnalysis() {
       } catch(e) {
         console.warn('Errore canale ' + ch + ':', e.message);
         errors.push(ch + ': ' + e.message);
+        window.ytChannelErrors = window.ytChannelErrors || {};
+        window.ytChannelErrors[ch] = e.message;
         // Se è un errore globale, lo rilanciamo per fermare il loop
         if (e.message.includes('YouTube API Error') || e.message.includes('quota') || e.message.includes('key')) {
           throw e;
@@ -7106,10 +7128,13 @@ async function runYtCompetitorAnalysis() {
       const fmtRate = videosPerWeek.toFixed(1);
       const cellCountText = stat.count > 0 ? `${stat.count} <span style="color:var(--ink-mute);font-size:10px;font-weight:400;">(${fmtRate}/sett.)</span>` : '0';
       
+      const hasError = window.ytChannelErrors?.[ch];
+      const errorIndicator = hasError ? ` <span title="${hasError.replace(/"/g, '&quot;')}" style="color:#ef4444;cursor:help;font-weight:bold;">⚠️</span>` : '';
+      
       tableHtml += `<tr style="border-bottom:1px solid var(--line);color:var(--ink-mid);">
-          <td style="padding:8px 6px;text-align:left;font-weight:600;font-family:var(--font-mono);font-size:10px;">${ch}</td>
-          <td style="padding:8px 6px;text-align:right;font-family:var(--font-mono);color:var(--ink-soft);">${fmtSubs || '—'}</td>
-          <td style="padding:8px 6px;text-align:center;font-weight:600;font-family:var(--font-mono);">${cellCountText}</td>
+          <td style="padding:8px 6px;text-align:left;font-weight:600;font-family:var(--font-mono);font-size:10px;">${ch}${errorIndicator}</td>
+          <td style="padding:8px 6px;text-align:right;font-family:var(--font-mono);color:var(--ink-soft);">${hasError ? '—' : (fmtSubs || '—')}</td>
+          <td style="padding:8px 6px;text-align:center;font-weight:600;font-family:var(--font-mono);">${hasError ? '<span style="color:#ef4444;font-size:10px;">Errore API</span>' : cellCountText}</td>
           <td style="padding:8px 6px;text-align:right;font-family:var(--font-mono);font-weight:600;color:var(--accent);">${fmtViews}</td>
           <td style="padding:8px 6px;text-align:right;font-family:var(--font-mono);font-weight:700;color:${engColor};">${avgEng}%</td>
         </tr>`;
@@ -7945,5 +7970,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 20 -->
+<!-- build trigger: 21 -->
 </html>
