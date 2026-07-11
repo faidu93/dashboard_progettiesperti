@@ -7029,12 +7029,18 @@ async function runYtCompetitorAnalysis() {
         checkYtResponse(statsData);
         
         (statsData.items||[]).forEach(v => {
-          const isLiveStream = v.liveStreamingDetails !== undefined || v.snippet?.liveBroadcastContent === 'completed' || v.snippet?.liveBroadcastContent === 'live';
-          if (isLiveStream) return;
-
           const durationSec = parseIsoDuration(v.contentDetails?.duration || '');
           const title = (v.snippet?.title || '').toLowerCase();
           const desc = (v.snippet?.description || '').toLowerCase();
+
+          const isCurrentlyLive = v.snippet?.liveBroadcastContent === 'live';
+          const isCompletedBroadcast = v.snippet?.liveBroadcastContent === 'completed';
+          const isLiveStreamTitle = title.includes('live') || title.includes('diretta') || title.includes('streamed');
+          const isLongLive = durationSec > 3000 && v.liveStreamingDetails !== undefined;
+
+          const isLiveStream = isCurrentlyLive || isCompletedBroadcast || isLiveStreamTitle || isLongLive;
+          if (isLiveStream) return;
+
           const isShortTag = title.includes('#short') || desc.includes('#short') || (v.snippet?.tags || []).some(t => t.toLowerCase().includes('short'));
           if (durationSec > 0 && (durationSec <= 180 || isShortTag)) return;
 
@@ -7970,5 +7976,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 21 -->
+<!-- build trigger: 22 -->
 </html>
