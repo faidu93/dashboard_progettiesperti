@@ -1068,6 +1068,8 @@ body {
   .cal-post.pub.SHORT          { background: #3d1212; color: #f08080; }
   /* Live YT: ambra */
   .cal-post.pub.LIVE           { background: #3a2500; color: #ffc04d; }
+  /* Asta Live YT: viola */
+  .cal-post.pub.ASTA_LIVE      { background: #22123d; color: #b380f0; }
   /* ── Pianificati: stessa icona e colore, bordo tratteggiato, sfondo trasparente ── */
   .cal-post.plan               { background: transparent !important; }
   .cal-post.plan.IMAGE         { outline: 2px dashed #3a7aaa; color: #7ec8f0; }
@@ -1076,6 +1078,7 @@ body {
   .cal-post.plan.VIDEO         { outline: 2px dashed #8b3232; color: #f08080; }
   .cal-post.plan.SHORT         { outline: 2px dashed #8b3232; color: #f08080; }
   .cal-post.plan.LIVE          { outline: 2px dashed #8b5500; color: #ffc04d; }
+  .cal-post.plan.ASTA_LIVE     { outline: 2px dashed #5a258c; color: #b380f0; }
   .cal-post.plan.STORY         { outline: 2px dashed #6a3aaa; color: #b39ddb; }
   /* + aggiungi (appare al hover) */
   .cal-plus {
@@ -2495,7 +2498,7 @@ body {
       <div id="calSlotHint" style="display:none;font-family:var(--font-mono);font-size:11px;padding:8px 11px;border-radius:7px;margin-bottom:4px;"></div>
       <div class="cal-field">
         <label>Formato</label>
-        <select id="calType">
+        <select id="calType" onchange="calOnTypeChange()">
           <option value="IMAGE">📷 Foto</option>
           <option value="CAROUSEL_ALBUM">⊞ Carosello</option>
           <option value="REELS">▶ Reel</option>
@@ -2505,6 +2508,10 @@ body {
       <div class="cal-field">
         <label>Titolo / Idea</label>
         <input type="text" id="calTitle" placeholder="Es: TOP 10 marcatori stagione 25/26">
+      </div>
+      <div class="cal-field" id="calHostField" style="display:none;">
+        <label>Host della diretta</label>
+        <input type="text" id="calHost" placeholder="Es: Profeta, Carmy, Borghi...">
       </div>
       <div class="cal-field" id="calMediaField" style="display:none;">
         <label>Media (carica = pubblica davvero su Instagram)</label>
@@ -2614,6 +2621,9 @@ body {
           </span>
           <span class="cal-legend-item">
             <span class="cal-post pub LIVE cal-leg-chip"><span class="cp-ico material-symbols-rounded">sensors</span><span class="cp-lbl">Live</span></span>
+          </span>
+          <span class="cal-legend-item">
+            <span class="cal-post pub ASTA_LIVE cal-leg-chip"><span class="cp-ico material-symbols-rounded">gavel</span><span class="cp-lbl">Asta Live</span></span>
           </span>
         </div>
         <div class="cal-legend-sep"></div>
@@ -5465,15 +5475,30 @@ function calSetFilter(btn) {
 }
 
 
+function calToggleHostField() {
+  const platform = document.getElementById('calPlatform').value;
+  const type = document.getElementById('calType').value;
+  const hostField = document.getElementById('calHostField');
+  if (hostField) {
+    const shouldShow = (platform === 'yt' && (type === 'LIVE' || type === 'ASTA_LIVE'));
+    hostField.style.display = shouldShow ? 'flex' : 'none';
+  }
+}
+
+function calOnTypeChange() {
+  calToggleHostField();
+}
+
 function calOnPlatformChange() {
   const platform = document.getElementById('calPlatform').value;
   const typeSelect = document.getElementById('calType');
   if (platform === 'yt') {
-    typeSelect.innerHTML = '<option value="VIDEO">▶ Video</option><option value="SHORT">⬜ Short</option><option value="LIVE">◉ Live</option>';
+    typeSelect.innerHTML = '<option value="VIDEO">▶ Video</option><option value="SHORT">⬜ Short</option><option value="LIVE">◉ Live</option><option value="ASTA_LIVE">🔨 Asta Live</option>';
   } else {
     typeSelect.innerHTML = '<option value="IMAGE">📷 Foto</option><option value="CAROUSEL_ALBUM">⊞ Carosello</option><option value="REELS">▶ Reel</option><option value="STORY">◈ Story</option>';
   }
   calToggleMediaField();
+  calToggleHostField();
   calUpdateSlotHint();
 }
 
@@ -5551,6 +5576,7 @@ function calPostChip(platform, type, label) {
     'yt:VIDEO':          'smart_display',
     'yt:SHORT':          'smartphone',
     'yt:LIVE':           'sensors',
+    'yt:ASTA_LIVE':      'gavel',
   };
   const key = platform + ':' + (type || '').toUpperCase();
   const icon = icons[key] || (platform === 'yt' ? 'smart_display' : 'photo_camera');
@@ -5654,11 +5680,12 @@ function calRender() {
         title="${isAutoPub ? '✅ Pubblicazione automatica · ' : ''}IG · ${p.time||''} ${p.title||''} (trascina per spostare)">${calPostChip('ig', p.type, (p.time?p.time.slice(0,5)+' ':'')+(p.title||''))}</div>`;
     });
     ytPlanned.forEach(p => {
+      const hostSuffix = p.host ? ` · Host: ${p.host}` : '';
       posts += `<div class="cal-post plan ${p.type||'VIDEO'}"
         draggable="true"
-        data-evid="${p.id}" data-platform="yt" data-evtype="${p.type}" data-evtitle="${(p.title||'').replace(/"/g,'&quot;')}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}"
+        data-evid="${p.id}" data-platform="yt" data-evtype="${p.type}" data-evtitle="${(p.title||'').replace(/"/g,'&quot;')}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}" data-evhost="${(p.host||'').replace(/"/g,'&quot;')}"
         onclick="calEditPlanned(event,'${p.id}','yt')"
-        title="YT · ${p.time||''} ${p.title||''} (trascina per spostare)">${calPostChip('yt', p.type||'VIDEO', (p.time?p.time.slice(0,5)+' ':'')+(p.title||''))}</div>`;
+        title="YT · ${p.time||''} ${p.title||''}${hostSuffix} (trascina per spostare)">${calPostChip('yt', p.type||'VIDEO', (p.time?p.time.slice(0,5)+' ':'')+(p.title||''))}</div>`;
     });
 
     h += `<div class="cal-day${cls}" data-date="${ds}"
@@ -5756,11 +5783,13 @@ function calEditPlanned(e, id, platform) {
   document.getElementById('calType').value = item.type;
   document.getElementById('calTitle').value = item.title;
   document.getElementById('calNotes').value = item.notes || '';
+  document.getElementById('calHost').value = item.host || '';
   document.getElementById('calModal').dataset.platform = platform;
   document.getElementById('calDeleteBtn').style.display = 'inline-flex';
   document.getElementById('calModalTitle').textContent = 'Modifica post';
   calResetUpload();
   calToggleMediaField();
+  calToggleHostField();
   document.getElementById('calModal').classList.add('show');
 }
 
@@ -5773,10 +5802,12 @@ function calOpenModal(ds, id) {
   document.getElementById('calModal').dataset.platform = 'ig';
   document.getElementById('calTitle').value = '';
   document.getElementById('calNotes').value = '';
+  document.getElementById('calHost').value = '';
   document.getElementById('calDeleteBtn').style.display = 'none';
   document.getElementById('calModalTitle').textContent = 'Pianifica post';
   calResetUpload();
   calToggleMediaField();
+  calToggleHostField();
   calUpdateSlotHint();
   document.getElementById('calModal').classList.add('show');
 }
@@ -5814,6 +5845,7 @@ function calSetupEvents() {
     const type = document.getElementById('calType').value;
     const title = document.getElementById('calTitle').value.trim();
     const notes = document.getElementById('calNotes').value.trim();
+    const host = (platform === 'yt' && (type === 'LIVE' || type === 'ASTA_LIVE')) ? document.getElementById('calHost').value.trim() : '';
     if (!date || !title) { alert('Inserisci almeno data e titolo.'); return; }
 
     // --- PUBBLICAZIONE REALE: solo IG + media caricato ---
@@ -5850,8 +5882,8 @@ function calSetupEvents() {
 
     // Se Google connesso, scrive direttamente su Google Calendar
     if (gcalSignedIn) {
-      if (id) { await gcalUpdateEvent(id, platform, date, time, type, titleForCal, notesForCal); }
-      else { await gcalCreateEvent(platform, date, time, type, titleForCal, notesForCal); }
+      if (id) { await gcalUpdateEvent(id, platform, date, time, type, titleForCal, notesForCal, host); }
+      else { await gcalCreateEvent(platform, date, time, type, titleForCal, notesForCal, host); }
       // Hook bacheca idee
       const fromIdea = document.getElementById('calModal').dataset.fromIdea;
       if (fromIdea) {
@@ -5872,9 +5904,9 @@ function calSetupEvents() {
     const items = loadFn();
     if (id) {
       const idx = items.findIndex(i => i.id === id);
-      if (idx >= 0) items[idx] = {id, date, time, type, title: titleForCal, notes: notesForCal};
+      if (idx >= 0) items[idx] = {id, date, time, type, title: titleForCal, notes: notesForCal, host};
     } else {
-      items.push({id: Date.now().toString(), date, time, type, title: titleForCal, notes: notesForCal});
+      items.push({id: Date.now().toString(), date, time, type, title: titleForCal, notes: notesForCal, host});
     }
     saveFn(items);
     // Se viene da un'idea, rimuovo l'idea dalla bacheca (è stata "spostata" nel calendario)
@@ -6102,7 +6134,8 @@ document.addEventListener('dragstart', (e) => {
     type: post.dataset.evtype,
     title: post.dataset.evtitle,
     notes: post.dataset.evnotes,
-    time: post.dataset.evtime
+    time: post.dataset.evtime,
+    host: post.dataset.evhost
   };
   e.dataTransfer.effectAllowed = 'move';
   // Aggiungo classe di feedback visivo
@@ -6138,7 +6171,7 @@ async function calDrop(e) {
   try {
     if (gcalSignedIn) {
       // Aggiorno l'evento su Google Calendar
-      const ok = await gcalUpdateEvent(d.id, d.platform, newDate, d.time, d.type, d.title, d.notes);
+      const ok = await gcalUpdateEvent(d.id, d.platform, newDate, d.time, d.type, d.title, d.notes, d.host);
       if (!ok) alert('Errore nello spostamento.');
     } else {
       // Fallback localStorage
@@ -6394,8 +6427,8 @@ function gcalEnsureToken() {
   return true;
 }
 
-async function gcalCreateEvent(platform, date, time, type, title, notes) {
-  console.log('[gcalCreateEvent] start', { platform, date, time, type, title });
+async function gcalCreateEvent(platform, date, time, type, title, notes, host) {
+  console.log('[gcalCreateEvent] start', { platform, date, time, type, title, host });
 
   // Diagnostica preliminare
   if (typeof gapi === 'undefined' || !gapi.client) {
@@ -6426,17 +6459,17 @@ async function gcalCreateEvent(platform, date, time, type, title, notes) {
   const startDate = date + 'T' + (time || '10:00') + ':00';
   const start = new Date(startDate);
   const end = new Date(start.getTime() + 30*60*1000);
-  const formatEmoji = {IMAGE:'📊', CAROUSEL_ALBUM:'🎠', REELS:'🎬', STORY:'📱', VIDEO:'🎬', SHORT:'📱', LIVE:'🔴'};
+  const formatEmoji = {IMAGE:'📊', CAROUSEL_ALBUM:'🎠', REELS:'🎬', STORY:'📱', VIDEO:'🎬', SHORT:'📱', LIVE:'🔴', ASTA_LIVE:'🔨'};
   const platformTag = platform === 'yt' ? '[YT]' : '[IG]';
   const summary = `${platformTag} ${formatEmoji[type]||''} ${title}`;
-  const description = 'Piattaforma: ' + (platform === 'yt' ? 'YouTube' : 'Instagram') + '\nFormato: ' + type + '\n\n' + (notes || '');
+  const description = 'Piattaforma: ' + (platform === 'yt' ? 'YouTube' : 'Instagram') + '\nFormato: ' + type + (host ? '\nHost: ' + host : '') + '\n\n' + (notes || '');
 
   const resource = {
     summary,
     description,
     start: { dateTime: start.toISOString(), timeZone: 'Europe/Rome' },
     end: { dateTime: end.toISOString(), timeZone: 'Europe/Rome' },
-    extendedProperties: { private: { platform, type, title, notes: notes||'' } }
+    extendedProperties: { private: { platform, type, title, notes: notes||'', host: host||'' } }
   };
 
   console.log('[gcalCreateEvent] sending', { calendarId: GCAL_CALENDAR_ID, resource });
@@ -6471,8 +6504,8 @@ async function gcalCreateEvent(platform, date, time, type, title, notes) {
   }
 }
 
-async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes) {
-  console.log('[gcalUpdateEvent] start', { eventId, platform, date, time, type });
+async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes, host) {
+  console.log('[gcalUpdateEvent] start', { eventId, platform, date, time, type, host });
   if (typeof gapi === 'undefined' || !gapi.client || !gapi.client.calendar) {
     alert('Google API non caricata. Ricarica la pagina.'); return false;
   }
@@ -6488,10 +6521,10 @@ async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes
   const startDate = date + 'T' + (time || '10:00') + ':00';
   const start = new Date(startDate);
   const end = new Date(start.getTime() + 30*60*1000);
-  const formatEmoji = {IMAGE:'📊', CAROUSEL_ALBUM:'🎠', REELS:'🎬', STORY:'📱', VIDEO:'🎬', SHORT:'📱', LIVE:'🔴'};
+  const formatEmoji = {IMAGE:'📊', CAROUSEL_ALBUM:'🎠', REELS:'🎬', STORY:'📱', VIDEO:'🎬', SHORT:'📱', LIVE:'🔴', ASTA_LIVE:'🔨'};
   const platformTag = platform === 'yt' ? '[YT]' : '[IG]';
   const summary = `${platformTag} ${formatEmoji[type]||''} ${title}`;
-  const description = 'Piattaforma: ' + (platform === 'yt' ? 'YouTube' : 'Instagram') + '\nFormato: ' + type + '\n\n' + (notes || '');
+  const description = 'Piattaforma: ' + (platform === 'yt' ? 'YouTube' : 'Instagram') + '\nFormato: ' + type + (host ? '\nHost: ' + host : '') + '\n\n' + (notes || '');
 
   try {
     const resp = await gapi.client.calendar.events.update({
@@ -6501,7 +6534,7 @@ async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes
         summary, description,
         start: { dateTime: start.toISOString(), timeZone: 'Europe/Rome' },
         end: { dateTime: end.toISOString(), timeZone: 'Europe/Rome' },
-        extendedProperties: { private: { platform, type, title, notes: notes||'' } }
+        extendedProperties: { private: { platform, type, title, notes: notes||'', host: host||'' } }
       }
     });
     console.log('[gcalUpdateEvent] success');
@@ -6579,6 +6612,7 @@ function gcalEventToInternal(ev) {
     type: ext.type || 'IMAGE',
     title: ext.title || (ev.summary||'').replace(/^\[(IG|YT)\]\s*[\u{1F300}-\u{1FAFF}]?\s*/u, ''),
     notes: ext.notes || '',
+    host: ext.host || '',
     platform: ext.platform || (ev.summary?.startsWith('[YT]') ? 'yt' : 'ig')
   };
 }
@@ -7512,8 +7546,8 @@ function renderIdeas(ideas, targetId, platform, sessionId, votes) {
     box.innerHTML = '<div class="idea-card loading">Nessuna idea generata. Riprova.</div>';
     return;
   }
-  const fmtLabel = { 'CAROUSEL_ALBUM':'Carosello', 'IMAGE':'Foto', 'REELS':'Reel', 'VIDEO':'Video', 'SHORT':'Short' };
-  const fmtClass = { 'CAROUSEL_ALBUM':'ig-post', 'IMAGE':'ig-post', 'REELS':'ig-reel', 'VIDEO':'yt-vid', 'SHORT':'yt-short' };
+  const fmtLabel = { 'CAROUSEL_ALBUM':'Carosello', 'IMAGE':'Foto', 'REELS':'Reel', 'VIDEO':'Video', 'SHORT':'Short', 'LIVE':'Live', 'ASTA_LIVE':'Asta Live' };
+  const fmtClass = { 'CAROUSEL_ALBUM':'ig-post', 'IMAGE':'ig-post', 'REELS':'ig-reel', 'VIDEO':'yt-vid', 'SHORT':'yt-short', 'LIVE':'yt-live', 'ASTA_LIVE':'yt-asta-live' };
   box.innerHTML = ideas.map(idea => {
     const fmt = idea.format || (platform === 'yt' ? 'VIDEO' : 'CAROUSEL_ALBUM');
     const cls = fmtClass[fmt] || 'ig-post';
@@ -7523,7 +7557,7 @@ function renderIdeas(ideas, targetId, platform, sessionId, votes) {
     const voteDown = votes[idea.num] === 'down' ? ' active' : '';
     const sid = sessionId || '';
     // Prepara dati per pianifica nel calendario
-    const planType = fmt === 'REELS' ? 'REELS' : fmt === 'CAROUSEL_ALBUM' ? 'CAROUSEL_ALBUM' : fmt === 'VIDEO' ? 'VIDEO' : fmt === 'SHORT' ? 'SHORT' : 'IMAGE';
+    const planType = fmt === 'REELS' ? 'REELS' : fmt === 'CAROUSEL_ALBUM' ? 'CAROUSEL_ALBUM' : fmt === 'VIDEO' ? 'VIDEO' : fmt === 'SHORT' ? 'SHORT' : fmt === 'LIVE' ? 'LIVE' : fmt === 'ASTA_LIVE' ? 'ASTA_LIVE' : 'IMAGE';
     const planTitle = (idea.title||'').replace(/'/g, "\\'").slice(0,80);
     const planSlot = (idea.slot||'').replace(/'/g,"'");
     return '<div class="idea-card" id="idea-' + sid + '-' + idea.num + '">' +
@@ -7594,8 +7628,8 @@ function renderFavorites() {
   if (igCount) igCount.textContent = igFavs.length ? igFavs.length + '' : '0';
   if (ytCount) ytCount.textContent = ytFavs.length ? ytFavs.length + '' : '0';
 
-  const fmtLabel = { 'CAROUSEL_ALBUM':'Carosello','IMAGE':'Foto','REELS':'Reel','VIDEO':'Video','SHORT':'Short' };
-  const fmtClass = { 'CAROUSEL_ALBUM':'ig-post','IMAGE':'ig-post','REELS':'ig-reel','VIDEO':'yt-vid','SHORT':'yt-short' };
+  const fmtLabel = { 'CAROUSEL_ALBUM':'Carosello','IMAGE':'Foto','REELS':'Reel','VIDEO':'Video','SHORT':'Short','LIVE':'Live','ASTA_LIVE':'Asta Live' };
+  const fmtClass = { 'CAROUSEL_ALBUM':'ig-post','IMAGE':'ig-post','REELS':'ig-reel','VIDEO':'yt-vid','SHORT':'yt-short','LIVE':'yt-live','ASTA_LIVE':'yt-asta-live' };
 
   function buildFavCard(idea) {
     const fmt = idea.format || 'IMAGE';
@@ -7663,7 +7697,7 @@ function calOpenModalFromIdea(title, type, slot, platform) {
     if (titleEl) titleEl.value = title;
     if (timeEl) timeEl.value = time;
     // Imposto piattaforma
-    const isYt = platform === 'yt' || type === 'VIDEO' || type === 'SHORT';
+    const isYt = platform === 'yt' || type === 'VIDEO' || type === 'SHORT' || type === 'LIVE' || type === 'ASTA_LIVE';
     if (platEl) { platEl.value = isYt ? 'yt' : 'ig'; calOnPlatformChange(); }
     // Imposto tipo
     if (typeEl) typeEl.value = type;
@@ -7976,5 +8010,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 22 -->
+<!-- build trigger: 23 -->
 </html>
