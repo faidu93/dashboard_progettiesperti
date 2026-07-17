@@ -1525,10 +1525,11 @@ body {
   .cal-upload-text { font-size: 12.5px; color: var(--ink-soft); margin-top: 6px; }
   .cal-upload-hint { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute); margin-top: 4px; }
   .cal-upload-preview { margin-top: 12px; display: none; }
-  .cal-upload-preview.show { display: block; }
+  .cal-upload-preview.show { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
   .cal-upload-preview img, .cal-upload-preview video {
     max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--line);
   }
+  .cal-preview-item { position: relative; display: inline-block; }
   .cal-upload-status {
     font-family: var(--font-mono); font-size: 11px; margin-top: 8px;
     display: flex; align-items: center; gap: 6px; justify-content: center;
@@ -2528,7 +2529,12 @@ body {
         <input type="hidden" id="calMediaKind">
       </div>
       <div class="cal-field">
-        <label>Note / Caption</label>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <label>Note / Caption</label>
+          <button type="button" class="cal-btn" id="calAiCaptionBtn" style="font-size:11px; padding:4px 8px; height:auto; margin-bottom:4px; display:inline-flex; align-items:center; gap:4px; background:rgba(255,140,30,0.08); border-color:var(--accent); color:var(--accent);">
+            <span class="material-symbols-rounded" style="font-size:14px;">auto_awesome</span>✨ Genera con AI
+          </button>
+        </div>
         <textarea id="calNotes" placeholder="Testo, riferimenti, hashtag… (diventa la caption se carichi un media)"></textarea>
       </div>
       <div class="cal-modal-actions">
@@ -3308,7 +3314,7 @@ async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso })
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret },
     body: JSON.stringify({
-      mediaType: mediaKind === 'video' ? 'REELS' : 'IMAGE',
+      mediaType: mediaKind === 'video' ? 'REELS' : (mediaKind === 'carousel' ? 'CAROUSEL_ALBUM' : 'IMAGE'),
       mediaUrl,
       caption: caption || '',
       scheduledAt: scheduledAtIso
@@ -3427,33 +3433,59 @@ function calResetUpload() {
   if (inp) inp.value = '';
 }
 
-async function calHandleFile(file) {
-  if (!file) return;
-  const isVideo = (file.type || '').startsWith('video');
+async function calHandleFiles(files) {
+  if (!files || !files.length) return;
+  const platform = document.getElementById('calPlatform').value;
+  const type = document.getElementById('calType').value;
+  const isCarousel = (platform === 'ig' && type === 'CAROUSEL_ALBUM');
+
+  // Se non è carosello, carichiamo solo il primo file
+  const filesToUpload = isCarousel ? Array.from(files).slice(0, 10) : [files[0]];
+
   const status = document.getElementById('calUploadStatus');
   const prev = document.getElementById('calUploadPreview');
-
-  const localUrl = URL.createObjectURL(file);
-  prev.innerHTML = isVideo
-    ? `<video src="${localUrl}" controls muted></video>`
-    : `<img src="${localUrl}" alt="anteprima">`;
-  prev.classList.add('show');
+  const removeBtn = document.getElementById('calUploadRemove');
 
   status.className = 'cal-upload-status loading';
   status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">progress_activity</span> Caricamento su Blob…';
 
-  try {
-    const url = await uploadMediaToBlob(file);
-    document.getElementById('calMediaUrl').value = url;
-    document.getElementById('calMediaKind').value = isVideo ? 'video' : 'image';
-    status.className = 'cal-upload-status ok';
-    status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> Media caricato · questo post verrà pubblicato automaticamente';
-    document.getElementById('calUploadRemove').style.display = 'inline-block';
-  } catch (e) {
-    status.className = 'cal-upload-status err';
-    status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">error</span> ' + (e.message || 'Errore upload');
-    calResetUpload();
+  prev.innerHTML = '';
+  prev.classList.add('show');
+
+  const urls = [];
+  const kinds = [];
+
+  for (let i = 0; i < filesToUpload.length; i++) {
+    const file = filesToUpload[i];
+    const isVideo = (file.type || '').startsWith('video');
+    const localUrl = URL.createObjectURL(file);
+
+    const previewItem = document.createElement('div');
+    previewItem.className = 'cal-preview-item';
+    previewItem.innerHTML = isVideo
+      ? `<video src="${localUrl}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--line);"></video>`
+      : `<img src="${localUrl}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--line);">`;
+    prev.appendChild(previewItem);
+
+    try {
+      status.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;">progress_activity</span> Caricamento file ${i + 1}/${filesToUpload.length}…`;
+      const url = await uploadMediaToBlob(file);
+      urls.push(url);
+      kinds.push(isVideo ? 'video' : 'image');
+    } catch (e) {
+      status.className = 'cal-upload-status err';
+      status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">error</span> ' + (e.message || 'Errore upload');
+      calResetUpload();
+      return;
+    }
   }
+
+  document.getElementById('calMediaUrl').value = urls.join(',');
+  document.getElementById('calMediaKind').value = kinds.join(',');
+
+  status.className = 'cal-upload-status ok';
+  status.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> ${urls.length} media caricati con successo`;
+  if (removeBtn) removeBtn.style.display = 'inline-block';
 }
 
 function calSetupUpload() {
@@ -3461,12 +3493,12 @@ function calSetupUpload() {
   const input = document.getElementById('calUploadInput');
   if (!zone || !input) return;
   zone.addEventListener('click', () => input.click());
-  input.addEventListener('change', e => calHandleFile(e.target.files[0]));
+  input.addEventListener('change', e => calHandleFiles(e.target.files));
   zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
   zone.addEventListener('drop', e => {
     e.preventDefault(); zone.classList.remove('dragover');
-    if (e.dataTransfer.files[0]) calHandleFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files.length) calHandleFiles(e.dataTransfer.files);
   });
   const rm = document.getElementById('calUploadRemove');
   if (rm) rm.addEventListener('click', calResetUpload);
@@ -5485,8 +5517,21 @@ function calToggleHostField() {
   }
 }
 
+function calUpdateUploadInputMultiple() {
+  const type = document.getElementById('calType').value;
+  const input = document.getElementById('calUploadInput');
+  if (input) {
+    if (type === 'CAROUSEL_ALBUM') {
+      input.setAttribute('multiple', 'multiple');
+    } else {
+      input.removeAttribute('multiple');
+    }
+  }
+}
+
 function calOnTypeChange() {
   calToggleHostField();
+  calUpdateUploadInputMultiple();
 }
 
 function calOnPlatformChange() {
@@ -5499,6 +5544,7 @@ function calOnPlatformChange() {
   }
   calToggleMediaField();
   calToggleHostField();
+  calUpdateUploadInputMultiple();
   calUpdateSlotHint();
 }
 
@@ -5790,6 +5836,7 @@ function calEditPlanned(e, id, platform) {
   calResetUpload();
   calToggleMediaField();
   calToggleHostField();
+  calUpdateUploadInputMultiple();
   document.getElementById('calModal').classList.add('show');
 }
 
@@ -5808,12 +5855,82 @@ function calOpenModal(ds, id) {
   calResetUpload();
   calToggleMediaField();
   calToggleHostField();
+  calUpdateUploadInputMultiple();
   calUpdateSlotHint();
   document.getElementById('calModal').classList.add('show');
 }
 
+async function calGenerateAiCaption() {
+  const title = document.getElementById('calTitle').value.trim();
+  const notes = document.getElementById('calNotes').value.trim();
+  const platform = document.getElementById('calPlatform').value;
+  const type = document.getElementById('calType').value;
+
+  if (!title) {
+    alert('Inserisci prima il titolo o l\'idea del post per guidare l\'AI.');
+    return;
+  }
+
+  const secret = getPublishSecret();
+  if (!secret) {
+    const inputSecret = prompt('Inserisci la password di pubblicazione per abilitare l\'AI:');
+    if (!inputSecret) return;
+    try {
+      sessionStorage.setItem('publish_secret', inputSecret);
+      localStorage.setItem('publish_secret', inputSecret);
+    } catch(e) {}
+  }
+
+  const btn = document.getElementById('calAiCaptionBtn');
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;animation:spin 1s linear infinite;">progress_activity</span> Scrittura…';
+
+  let selectedModel = 'claude-sonnet-5';
+  try { selectedModel = localStorage.getItem('intel_model') || 'claude-sonnet-5'; } catch(e) {}
+
+  const sysPrompt = "Sei un copywriter esperto di social media. Scrivi una caption accattivante e professionale in lingua italiana, pronta da pubblicare su Instagram. Utilizza paragrafi brevi, includi emoji rilevanti e aggiungi degli hashtag popolari legati al calcio e al fantacalcio alla fine. Non includere introduzioni, spiegazioni o virgolette intorno al testo, restituisci solo ed esclusivamente il corpo della caption.";
+  const promptText = `Scrivi una caption per questo post:\nTitolo: ${title}\nFormato: ${type}\n${notes ? 'Dettagli/Idee iniziali: ' + notes : ''}`;
+
+  try {
+    const res = await fetch(BACKEND_BASE + '/api/claude', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Publish-Secret': getPublishSecret()
+      },
+      body: JSON.stringify({
+        model: selectedModel,
+        max_tokens: 1500,
+        messages: [
+          { role: 'user', content: sysPrompt + "\n\n" + promptText }
+        ]
+      })
+    });
+    
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+    
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+    if (text) {
+      document.getElementById('calNotes').value = text;
+    } else {
+      alert('Nessun testo generato. Riprova.');
+    }
+  } catch (e) {
+    alert('Errore nella generazione: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
+}
+
 function calSetupEvents() {
   calSetupUpload();
+  const aiCaptionBtn = document.getElementById('calAiCaptionBtn');
+  if (aiCaptionBtn) aiCaptionBtn.onclick = calGenerateAiCaption;
   document.getElementById('calPrev').onclick = () => {
     calCurrentDate = new Date(calCurrentDate.getFullYear(), calCurrentDate.getMonth()-1, 1);
     calRender();
@@ -5850,7 +5967,10 @@ function calSetupEvents() {
 
     // --- PUBBLICAZIONE REALE: solo IG + media caricato ---
     const mediaUrl = document.getElementById('calMediaUrl') ? document.getElementById('calMediaUrl').value : '';
-    const mediaKind = document.getElementById('calMediaKind') ? document.getElementById('calMediaKind').value : '';
+    let mediaKind = document.getElementById('calMediaKind') ? document.getElementById('calMediaKind').value : '';
+    if (type === 'CAROUSEL_ALBUM' && mediaUrl.includes(',')) {
+      mediaKind = 'carousel';
+    }
     let willAutoPublish = false;
     if (platform === 'ig' && mediaUrl) {
       const localDateTime = new Date(`${date}T${(time || '10:00')}:00`);
@@ -8010,5 +8130,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 23 -->
+<!-- build trigger: 24 -->
 </html>
