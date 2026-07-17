@@ -1542,6 +1542,10 @@ body {
     border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer; margin-top: 8px;
   }
   .cal-post.autopub { box-shadow: inset 0 0 0 1.5px var(--pos); }
+  .cal-btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cal-btn-option { flex: 1; padding: 9px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg-elev-2); color: var(--ink-soft); font-size: 13px; cursor: pointer; transition: all .15s; white-space: nowrap; font-family: var(--font-sans); text-align: center; }
+  .cal-btn-option:hover { border-color: var(--accent); color: var(--ink); background: rgba(255,140,30,0.04); }
+  .cal-btn-option.active { border-color: var(--accent); background: rgba(255,140,30,0.12); color: var(--accent); font-weight: 600; }
 .queue-row { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; background: var(--bg-elev-2); }
 .queue-main { flex: 1; min-width: 0; }
 .queue-cap { font-size: 13px; color: var(--ink); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -2481,7 +2485,11 @@ body {
       <input type="hidden" id="calEditId">
       <div class="cal-field">
         <label>Social</label>
-        <select id="calPlatform" onchange="calOnPlatformChange()">
+        <div class="cal-btn-group" id="calPlatformGroup">
+          <button type="button" class="cal-btn-option active" data-val="ig" onclick="calSetPlatform('ig')">📸 Instagram</button>
+          <button type="button" class="cal-btn-option" data-val="yt" onclick="calSetPlatform('yt')">🎬 YouTube</button>
+        </div>
+        <select id="calPlatform" style="display:none">
           <option value="ig">📸 Instagram</option>
           <option value="yt">🎬 YouTube</option>
         </select>
@@ -2504,7 +2512,8 @@ body {
       <div id="calSlotHint" style="display:none;font-family:var(--font-mono);font-size:11px;padding:8px 11px;border-radius:7px;margin-bottom:4px;"></div>
       <div class="cal-field">
         <label>Formato</label>
-        <select id="calType" onchange="calOnTypeChange()">
+        <div class="cal-btn-group" id="calTypeGroup"></div>
+        <select id="calType" style="display:none">
           <option value="IMAGE">📷 Foto</option>
           <option value="CAROUSEL_ALBUM">⊞ Carosello</option>
           <option value="REELS">▶ Reel</option>
@@ -5545,6 +5554,50 @@ function calUpdateUploadInputMultiple() {
   }
 }
 
+// Tipi di formato per piattaforma
+const CAL_IG_TYPES = [
+  {value:'IMAGE',      label:'📷 Foto'},
+  {value:'CAROUSEL_ALBUM', label:'⊞ Carosello'},
+  {value:'REELS',     label:'▶ Reel'},
+  {value:'STORY',     label:'◈ Story'}
+];
+const CAL_YT_TYPES = [
+  {value:'VIDEO',     label:'▶ Video'},
+  {value:'SHORT',     label:'⬜ Short'},
+  {value:'LIVE',      label:'◉ Live'},
+  {value:'ASTA_LIVE', label:'🔨 Asta'}
+];
+
+// Renderizza i pulsanti del gruppo Formato e sincronizza il select nascosto
+function calRenderTypeButtons(types, selectedVal) {
+  const group = document.getElementById('calTypeGroup');
+  const sel   = document.getElementById('calType');
+  if (!group) return;
+  const val = selectedVal || types[0].value;
+  group.innerHTML = types.map(o =>
+    `<button type="button" class="cal-btn-option${o.value === val ? ' active' : ''}" data-val="${o.value}" onclick="calSetType('${o.value}')">${o.label}</button>`
+  ).join('');
+  if (sel) {
+    sel.innerHTML = types.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+    sel.value = val;
+  }
+}
+
+// Imposta la piattaforma via pulsante
+function calSetPlatform(val) {
+  document.getElementById('calPlatform').value = val;
+  calOnPlatformChange();
+}
+
+// Imposta il formato via pulsante
+function calSetType(val) {
+  document.getElementById('calType').value = val;
+  document.querySelectorAll('#calTypeGroup .cal-btn-option').forEach(b =>
+    b.classList.toggle('active', b.dataset.val === val)
+  );
+  calOnTypeChange();
+}
+
 function calOnTypeChange() {
   calToggleHostField();
   calUpdateUploadInputMultiple();
@@ -5552,16 +5605,19 @@ function calOnTypeChange() {
 
 function calOnPlatformChange() {
   const platform = document.getElementById('calPlatform').value;
-  const typeSelect = document.getElementById('calType');
-  const ytBanner = document.getElementById('calYtBanner');
+  const ytBanner  = document.getElementById('calYtBanner');
   const notesField = document.getElementById('calNotesField');
+  // Sincronizza pulsanti piattaforma
+  document.querySelectorAll('#calPlatformGroup .cal-btn-option').forEach(b =>
+    b.classList.toggle('active', b.dataset.val === platform)
+  );
   if (platform === 'yt') {
-    typeSelect.innerHTML = '<option value="VIDEO">▶ Video</option><option value="SHORT">⬜ Short</option><option value="LIVE">◉ Live</option><option value="ASTA_LIVE">🔨 Asta Live</option>';
-    if (ytBanner) ytBanner.style.display = 'flex';
+    calRenderTypeButtons(CAL_YT_TYPES, 'VIDEO');
+    if (ytBanner)   ytBanner.style.display   = 'flex';
     if (notesField) notesField.style.display = 'none';
   } else {
-    typeSelect.innerHTML = '<option value="IMAGE">📷 Foto</option><option value="CAROUSEL_ALBUM">⊞ Carosello</option><option value="REELS">▶ Reel</option><option value="STORY">◈ Story</option>';
-    if (ytBanner) ytBanner.style.display = 'none';
+    calRenderTypeButtons(CAL_IG_TYPES, 'IMAGE');
+    if (ytBanner)   ytBanner.style.display   = 'none';
     if (notesField) notesField.style.display = '';
   }
   calToggleMediaField();
@@ -5845,10 +5901,10 @@ function calEditPlanned(e, id, platform) {
   }
   document.getElementById('calEditId').value = id;
   document.getElementById('calPlatform').value = platform;
-  calOnPlatformChange(); // aggiorna le opzioni del formato in base alla piattaforma
+  calOnPlatformChange(); // aggiorna pulsanti formato in base alla piattaforma
   document.getElementById('calDate').value = item.date;
   document.getElementById('calTime').value = item.time || '10:00';
-  document.getElementById('calType').value = item.type;
+  calSetType(item.type); // aggiorna pulsante tipo attivo
   document.getElementById('calTitle').value = item.title;
   document.getElementById('calNotes').value = item.notes || '';
   document.getElementById('calHost').value = item.host || '';
@@ -5867,14 +5923,18 @@ function calOpenModal(ds, id) {
   document.getElementById('calDate').value = ds || calDateStr(new Date());
   document.getElementById('calTime').value = '10:00';
   document.getElementById('calPlatform').value = 'ig';
-  document.getElementById('calType').innerHTML = '<option value="IMAGE">📷 Foto</option><option value="CAROUSEL_ALBUM">⊞ Carosello</option><option value="REELS">▶ Reel</option><option value="STORY">◈ Story</option>';
-  document.getElementById('calType').value = 'IMAGE';
   document.getElementById('calModal').dataset.platform = 'ig';
   document.getElementById('calTitle').value = '';
   document.getElementById('calNotes').value = '';
   document.getElementById('calHost').value = '';
   document.getElementById('calDeleteBtn').style.display = 'none';
   document.getElementById('calModalTitle').textContent = 'Pianifica post';
+  // Reset pulsanti piattaforma su Instagram
+  document.querySelectorAll('#calPlatformGroup .cal-btn-option').forEach(b =>
+    b.classList.toggle('active', b.dataset.val === 'ig')
+  );
+  // Renderizza pulsanti formato IG con Foto selezionata
+  calRenderTypeButtons(CAL_IG_TYPES, 'IMAGE');
   const ytBanner = document.getElementById('calYtBanner');
   if (ytBanner) ytBanner.style.display = 'none';
   const notesField = document.getElementById('calNotesField');
