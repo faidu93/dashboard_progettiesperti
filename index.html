@@ -2486,6 +2486,11 @@ body {
           <option value="yt">🎬 YouTube</option>
         </select>
       </div>
+      <!-- Banner YouTube: solo pianificazione -->
+      <div id="calYtBanner" style="display:none; align-items:center; gap:8px; padding:9px 12px; border-radius:8px; background:rgba(255,80,80,0.07); border:1px solid rgba(255,80,80,0.2); font-family:var(--font-mono); font-size:11px; color:var(--ink-soft); margin-bottom:4px;">
+        <span class="material-symbols-rounded" style="font-size:16px; color:#ff5050; flex-shrink:0;">info</span>
+        <span>YouTube in <strong>sola pianificazione</strong> — il post viene salvato nel calendario ma non pubblicato automaticamente.</span>
+      </div>
       <div class="cal-modal-row">
         <div class="cal-field">
           <label>Data</label>
@@ -2515,7 +2520,7 @@ body {
         <input type="text" id="calHost" placeholder="Es: Profeta, Carmy, Borghi...">
       </div>
       <div class="cal-field" id="calMediaField" style="display:none;">
-        <label>Media (carica = pubblica davvero su Instagram)</label>
+        <label>Media <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· caricando qui il post viene pubblicato su Instagram</span></label>
         <div class="cal-upload" id="calUpload">
           <input type="file" id="calUploadInput" accept="image/*,video/*" style="display:none;">
           <span class="material-symbols-rounded">cloud_upload</span>
@@ -3458,7 +3463,7 @@ async function calHandleFiles(files) {
   const removeBtn = document.getElementById('calUploadRemove');
 
   status.className = 'cal-upload-status loading';
-  status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">progress_activity</span> Caricamento su Blob…';
+  status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">progress_activity</span> Caricamento in corso…';
 
   prev.innerHTML = '';
   prev.classList.add('show');
@@ -3495,7 +3500,7 @@ async function calHandleFiles(files) {
   document.getElementById('calMediaKind').value = kinds.join(',');
 
   status.className = 'cal-upload-status ok';
-  status.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> ${urls.length} media caricati con successo`;
+  status.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> ${urls.length > 1 ? urls.length + ' media caricati' : 'Media caricato'} con successo`;
   if (removeBtn) removeBtn.style.display = 'inline-block';
 }
 
@@ -5548,10 +5553,13 @@ function calOnTypeChange() {
 function calOnPlatformChange() {
   const platform = document.getElementById('calPlatform').value;
   const typeSelect = document.getElementById('calType');
+  const ytBanner = document.getElementById('calYtBanner');
   if (platform === 'yt') {
     typeSelect.innerHTML = '<option value="VIDEO">▶ Video</option><option value="SHORT">⬜ Short</option><option value="LIVE">◉ Live</option><option value="ASTA_LIVE">🔨 Asta Live</option>';
+    if (ytBanner) ytBanner.style.display = 'flex';
   } else {
     typeSelect.innerHTML = '<option value="IMAGE">📷 Foto</option><option value="CAROUSEL_ALBUM">⊞ Carosello</option><option value="REELS">▶ Reel</option><option value="STORY">◈ Story</option>';
+    if (ytBanner) ytBanner.style.display = 'none';
   }
   calToggleMediaField();
   calToggleHostField();
@@ -5855,6 +5863,7 @@ function calOpenModal(ds, id) {
   document.getElementById('calEditId').value = id || '';
   document.getElementById('calDate').value = ds || calDateStr(new Date());
   document.getElementById('calTime').value = '10:00';
+  document.getElementById('calPlatform').value = 'ig';
   document.getElementById('calType').innerHTML = '<option value="IMAGE">📷 Foto</option><option value="CAROUSEL_ALBUM">⊞ Carosello</option><option value="REELS">▶ Reel</option><option value="STORY">◈ Story</option>';
   document.getElementById('calType').value = 'IMAGE';
   document.getElementById('calModal').dataset.platform = 'ig';
@@ -5863,6 +5872,8 @@ function calOpenModal(ds, id) {
   document.getElementById('calHost').value = '';
   document.getElementById('calDeleteBtn').style.display = 'none';
   document.getElementById('calModalTitle').textContent = 'Pianifica post';
+  const ytBanner = document.getElementById('calYtBanner');
+  if (ytBanner) ytBanner.style.display = 'none';
   calResetUpload();
   calToggleMediaField();
   calToggleHostField();
