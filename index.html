@@ -3311,26 +3311,37 @@ function clearPublishSecret() {
   try { localStorage.removeItem('publish_secret'); } catch(e) {}
 }
 
-// Upload di un file su Supabase Storage tramite /api/upload → ritorna l'URL pubblico
+// Upload di un file su Supabase Storage tramite signed URL (bypass limite Vercel)
+// Flusso: 1) backend genera URL firmato → 2) PUT diretto al bucket Supabase
 async function uploadMediaToBlob(file) {
   const secret = getPublishSecret();
   if (!secret) throw new Error('Password di pubblicazione mancante.');
-  const res = await fetch(`${BACKEND_BASE}/api/upload`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': file.type || 'application/octet-stream',
-      'X-Publish-Secret': secret,
-      'X-Filename': file.name || 'upload'
-    },
-    body: file
-  });
-  const j = await res.json().catch(() => ({}));
-  if (!res.ok || j.error) {
-    if (res.status === 401) clearPublishSecret();
-    throw new Error(j.error || `Upload fallito (HTTP ${res.status})`);
+
+  // STEP 1: richiedo l'URL firmato al backend
+  const signRes = await fetch(
+    `${BACKEND_BASE}/api/upload?action=sign&filename=${encodeURIComponent(file.name || 'upload')}`,
+    { headers: { 'X-Publish-Secret': secret } }
+  );
+  const signData = await signRes.json().catch(() => ({}));
+  if (!signRes.ok || signData.error) {
+    if (signRes.status === 401) clearPublishSecret();
+    throw new Error(signData.error || `Errore signed URL (HTTP ${signRes.status})`);
   }
-  return j.url;
+
+  // STEP 2: carico direttamente su Supabase (nessun limite di dimensione)
+  const uploadRes = await fetch(signData.signedUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    body: file,
+  });
+  if (!uploadRes.ok) {
+    const errText = await uploadRes.text().catch(() => '');
+    throw new Error(`Upload Supabase fallito (HTTP ${uploadRes.status}) — ${errText.slice(0,120)}`);
+  }
+
+  return signData.publicUrl;
 }
+
 
 // Aggiunge un post alla coda di pubblicazione reale (/api/schedule)
 async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso }) {
