@@ -2533,7 +2533,7 @@ body {
         <input type="hidden" id="calMediaUrl">
         <input type="hidden" id="calMediaKind">
       </div>
-      <div class="cal-field">
+      <div class="cal-field" id="calNotesField">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <label>Note / Caption</label>
           <button type="button" class="cal-btn" id="calAiCaptionBtn" style="font-size:11px; padding:4px 8px; height:auto; display:inline-flex; align-items:center; gap:4px; background:rgba(255,140,30,0.08); border-color:var(--accent); color:var(--accent);">
@@ -5554,12 +5554,15 @@ function calOnPlatformChange() {
   const platform = document.getElementById('calPlatform').value;
   const typeSelect = document.getElementById('calType');
   const ytBanner = document.getElementById('calYtBanner');
+  const notesField = document.getElementById('calNotesField');
   if (platform === 'yt') {
     typeSelect.innerHTML = '<option value="VIDEO">▶ Video</option><option value="SHORT">⬜ Short</option><option value="LIVE">◉ Live</option><option value="ASTA_LIVE">🔨 Asta Live</option>';
     if (ytBanner) ytBanner.style.display = 'flex';
+    if (notesField) notesField.style.display = 'none';
   } else {
     typeSelect.innerHTML = '<option value="IMAGE">📷 Foto</option><option value="CAROUSEL_ALBUM">⊞ Carosello</option><option value="REELS">▶ Reel</option><option value="STORY">◈ Story</option>';
     if (ytBanner) ytBanner.style.display = 'none';
+    if (notesField) notesField.style.display = '';
   }
   calToggleMediaField();
   calToggleHostField();
@@ -5874,6 +5877,8 @@ function calOpenModal(ds, id) {
   document.getElementById('calModalTitle').textContent = 'Pianifica post';
   const ytBanner = document.getElementById('calYtBanner');
   if (ytBanner) ytBanner.style.display = 'none';
+  const notesField = document.getElementById('calNotesField');
+  if (notesField) notesField.style.display = '';
   calResetUpload();
   calToggleMediaField();
   calToggleHostField();
