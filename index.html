@@ -5918,12 +5918,13 @@ async function calGenerateAiCaption() {
   const sysPrompt = `Sei un copywriter professionista di social media, esperto di calcio e fantacalcio italiano. Scrivi una caption accattivante, originale e per nulla banale pronta da pubblicare su Instagram.
 ${systemInstructions}
 
-Regole di formattazione e scrittura:
-- Usa paragrafi brevi di 1 o 2 frasi ciascuno e lascia righe vuote per garantire un'alta leggibilità.
-- Inserisci emoji coerenti e mirate (posizionate a inizio paragrafo o per enfatizzare concetti, non metterne troppe di fila).
-- Alla fine del post aggiungi da 5 a 8 hashtag popolari e mirati (es. #fantacalcio #seriea #consiglifantacalcio ecc.).
-- Non usare mai introduzioni standard come "Ecco la tua caption" o saluti banali. Inizia direttamente con il testo della caption.
-- Non inserire spiegazioni o virgolette che delimitano il testo. Restituisci solo ed esclusivamente il corpo del post pronto da pubblicare.`;
+Regole di formattazione e scrittura (Ottimizzate per l'Algoritmo Instagram 2026):
+- Usa paragrafi brevi di 1 o 2 frasi ciascuno, separati da una riga vuota, per favorire la lettura veloce.
+- Ottimizzazione SEO: Incorpora parole chiave descrittive e termini di ricerca naturali all'interno del testo (nomi dei calciatori, squadre, ruoli, termini del fantacalcio) per aiutare l'indicizzazione dei contenuti.
+- Inserisci emoji coerenti e mirate per guidare l'attenzione (evita di metterne troppe).
+- Alla fine del post aggiungi al massimo 3 hashtag altamente specifici e coerenti col post. È fondamentale NON superare i 3 hashtag.
+- Non usare mai formule introduttive o di chiusura dell'AI (es. "Ecco la caption"). Inizia subito con il testo pronto per la pubblicazione.
+- Non inserire spiegazioni o virgolette che delimitano il testo. Restituisci solo il corpo del post.`;
 
   let promptText = `Scrivi la caption per questo post:\nTitolo/Idea: ${title}\nFormato post: ${type}`;
   if (notes) {
@@ -8171,5 +8172,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 25 -->
+<!-- build trigger: 26 -->
 </html>
