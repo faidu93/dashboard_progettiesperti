@@ -2529,12 +2529,24 @@ body {
         <input type="hidden" id="calMediaKind">
       </div>
       <div class="cal-field">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <label>Note / Caption</label>
-          <button type="button" class="cal-btn" id="calAiCaptionBtn" style="font-size:11px; padding:4px 8px; height:auto; margin-bottom:4px; display:inline-flex; align-items:center; gap:4px; background:rgba(255,140,30,0.08); border-color:var(--accent); color:var(--accent);">
+          <button type="button" class="cal-btn" id="calAiCaptionBtn" style="font-size:11px; padding:4px 8px; height:auto; display:inline-flex; align-items:center; gap:4px; background:rgba(255,140,30,0.08); border-color:var(--accent); color:var(--accent);">
             <span class="material-symbols-rounded" style="font-size:14px;">auto_awesome</span>✨ Genera con AI
           </button>
         </div>
+        
+        <!-- OPZIONI AI AVANZATE -->
+        <div id="calAiOptions" style="display:flex; gap:8px; margin-bottom:8px;">
+          <select id="calAiTone" style="flex: 1; font-size:11px; padding:6px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink-soft);">
+            <option value="coinvolgente">🗣 Coinvolgente (Community)</option>
+            <option value="tecnico">📊 Tecnico (Statistiche & Numeri)</option>
+            <option value="ironico">🤪 Ironico / Sarcastico</option>
+            <option value="hype">🔥 Hype / Provocatorio</option>
+          </select>
+          <input type="text" id="calAiExtra" placeholder="Dettagli chiave (es. cita Retegui, sconsiglia Vlahovic...)" style="flex: 2; font-size:11px; padding:6px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink);">
+        </div>
+
         <textarea id="calNotes" placeholder="Testo, riferimenti, hashtag… (diventa la caption se carichi un media)"></textarea>
       </div>
       <div class="cal-modal-actions">
@@ -5889,8 +5901,37 @@ async function calGenerateAiCaption() {
   let selectedModel = 'claude-sonnet-5';
   try { selectedModel = localStorage.getItem('intel_model') || 'claude-sonnet-5'; } catch(e) {}
 
-  const sysPrompt = "Sei un copywriter esperto di social media. Scrivi una caption accattivante e professionale in lingua italiana, pronta da pubblicare su Instagram. Utilizza paragrafi brevi, includi emoji rilevanti e aggiungi degli hashtag popolari legati al calcio e al fantacalcio alla fine. Non includere introduzioni, spiegazioni o virgolette intorno al testo, restituisci solo ed esclusivamente il corpo della caption.";
-  const promptText = `Scrivi una caption per questo post:\nTitolo: ${title}\nFormato: ${type}\n${notes ? 'Dettagli/Idee iniziali: ' + notes : ''}`;
+  const tone = document.getElementById('calAiTone').value;
+  const extra = document.getElementById('calAiExtra').value.trim();
+
+  let systemInstructions = '';
+  if (tone === 'coinvolgente') {
+    systemInstructions = "Usa uno stile estremamente coinvolgente incentrato sulla community del fantacalcio. Inizia con un gancio (hook) forte e scioccante o una domanda intrigante nei primi 10-15 caratteri. Chiudi sempre con una domanda aperta e chiara per invitare la community a scrivere nei commenti (es. 'Chi prenderete tra questi due? Ditecelo sotto! 👇'). Mantieni un tono amichevole e appassionato.";
+  } else if (tone === 'tecnico') {
+    systemInstructions = "Usa uno stile tecnico, analitico e professionale. Concentrati su dati reali, statistiche di gioco, andamento recente (gol, assist, ammonizioni), fantamedia e indicazioni tattiche. Evita luoghi comuni o frasi ad effetto superficiali, dai valore concreto ai fantallenatori tramite numeri precisi.";
+  } else if (tone === 'ironico') {
+    systemInstructions = "Usa uno stile ironico, divertente e sarcastico. Utilizza il tipico gergo dei fantallenatori italiani (es. 'il pupillo', 'il fantacalcista medio', 'bonus', 'malus'), scherza sugli errori frequenti o le delusioni costose e mantieni un tono colloquiale, divertente e dissacrante.";
+  } else if (tone === 'hype') {
+    systemInstructions = "Usa uno stile ad alto tasso di hype e provocatorio. Fai dichiarazioni audaci (hot takes), lancia previsioni coraggiose o polemiche costruttive, crea grande attesa e curiosità per stimolare dibattiti accesi tra fazioni opposte nei commenti.";
+  }
+
+  const sysPrompt = `Sei un copywriter professionista di social media, esperto di calcio e fantacalcio italiano. Scrivi una caption accattivante, originale e per nulla banale pronta da pubblicare su Instagram.
+${systemInstructions}
+
+Regole di formattazione e scrittura:
+- Usa paragrafi brevi di 1 o 2 frasi ciascuno e lascia righe vuote per garantire un'alta leggibilità.
+- Inserisci emoji coerenti e mirate (posizionate a inizio paragrafo o per enfatizzare concetti, non metterne troppe di fila).
+- Alla fine del post aggiungi da 5 a 8 hashtag popolari e mirati (es. #fantacalcio #seriea #consiglifantacalcio ecc.).
+- Non usare mai introduzioni standard come "Ecco la tua caption" o saluti banali. Inizia direttamente con il testo della caption.
+- Non inserire spiegazioni o virgolette che delimitano il testo. Restituisci solo ed esclusivamente il corpo del post pronto da pubblicare.`;
+
+  let promptText = `Scrivi la caption per questo post:\nTitolo/Idea: ${title}\nFormato post: ${type}`;
+  if (notes) {
+    promptText += `\nNote/Contenuto di partenza: ${notes}`;
+  }
+  if (extra) {
+    promptText += `\nElementi o parole chiave da inserire assolutamente: ${extra}`;
+  }
 
   try {
     const res = await fetch(BACKEND_BASE + '/api/claude', {
@@ -8130,5 +8171,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 24 -->
+<!-- build trigger: 25 -->
 </html>
