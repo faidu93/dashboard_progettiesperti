@@ -5968,7 +5968,7 @@ function calSetupEvents() {
     // --- PUBBLICAZIONE REALE: solo IG + media caricato ---
     const mediaUrl = document.getElementById('calMediaUrl') ? document.getElementById('calMediaUrl').value : '';
     let mediaKind = document.getElementById('calMediaKind') ? document.getElementById('calMediaKind').value : '';
-    if (type === 'CAROUSEL_ALBUM' && mediaUrl.includes(',')) {
+    if (type === 'CAROUSEL_ALBUM') {
       mediaKind = 'carousel';
     }
     let willAutoPublish = false;
