@@ -2503,7 +2503,7 @@ body {
           <option value="IMAGE">📷 Foto</option>
           <option value="CAROUSEL_ALBUM">⊞ Carosello</option>
           <option value="REELS">▶ Reel</option>
-          <option value="STORY">📱 STORY</option>
+          <option value="STORY">◈ Story</option>
         </select>
       </div>
       <div class="cal-field">
@@ -3297,7 +3297,7 @@ function clearPublishSecret() {
   try { localStorage.removeItem('publish_secret'); } catch(e) {}
 }
 
-// Upload di un file su Vercel Blob tramite /api/upload → ritorna l'URL pubblico
+// Upload di un file su Supabase Storage tramite /api/upload → ritorna l'URL pubblico
 async function uploadMediaToBlob(file) {
   const secret = getPublishSecret();
   if (!secret) throw new Error('Password di pubblicazione mancante.');
@@ -3341,9 +3341,7 @@ async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso })
 }
 
 // ===== CODA DI PUBBLICAZIONE (#1) =====
-// Carica la coda reale dal backend (?action=list) e la mostra. Gestisce con
-// grazia il caso in cui il Blob sia limitato/non disponibile (es. fino al reset
-// del piano Hobby): mostra un messaggio invece di rompersi.
+// Carica la coda reale dal backend (?action=list) e la mostra.
 async function loadPublishQueue() {
   const box = document.getElementById('queueList');
   if (!box) return;
@@ -3366,7 +3364,7 @@ async function loadPublishQueue() {
     const queue = Array.isArray(j.posts) ? j.posts : (Array.isArray(j.queue) ? j.queue : (Array.isArray(j) ? j : []));
     renderPublishQueue(queue);
   } catch (e) {
-    box.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--warn);padding:16px 0;text-align:center;">Coda non disponibile al momento (${e.message}).<br><span style="color:var(--ink-mute);">Se il backend Blob è limitato, tornerà visibile al ripristino.</span></div>`;
+    box.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--warn);padding:16px 0;text-align:center;">Coda non disponibile al momento (${e.message}).</div>`;
   }
 }
 
@@ -3395,7 +3393,8 @@ function renderPublishQueue(queue) {
     const dt = p.scheduledAt ? new Date(p.scheduledAt) : null;
     const when = dt ? `${fmtDate(dt)} · ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}` : '—';
     const cap = (p.caption || '').replace(/</g,'&lt;').slice(0, 70) || '(senza caption)';
-    const kind = p.mediaType === 'REELS' ? '🎬 Reel' : '📸 Immagine';
+    const kindMap = { REELS: '🎬 Reel', CAROUSEL_ALBUM: '🖼️ Carosello', IMAGE: '📸 Foto', STORY: '◈ Story' };
+    const kind = kindMap[p.mediaType] || '📸 Foto';
     const canDelete = p.status === 'pending' || p.status === 'error';
     h += `<div class="queue-row">
       <span class="material-symbols-rounded" style="color:${m.color};font-size:20px;">${m.icon}</span>
@@ -8172,5 +8171,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 26 -->
+<!-- build trigger: 27 -->
 </html>
