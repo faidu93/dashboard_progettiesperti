@@ -2575,12 +2575,6 @@ body {
         
         <!-- OPZIONI AI AVANZATE -->
         <div id="calAiOptions" style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;">
-          <div style="display:flex; gap:6px; flex-wrap:wrap;">
-            <button type="button" class="cal-tone-btn active" data-tone="coinvolgente" onclick="calSetTone('coinvolgente')">🗣 Community</button>
-            <button type="button" class="cal-tone-btn" data-tone="tecnico" onclick="calSetTone('tecnico')">📊 Tecnico</button>
-            <button type="button" class="cal-tone-btn" data-tone="ironico" onclick="calSetTone('ironico')">🤪 Ironico</button>
-            <button type="button" class="cal-tone-btn" data-tone="hype" onclick="calSetTone('hype')">🔥 Hype</button>
-          </div>
           <input type="text" id="calAiExtra" placeholder="Dettagli chiave (es. cita Fazzini, gioca sul nome...)" style="font-size:12px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink); width:100%; box-sizing:border-box; outline:none;">
           <input type="hidden" id="calAiTone" value="coinvolgente">
         </div>
@@ -5692,17 +5686,9 @@ function calSetType(val) {
   calOnTypeChange();
 }
 
-// Imposta il tono AI via pulsante
-function calSetTone(val) {
-  const hidden = document.getElementById('calAiTone');
-  if (hidden) hidden.value = val;
-  document.querySelectorAll('.cal-tone-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.tone === val)
-  );
-}
-
 function calOnTypeChange() {
   calToggleHostField();
+  calToggleMediaField();
   calUpdateUploadInputMultiple();
 }
 
@@ -8413,5 +8399,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 36 -->
+<!-- build trigger: 37 -->
 </html>
