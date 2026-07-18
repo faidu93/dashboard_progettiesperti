@@ -2552,6 +2552,19 @@ body {
         <input type="hidden" id="calMediaUrl">
         <input type="hidden" id="calMediaKind">
       </div>
+      <div class="cal-field" id="calCoverField" style="display:none;">
+        <label>Copertina Reel <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· immagine da usare come copertina del Reel (opzionale)</span></label>
+        <div class="cal-upload" id="calCoverUpload">
+          <input type="file" id="calCoverUploadInput" accept="image/*" style="display:none;">
+          <span class="material-symbols-rounded">image</span>
+          <div class="cal-upload-text">Carica copertina Reel</div>
+          <div class="cal-upload-hint">Solo immagini (JPEG, PNG)</div>
+        </div>
+        <div class="cal-upload-preview" id="calCoverUploadPreview"></div>
+        <div class="cal-upload-status" id="calCoverUploadStatus"></div>
+        <button type="button" class="cal-upload-remove" id="calCoverUploadRemove" style="display:none;">Rimuovi copertina</button>
+        <input type="hidden" id="calCoverUrl">
+      </div>
       <div class="cal-field" id="calNotesField">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <label>Note / Caption</label>
@@ -3510,7 +3523,7 @@ async function calHandleFiles(files) {
     const previewItem = document.createElement('div');
     previewItem.className = 'cal-preview-item';
     previewItem.innerHTML = isVideo
-      ? `<video src="${localUrl}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--line);"></video>`
+      ? `<video src="${localUrl}#t=0.5" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--line);" preload="metadata"></video>`
       : `<img src="${localUrl}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--line);">`;
     prev.appendChild(previewItem);
 
@@ -3551,11 +3564,84 @@ function calSetupUpload() {
   if (rm) rm.addEventListener('click', calResetUpload);
 }
 
-// Mostra l'area media solo per Instagram
+// Gestione Copertina Reel (Upload)
+async function calHandleCoverFile(files) {
+  const file = files[0];
+  if (!file) return;
+  const prev = document.getElementById('calCoverUploadPreview');
+  const status = document.getElementById('calCoverUploadStatus');
+  const removeBtn = document.getElementById('calCoverUploadRemove');
+  if (!prev || !status) return;
+
+  prev.innerHTML = '';
+  status.className = 'cal-upload-status';
+  status.innerHTML = '';
+
+  if (!file.type.startsWith('image/')) {
+    status.className = 'cal-upload-status err';
+    status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">error</span> La copertina deve essere un\'immagine.';
+    return;
+  }
+
+  const localUrl = URL.createObjectURL(file);
+  const previewItem = document.createElement('div');
+  previewItem.className = 'cal-preview-item';
+  previewItem.innerHTML = `<img src="${localUrl}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--line);">`;
+  prev.appendChild(previewItem);
+
+  try {
+    status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;animation:spin 1s linear infinite;">progress_activity</span> Caricamento copertina…';
+    const url = await uploadMediaToSupabase(file);
+    document.getElementById('calCoverUrl').value = url;
+    status.className = 'cal-upload-status ok';
+    status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> Copertina caricata con successo';
+    if (removeBtn) removeBtn.style.display = 'inline-block';
+  } catch (e) {
+    status.className = 'cal-upload-status err';
+    status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">error</span> ' + (e.message || 'Errore upload');
+    calResetCoverUpload();
+  }
+}
+
+function calResetCoverUpload() {
+  document.getElementById('calCoverUrl').value = '';
+  const prev = document.getElementById('calCoverUploadPreview');
+  const status = document.getElementById('calCoverUploadStatus');
+  const removeBtn = document.getElementById('calCoverUploadRemove');
+  const input = document.getElementById('calCoverUploadInput');
+  if (prev) prev.innerHTML = '';
+  if (status) { status.className = 'cal-upload-status'; status.innerHTML = ''; }
+  if (removeBtn) removeBtn.style.display = 'none';
+  if (input) input.value = '';
+}
+
+function calSetupCoverUpload() {
+  const zone = document.getElementById('calCoverUpload');
+  const input = document.getElementById('calCoverUploadInput');
+  if (!zone || !input) return;
+  zone.addEventListener('click', () => input.click());
+  input.addEventListener('change', e => calHandleCoverFile(e.target.files));
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) calHandleCoverFile(e.dataTransfer.files);
+  });
+  const rm = document.getElementById('calCoverUploadRemove');
+  if (rm) rm.addEventListener('click', calResetCoverUpload);
+}
+
+// Mostra l'area media solo per Instagram, e l'area copertina per i Reel
 function calToggleMediaField() {
   const platform = document.getElementById('calPlatform').value;
+  const type = document.getElementById('calType').value;
   const field = document.getElementById('calMediaField');
   if (field) field.style.display = (platform === 'ig') ? 'flex' : 'none';
+
+  const coverField = document.getElementById('calCoverField');
+  if (coverField) {
+    coverField.style.display = (platform === 'ig' && type === 'REELS') ? 'flex' : 'none';
+  }
 }
 
 const MONTHS_NUM = ['01','02','03','04','05','06','07','08','09','10','11','12'];
@@ -6129,6 +6215,7 @@ ${examplesText}`;
 
 function calSetupEvents() {
   calSetupUpload();
+  calSetupCoverUpload();
   const aiCaptionBtn = document.getElementById('calAiCaptionBtn');
   if (aiCaptionBtn) aiCaptionBtn.onclick = calGenerateAiCaption;
   document.getElementById('calPrev').onclick = () => {
@@ -6166,11 +6253,19 @@ function calSetupEvents() {
     if (!date || !title) { alert('Inserisci almeno data e titolo.'); return; }
 
     // --- PUBBLICAZIONE REALE: solo IG + media caricato ---
-    const mediaUrl = document.getElementById('calMediaUrl') ? document.getElementById('calMediaUrl').value : '';
+    let mediaUrl = document.getElementById('calMediaUrl') ? document.getElementById('calMediaUrl').value : '';
     let mediaKind = document.getElementById('calMediaKind') ? document.getElementById('calMediaKind').value : '';
+    const coverUrl = document.getElementById('calCoverUrl') ? document.getElementById('calCoverUrl').value : '';
+
     if (type === 'CAROUSEL_ALBUM') {
       mediaKind = 'carousel';
     }
+    
+    // Comma-separate coverUrl for Reels if it exists
+    if (platform === 'ig' && type === 'REELS' && coverUrl && mediaUrl) {
+      mediaUrl = mediaUrl + ',' + coverUrl;
+    }
+
     let willAutoPublish = false;
     if (platform === 'ig' && mediaUrl) {
       const localDateTime = new Date(`${date}T${(time || '10:00')}:00`);
@@ -8330,5 +8425,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 34 -->
+<!-- build trigger: 35 -->
 </html>
