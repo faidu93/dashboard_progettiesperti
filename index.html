@@ -6034,7 +6034,13 @@ async function repurposeYoutubeToInstagram(url) {
     if(!videoId) { alert("Impossibile estrarre l\"ID del video."); return; }
 
     document.getElementById("calDetail").classList.remove("show");
-    switchIntelTab("ig");
+    const intTabBtn = document.querySelector('button[data-tab="intelligence"]');
+    if (intTabBtn) tabSwitch(intTabBtn);
+    // Scrolldown to IG section if needed
+    setTimeout(() => {
+      const igSection = document.getElementById('igIntelConfig');
+      if(igSection) igSection.scrollIntoView({behavior: 'smooth', block: 'start'});
+    }, 100);
     
     const overlay = document.getElementById("loadingOverlay");
     overlay.classList.remove("hidden");
@@ -6058,9 +6064,9 @@ async function repurposeYoutubeToInstagram(url) {
       return; // Canceled by user
     }
 
-    const prompt = "Ecco l\"esatto transcript di un mio video YouTube appena scaricato:\n\n\"" + data.transcript + "\"\n\nAgisci come un Social Media Manager esperto.\nEstrai i concetti di maggior valore e trasformali in idee di contenuto per Instagram (per il mio account, usa il tono informale, appassionato e dritto al punto che mi contraddistingue).\n\nVoglio che crei esattamente:\n" + userReq + "\n\nDevono essere formattate esattamente usando il formato standard richiesto dal mio sistema, ossia:\nNUMERO) [FORMATO] - TITOLO FORTE\n[Spiegazione del contenuto, gancio iniziale, sviluppo ed eventuale call to action]";
+    const claudePrompt = "Ecco l\"esatto transcript di un mio video YouTube appena scaricato:\n\n\"" + data.transcript + "\"\n\nAgisci come un Social Media Manager esperto.\nEstrai i concetti di maggior valore e trasformali in idee di contenuto per Instagram (per il mio account, usa il tono informale, appassionato e dritto al punto che mi contraddistingue).\n\nVoglio che crei esattamente:\n" + userReq + "\n\nDevono essere formattate esattamente usando il formato standard richiesto dal mio sistema, ossia:\nNUMERO) [FORMATO] - TITOLO FORTE\n[Spiegazione del contenuto, gancio iniziale, sviluppo ed eventuale call to action]";
 
-    const ideas = await callClaudeForIdeas(prompt, "igIdeas", "ig");
+    const ideas = await callClaudeForIdeas(claudePrompt, "igIdeas", "ig");
     
     updateLoadingStep("Idee generate e salvate!", "done");
     renderIdeas(ideas, "igIdeas", "ig", null, {});
