@@ -2565,6 +2565,10 @@ body {
         <button type="button" class="cal-upload-remove" id="calCoverUploadRemove" style="display:none;">Rimuovi copertina</button>
         <input type="hidden" id="calCoverUrl">
       </div>
+      <div class="cal-field" id="calCollabField" style="display:none;">
+        <label>Collaboratori (Co-author) <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· username Instagram da invitare come co-autori (separati da virgola, es: pag1, pag2)</span></label>
+        <input type="text" id="calCollaborators" placeholder="Es: carmyminardi, profeta_del_fanta" style="font-size:12px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink); width:100%; box-sizing:border-box; outline:none;">
+      </div>
       <div class="cal-field" id="calNotesField">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <label>Note / Caption</label>
@@ -3625,7 +3629,7 @@ function calSetupCoverUpload() {
   if (rm) rm.addEventListener('click', calResetCoverUpload);
 }
 
-// Mostra l'area media solo per Instagram, e l'area copertina per i Reel
+// Mostra l'area media solo per Instagram, l'area copertina per i Reel e i collaboratori per IG (tranne Story)
 function calToggleMediaField() {
   const platform = document.getElementById('calPlatform').value;
   const type = document.getElementById('calType').value;
@@ -3635,6 +3639,11 @@ function calToggleMediaField() {
   const coverField = document.getElementById('calCoverField');
   if (coverField) {
     coverField.style.display = (platform === 'ig' && type === 'REELS') ? 'flex' : 'none';
+  }
+
+  const collabField = document.getElementById('calCollabField');
+  if (collabField) {
+    collabField.style.display = (platform === 'ig' && type !== 'STORY') ? 'flex' : 'none';
   }
 }
 
@@ -6022,7 +6031,16 @@ function calEditPlanned(e, id, platform) {
   document.getElementById('calTime').value = item.time || '10:00';
   calSetType(item.type); // aggiorna pulsante tipo attivo
   document.getElementById('calTitle').value = item.title;
-  document.getElementById('calNotes').value = item.notes || '';
+  // Estrai il tag [COLLAB:...] dalle note e ripristina il campo collaboratori
+  let editNotes = item.notes || '';
+  let editCollaborators = '';
+  const collabMatch = editNotes.match(/\[COLLAB:([^\]]+)\]/);
+  if (collabMatch) {
+    editCollaborators = collabMatch[1];
+    editNotes = editNotes.replace(/\s*\[COLLAB:[^\]]+\]/, '').trim();
+  }
+  document.getElementById('calNotes').value = editNotes;
+  document.getElementById('calCollaborators').value = editCollaborators;
   document.getElementById('calHost').value = item.host || '';
   document.getElementById('calModal').dataset.platform = platform;
   document.getElementById('calDeleteBtn').style.display = 'inline-flex';
@@ -6043,6 +6061,7 @@ function calOpenModal(ds, id) {
   document.getElementById('calTitle').value = '';
   document.getElementById('calNotes').value = '';
   document.getElementById('calHost').value = '';
+  document.getElementById('calCollaborators').value = '';
   document.getElementById('calDeleteBtn').style.display = 'none';
   document.getElementById('calModalTitle').textContent = 'Pianifica post';
   // Reset pulsanti piattaforma su Instagram
@@ -6223,6 +6242,11 @@ function calSetupEvents() {
     const type = document.getElementById('calType').value;
     const title = document.getElementById('calTitle').value.trim();
     const notes = document.getElementById('calNotes').value.trim();
+    const collaboratorsRaw = (document.getElementById('calCollaborators') ? document.getElementById('calCollaborators').value.trim() : '');
+    // Appende il tag [COLLAB:...] in fondo alle note se ci sono collaboratori e siamo su IG
+    const finalNotes = (collaboratorsRaw && platform === 'ig')
+      ? (notes + (notes ? '\n\n' : '') + '[COLLAB:' + collaboratorsRaw + ']')
+      : notes;
     const host = (platform === 'yt' && (type === 'LIVE' || type === 'ASTA_LIVE')) ? document.getElementById('calHost').value.trim() : '';
     if (!date || !title) { alert('Inserisci almeno data e titolo.'); return; }
 
@@ -6252,7 +6276,7 @@ function calSetupEvents() {
       saveBtn.disabled = true;
       saveBtn.innerHTML = '<span class="material-symbols-rounded">progress_activity</span>Accodo pubblicazione…';
       try {
-        await schedulePublish({ mediaUrl, mediaKind, caption: notes, scheduledAtIso: localDateTime.toISOString() });
+        await schedulePublish({ mediaUrl, mediaKind, caption: finalNotes, scheduledAtIso: localDateTime.toISOString() });
         willAutoPublish = true;
       } catch (e) {
         saveBtn.disabled = false;
@@ -6266,8 +6290,8 @@ function calSetupEvents() {
     // Marco titolo/note per distinguere i post auto-pubblicati in calendario
     const titleForCal = willAutoPublish ? ('✅ ' + title) : title;
     const notesForCal = willAutoPublish
-      ? (notes + '\n\n[Pubblicazione automatica programmata · media già caricato]')
-      : notes;
+      ? (finalNotes + '\n\n[Pubblicazione automatica programmata · media già caricato]')
+      : finalNotes;
 
     // Se Google connesso, scrive direttamente su Google Calendar
     if (gcalSignedIn) {
@@ -8399,5 +8423,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 37 -->
+<!-- build trigger: 38 -->
 </html>
