@@ -2629,7 +2629,7 @@ body {
       </div>
       <div class="cal-detail-caption" id="cdCaption"></div>
       <div class="cal-detail-actions">
-        <a id="cdLink" href="#" target="_blank" rel="noopener" class="cal-btn"><svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Apri su Instagram</a>
+        <a id="cdLink" href="#" target="_blank" rel="noopener" class="cal-btn"><svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Apri su Instagram</a>\n        <button type="button" id="cdRepurposeBtn" class="cal-btn" style="display:none; background:rgba(255,140,30,0.1); color:var(--accent); border-color:rgba(255,140,30,0.3);"><svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Ricicla in Instagram</button>
         <button class="cal-btn" id="cdClose">Chiudi</button>
       </div>
     </div>
@@ -6021,6 +6021,61 @@ function calDayClick(e, ds) {
 }
 
 
+
+async function repurposeYoutubeToInstagram(url) {
+  try {
+    let videoId = "";
+    try {
+      if (url.includes("v=")) videoId = url.split("v=")[1].split("&")[0];
+      else if (url.includes("youtu.be/")) videoId = url.split("youtu.be/")[1].split("?")[0];
+    } catch(e) {}
+    
+    if(!videoId) { alert("Impossibile estrarre l\"ID del video."); return; }
+
+    document.getElementById("calDetail").classList.remove("show");
+    switchIntelTab("ig");
+    
+    const overlay = document.getElementById("loadingOverlay");
+    overlay.classList.remove("hidden");
+    setTimeout(() => overlay.classList.remove("fade-out"), 10);
+    document.getElementById("loadingLog").innerHTML = "";
+    updateLoadingStep("Estraggo i sottotitoli del video YouTube...", "spin");
+
+    const res = await fetch(BACKEND_BASE + "/api/youtube-transcript?videoId=" + videoId);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Errore fetch transcript");
+
+    updateLoadingStep("Sottotitoli estratti. Genero idee di contenuto...", "spin");
+
+    // Ask user for specific output
+    let userReq = prompt(
+      "Cosa vuoi creare da questo video?\nEs: \"3 Reel tecnici e 1 Carosello divertente\" oppure \"1 post testuale su X\"", 
+      "3 idee per Reel e 2 per Caroselli"
+    );
+    if (!userReq) {
+      document.getElementById("loadingOverlay").classList.add("hidden");
+      return; // Canceled by user
+    }
+
+    const prompt = "Ecco l\"esatto transcript di un mio video YouTube appena scaricato:\n\n\"" + data.transcript + "\"\n\nAgisci come un Social Media Manager esperto.\nEstrai i concetti di maggior valore e trasformali in idee di contenuto per Instagram (per il mio account, usa il tono informale, appassionato e dritto al punto che mi contraddistingue).\n\nVoglio che crei esattamente:\n" + userReq + "\n\nDevono essere formattate esattamente usando il formato standard richiesto dal mio sistema, ossia:\nNUMERO) [FORMATO] - TITOLO FORTE\n[Spiegazione del contenuto, gancio iniziale, sviluppo ed eventuale call to action]";
+
+    const ideas = await callClaudeForIdeas(prompt, "igIdeas", "ig");
+    
+    updateLoadingStep("Idee generate e salvate!", "done");
+    renderIdeas(ideas, "igIdeas", "ig", null, {});
+    setTimeout(() => overlay.classList.add("fade-out"), 800);
+    setTimeout(() => overlay.classList.add("hidden"), 1200);
+
+  } catch(e) {
+    console.error(e);
+    updateLoadingStep("Errore durante il riciclo: " + e.message, "error");
+    setTimeout(() => {
+      document.getElementById("loadingOverlay").classList.add("fade-out");
+      setTimeout(()=>document.getElementById("loadingOverlay").classList.add("hidden"), 400);
+    }, 2500);
+  }
+}
+
 function calShowYtDetail(e, encoded) {
   e.stopPropagation();
   const d = JSON.parse(decodeURIComponent(encoded));
@@ -6035,15 +6090,18 @@ function calShowYtDetail(e, encoded) {
   document.getElementById('cdReach').textContent = numIt(d.views || 0) + ' views · ' + numIt(d.likes || 0) + ' likes';
   document.getElementById('cdCaption').textContent = '';
   // Link a YouTube
-  const linkEl = document.getElementById('cdLink');
+  const linkEl = document.getElementById("cdLink");
+  const repBtn = document.getElementById("cdRepurposeBtn");
   if (d.url) {
     linkEl.href = d.url;
-    linkEl.style.display = 'inline-flex';
-    linkEl.textContent = '▶ Apri su YouTube';
+    linkEl.style.display = "inline-flex";
+    repBtn.style.display = "inline-flex";
+    repBtn.onclick = () => repurposeYoutubeToInstagram(d.url);
   } else {
-    linkEl.style.display = 'none';
+    linkEl.style.display = "none";
+    repBtn.style.display = "none";
   }
-  document.getElementById('calDetail').classList.add('show');
+  document.getElementById("calDetail").classList.add("show");
 }
 
 function calShowDetail(e, encoded) {
@@ -6064,7 +6122,9 @@ function calShowDetail(e, encoded) {
   document.getElementById('cdReach').textContent = d.reach ? 'Reach: ' + numIt(d.reach) : '';
   document.getElementById('cdCaption').textContent = d.caption || '—';
   // Reset link: torna a "Apri su Instagram" e ricostruisce contenuto originale
-  const linkEl = document.getElementById('cdLink');
+  const linkEl = document.getElementById("cdLink");
+  const repBtn = document.getElementById("cdRepurposeBtn");
+  if(repBtn) repBtn.style.display = "none";
   if (d.url) {
     linkEl.href = d.url;
     linkEl.style.display = 'inline-flex';
