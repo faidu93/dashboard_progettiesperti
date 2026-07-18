@@ -1821,6 +1821,29 @@ body {
   #subRefreshBtnTop span:not(.material-symbols-rounded), #btnForceRefreshAllTop span:not(.material-symbols-rounded) { display: none !important; }
   #subRefreshBtnTop, #btnForceRefreshAllTop { padding: 8px !important; min-width: 32px; border-radius: 50% !important; }
 }
+
+/* MOBILE OPTIMIZATIONS & BRAND ICOS */
+.brand-ico {
+  width: 15px; height: 15px;
+  vertical-align: -2px;
+  margin-right: 5px;
+}
+.brand-ico.ig { color: #e1306c; }
+.brand-ico.yt { color: #ff0000; }
+
+@media (max-width: 768px) {
+  .nav-inner { flex-direction: column; padding: 12px 16px; gap: 12px; }
+  .nav-cluster { width: 100%; justify-content: space-between; }
+  .container { padding: 20px 16px 40px; }
+  .calGrid { overflow-x: auto; padding-bottom: 12px; display: block; white-space: nowrap; }
+  .top-cols { grid-template-columns: 1fr; }
+  .panel-grid.two-col, .panel-grid.equal, .panel-grid.three-col { grid-template-columns: 1fr; }
+  .layout-header-actions { flex-wrap: wrap; gap: 8px; }
+  .layout-header-actions button { flex: 1; text-align: center; justify-content: center; }
+  .cal-filters { flex-wrap: wrap; }
+  .cal-filter { flex: 1; justify-content: center; }
+  .tabs { flex-wrap: wrap; overflow-x: auto; white-space: nowrap; justify-content: flex-start; }
+}
 </style>
 </head>
 <body>
@@ -2496,12 +2519,12 @@ body {
       <div class="cal-field">
         <label>Social</label>
         <div class="cal-btn-group" id="calPlatformGroup">
-          <button type="button" class="cal-btn-option active" data-val="ig" onclick="calSetPlatform('ig')">📸 Instagram</button>
-          <button type="button" class="cal-btn-option" data-val="yt" onclick="calSetPlatform('yt')">🎬 YouTube</button>
+          <button type="button" class="cal-btn-option active" data-val="ig" onclick="calSetPlatform('ig')"><svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Instagram</button>
+          <button type="button" class="cal-btn-option" data-val="yt" onclick="calSetPlatform('yt')"><svg class="brand-ico yt" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C.5 8.056.5 12 .5 12s0 3.944.501 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.377.55 9.377.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C23.5 15.944 23.5 12 23.5 12s0-3.944-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YouTube</button>
         </div>
         <select id="calPlatform" style="display:none">
-          <option value="ig">📸 Instagram</option>
-          <option value="yt">🎬 YouTube</option>
+          <option value="ig">Instagram</option>
+          <option value="yt">YouTube</option>
         </select>
       </div>
       <!-- Banner YouTube: solo pianificazione -->
@@ -2647,8 +2670,8 @@ body {
       <div class="cal-filter-bar">
         <span class="cal-filter-label">Filtra:</span>
         <button class="cal-filter active" data-filter="all" onclick="calSetFilter(this)">Tutti</button>
-        <button class="cal-filter" data-filter="ig" onclick="calSetFilter(this)">📸 Instagram</button>
-        <button class="cal-filter" data-filter="yt" onclick="calSetFilter(this)">🎬 YouTube</button>
+        <button class="cal-filter" data-filter="ig" onclick="calSetFilter(this)"><svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Instagram</button>
+        <button class="cal-filter" data-filter="yt" onclick="calSetFilter(this)"><svg class="brand-ico yt" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C.5 8.056.5 12 .5 12s0 3.944.501 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.377.55 9.377.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C23.5 15.944 23.5 12 23.5 12s0-3.944-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YouTube</button>
       </div>
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-legend">
