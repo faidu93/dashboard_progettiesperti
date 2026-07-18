@@ -3443,13 +3443,17 @@ function renderPublishQueue(queue) {
     const kindMap = { REELS: '🎬 Reel', CAROUSEL_ALBUM: '🖼️ Carosello', IMAGE: '📸 Foto', STORY: '◈ Story' };
     const kind = kindMap[p.mediaType] || '📸 Foto';
     const canDelete = p.status === 'pending' || p.status === 'error';
+    const escapedCaption = (p.caption || '').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
     h += `<div class="queue-row">
       <span class="material-symbols-rounded" style="color:${m.color};font-size:20px;">${m.icon}</span>
       <div class="queue-main">
         <div class="queue-cap">${cap}${cap.length >= 70 ? '…' : ''}</div>
         <div class="queue-meta">${kind} · ${when} · <span style="color:${m.color};">${m.label}</span>${p.status==='error' && p.error ? ' · <span style="color:var(--neg);">'+p.error.slice(0,40)+'</span>' : ''}</div>
       </div>
-      ${canDelete ? `<button class="queue-del" title="Rimuovi dalla coda" onclick="deleteFromQueue('${p.id}')"><span class="material-symbols-rounded">delete</span></button>` : ''}
+      ${canDelete ? `
+      <button class="queue-del" style="color:var(--accent); margin-right:8px;" title="Modifica" onclick="openEditQueueModal('${p.id}', '${escapedCaption}', '${p.scheduledAt}')"><span class="material-symbols-rounded">edit</span></button>
+      <button class="queue-del" title="Rimuovi dalla coda" onclick="deleteFromQueue('${p.id}')"><span class="material-symbols-rounded">delete</span></button>
+      ` : ''}
     </div>`;
   });
   box.innerHTML = h;
@@ -8448,6 +8452,106 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
+  <!-- MODAL: Modifica Post Programmato in Coda -->
+  <div class="cal-modal-bg" id="editQueueModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+    <div class="cal-modal" style="background:#15151b; width:100%; max-width:560px; padding:24px; border-radius:12px; border:1px solid rgba(255,255,255,0.05); color:#fff; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+      <h3 style="font-size:18px; margin-bottom:4px;">Modifica post programmato</h3>
+      <p style="font-size:12px; color:var(--ink-mute); font-family:var(--font-mono); margin-bottom:16px;">Modifica la didascalia, i tag o la data di pubblicazione.</p>
+      
+      <input type="hidden" id="editQueueId">
+      
+      <div class="cal-field" style="margin-top:16px;">
+        <label>Caption, Tag e Collaboratori</label>
+        <textarea id="editQueueCaption" rows="8" style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:#fff; font-family:var(--font-mono); resize:vertical;" placeholder="Inserisci qui il testo del post e i tag..."></textarea>
+      </div>
+      
+      <div class="cal-modal-row" style="display:flex; gap:12px; margin-top:16px;">
+        <div class="cal-field" style="flex:1;">
+          <label>Data</label>
+          <input type="date" id="editQueueDate" style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:#fff; color-scheme:dark;">
+        </div>
+        <div class="cal-field" style="flex:1;">
+          <label>Ora</label>
+          <input type="time" id="editQueueTime" style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:#fff; color-scheme:dark;">
+        </div>
+      </div>
+      
+      <div class="cal-modal-row" style="display:flex; gap:12px; margin-top:24px; justify-content:flex-end;">
+        <button type="button" class="cal-btn-sec" onclick="closeEditQueueModal()" style="padding:10px 16px; background:rgba(255,255,255,0.05); border:none; color:#fff; border-radius:8px; cursor:pointer;">Annulla</button>
+        <button type="button" class="cal-btn-pri" id="saveEditQueueBtn" onclick="saveEditQueueModal()" style="padding:10px 16px; background:var(--accent); border:none; color:#fff; border-radius:8px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:6px;">Salva Modifiche</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openEditQueueModal(id, caption, isoDate) {
+      document.getElementById('editQueueId').value = id;
+      document.getElementById('editQueueCaption').value = caption || '';
+      
+      if (isoDate && isoDate !== 'null') {
+        const dt = new Date(isoDate);
+        document.getElementById('editQueueDate').value = dt.toISOString().split('T')[0];
+        document.getElementById('editQueueTime').value = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+      } else {
+        document.getElementById('editQueueDate').value = '';
+        document.getElementById('editQueueTime').value = '';
+      }
+      
+      const modal = document.getElementById('editQueueModal');
+      modal.style.display = 'flex';
+    }
+
+    function closeEditQueueModal() {
+      document.getElementById('editQueueModal').style.display = 'none';
+    }
+
+    async function saveEditQueueModal() {
+      const id = document.getElementById('editQueueId').value;
+      const caption = document.getElementById('editQueueCaption').value.trim();
+      const d = document.getElementById('editQueueDate').value;
+      const t = document.getElementById('editQueueTime').value;
+      
+      if (!id) return;
+      if (!d || !t) {
+        alert('Inserisci data e ora valide.');
+        return;
+      }
+
+      const isoDate = new Date(d + 'T' + t).toISOString();
+      const secret = getPublishSecret();
+      if (!secret) { alert('Password di pubblicazione mancante.'); return; }
+
+      const btn = document.getElementById('saveEditQueueBtn');
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="material-symbols-rounded" style="animation:spin 1s linear infinite;font-size:18px;">progress_activity</span> Salvataggio...';
+
+      try {
+        const res = await fetch(`${BACKEND_BASE}/api/schedule?action=update&id=${encodeURIComponent(id)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret },
+          body: JSON.stringify({
+            caption: caption,
+            scheduledAt: isoDate
+          })
+        });
+        
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok || j.error) {
+          if (res.status === 401) clearPublishSecret();
+          throw new Error(j.error || `HTTP ${res.status}`);
+        }
+        
+        closeEditQueueModal();
+        loadPublishQueue(); // Refresh queue
+      } catch (e) {
+        alert('Errore durante il salvataggio: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+      }
+    }
+  </script>
 </body>
 <!-- build trigger: 38 -->
 </html>
