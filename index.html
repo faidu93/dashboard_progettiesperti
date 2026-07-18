@@ -6101,6 +6101,7 @@ function calShowYtDetail(e, encoded) {
   const repBtn = document.getElementById("cdRepurposeBtn");
   if (d.url) {
     linkEl.href = d.url;
+    linkEl.innerHTML = '<svg class="brand-ico yt" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C.5 8.056.5 12 .5 12s0 3.944.501 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.377.55 9.377.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C23.5 15.944 23.5 12 23.5 12s0-3.944-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> Apri su YouTube';
     linkEl.style.display = "inline-flex";
     repBtn.style.display = "inline-flex";
     repBtn.onclick = () => repurposeYoutubeToInstagram(d.url);
