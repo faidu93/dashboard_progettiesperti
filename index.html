@@ -907,15 +907,16 @@ body {
   /* Modal calendario */
   .cal-modal-bg {
     position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-    display: none; align-items: center; justify-content: center;
-    z-index: 200; padding: 20px;
+    display: none; align-items: flex-start; justify-content: center;
+    z-index: 200; padding: 16px; overflow-y: auto;
   }
   .cal-modal-bg.show { display: flex; }
   .cal-modal {
     background: var(--bg-elev); border: 1px solid var(--line-strong);
-    border-radius: 14px; padding: 28px; width: 100%; max-width: 460px;
-    display: flex; flex-direction: column; gap: 18px;
-    max-height: 90vh; overflow-y: auto;
+    border-radius: 14px; padding: 24px; width: 100%; max-width: 460px;
+    display: flex; flex-direction: column; gap: 16px;
+    max-height: 92vh; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .cal-modal h3 { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--ink); margin: 0; }
   .cal-field { display: flex; flex-direction: column; gap: 6px; }
@@ -1104,15 +1105,16 @@ body {
   /* Modal pianifica */
   .cal-modal-bg {
     position: fixed; inset: 0; background: rgba(0,0,0,0.72);
-    display: none; align-items: center; justify-content: center;
-    z-index: 300; padding: 20px;
+    display: none; align-items: flex-start; justify-content: center;
+    z-index: 300; padding: 16px; overflow-y: auto;
   }
   .cal-modal-bg.show { display: flex; }
   .cal-modal {
     background: var(--bg-elev); border: 1px solid var(--line-strong);
-    border-radius: 14px; padding: 28px; width: 100%; max-width: 440px;
+    border-radius: 14px; padding: 24px; width: 100%; max-width: 440px;
     display: flex; flex-direction: column; gap: 16px;
-    max-height: 90vh; overflow-y: auto;
+    max-height: 92vh; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .cal-modal h3 { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--ink); margin: 0; }
   .cal-field { display: flex; flex-direction: column; gap: 6px; }
@@ -1376,18 +1378,29 @@ body {
       font-size: 11px !important;
     }
     
-    /* Modal: full screen */
+    /* Modal: full screen su mobile ≤480px */
     .modal-bg, .cal-modal-bg, .cal-detail-bg {
       padding: 0 !important;
+      align-items: flex-start !important;
       padding-top: env(safe-area-inset-top) !important;
     }
     .modal, .cal-modal, .cal-detail {
       max-width: 100% !important;
+      width: 100% !important;
+      height: 100vh;
+      height: 100dvh;
       max-height: 100vh !important;
-      min-height: 100vh;
+      max-height: 100dvh !important;
       border-radius: 0 !important;
       padding: 20px 16px !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
     }
+    /* Data/Ora in colonna su mobile stretto */
+    .cal-modal-row { grid-template-columns: 1fr !important; gap: 10px !important; }
+    /* Bottoni formato: font più piccolo */
+    .cal-btn-option { font-size: 11.5px !important; padding: 8px 4px !important; }
+    .cal-tone-btn { font-size: 11px !important; padding: 5px 8px !important; }
   }
   
   @media (max-width: 360px) {
@@ -1545,10 +1558,10 @@ body {
   }
   .cal-post.autopub { box-shadow: inset 0 0 0 1.5px var(--pos); }
   .cal-btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
-  .cal-btn-option { flex: 1; padding: 9px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg-elev-2); color: var(--ink-soft); font-size: 13px; cursor: pointer; transition: all .15s; white-space: nowrap; font-family: var(--font-sans); text-align: center; }
+  .cal-btn-option { flex: 1; padding: 9px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg-elev-2); color: var(--ink-soft); font-size: 13px; cursor: pointer; transition: all .15s; white-space: nowrap; font-family: var(--font-sans); text-align: center; touch-action: manipulation; -webkit-tap-highlight-color: transparent; min-width: 0; }
   .cal-btn-option:hover { border-color: var(--accent); color: var(--ink); background: rgba(255,140,30,0.04); }
   .cal-btn-option.active { border-color: var(--accent); background: rgba(255,140,30,0.12); color: var(--accent); font-weight: 600; }
-  .cal-tone-btn { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg-elev-2); color: var(--ink-soft); font-size: 12px; cursor: pointer; transition: all .15s; font-family: var(--font-sans); white-space: nowrap; }
+  .cal-tone-btn { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg-elev-2); color: var(--ink-soft); font-size: 12px; cursor: pointer; transition: all .15s; font-family: var(--font-sans); white-space: nowrap; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .cal-tone-btn:hover { border-color: var(--accent); color: var(--ink); }
   .cal-tone-btn.active { border-color: var(--accent); background: rgba(255,140,30,0.12); color: var(--accent); font-weight: 600; }
 .queue-row { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; background: var(--bg-elev-2); }
@@ -8273,5 +8286,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 28 -->
+<!-- build trigger: 29 -->
 </html>
