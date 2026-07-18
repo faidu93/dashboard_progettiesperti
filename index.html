@@ -6036,50 +6036,44 @@ async function repurposeYoutubeToInstagram(url) {
     document.getElementById("calDetail").classList.remove("show");
     const intTabBtn = document.querySelector('button[data-tab="intelligence"]');
     if (intTabBtn) tabSwitch(intTabBtn);
-    // Scrolldown to IG section if needed
     setTimeout(() => {
       const igSection = document.getElementById('igIntelConfig');
       if(igSection) igSection.scrollIntoView({behavior: 'smooth', block: 'start'});
     }, 100);
     
-    const overlay = document.getElementById("loadingOverlay");
-    overlay.classList.remove("hidden");
-    setTimeout(() => overlay.classList.remove("fade-out"), 10);
-    document.getElementById("loadingLog").innerHTML = "";
-    updateLoadingStep("Estraggo i sottotitoli del video YouTube...", "spin");
+    loadingStart();
+    document.getElementById('loadingTitle').textContent = 'Riciclo Contenuti AI';
+    loadingStep('yt_sub', 'Estraggo i sottotitoli del video YouTube...', 'active');
 
     const res = await fetch(BACKEND_BASE + "/api/youtube-transcript?videoId=" + videoId);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Errore fetch transcript");
 
-    updateLoadingStep("Sottotitoli estratti. Genero idee di contenuto...", "spin");
+    loadingDone('yt_sub', 'Sottotitoli estratti.');
 
-    // Ask user for specific output
     let userReq = prompt(
       "Cosa vuoi creare da questo video?\nEs: \"3 Reel tecnici e 1 Carosello divertente\" oppure \"1 post testuale su X\"", 
       "3 idee per Reel e 2 per Caroselli"
     );
     if (!userReq) {
-      document.getElementById("loadingOverlay").classList.add("hidden");
-      return; // Canceled by user
+      loadingFinish(false);
+      return; 
     }
+
+    loadingStep('yt_claude', 'Genero idee di contenuto con Claude...', 'active');
 
     const claudePrompt = "Ecco l\"esatto transcript di un mio video YouTube appena scaricato:\n\n\"" + data.transcript + "\"\n\nAgisci come un Social Media Manager esperto.\nEstrai i concetti di maggior valore e trasformali in idee di contenuto per Instagram (per il mio account, usa il tono informale, appassionato e dritto al punto che mi contraddistingue).\n\nVoglio che crei esattamente:\n" + userReq + "\n\nDevono essere formattate esattamente usando il formato standard richiesto dal mio sistema, ossia:\nNUMERO) [FORMATO] - TITOLO FORTE\n[Spiegazione del contenuto, gancio iniziale, sviluppo ed eventuale call to action]";
 
     const ideas = await callClaudeForIdeas(claudePrompt, "igIdeas", "ig");
     
-    updateLoadingStep("Idee generate e salvate!", "done");
+    loadingDone('yt_claude', 'Idee generate e salvate!');
     renderIdeas(ideas, "igIdeas", "ig", null, {});
-    setTimeout(() => overlay.classList.add("fade-out"), 800);
-    setTimeout(() => overlay.classList.add("hidden"), 1200);
+    setTimeout(() => loadingFinish(true), 800);
 
   } catch(e) {
     console.error(e);
-    updateLoadingStep("Errore durante il riciclo: " + e.message, "error");
-    setTimeout(() => {
-      document.getElementById("loadingOverlay").classList.add("fade-out");
-      setTimeout(()=>document.getElementById("loadingOverlay").classList.add("hidden"), 400);
-    }, 2500);
+    loadingError('yt_err', e.message);
+    setTimeout(() => loadingFinish(false), 2500);
   }
 }
 
