@@ -915,6 +915,7 @@ body {
     background: var(--bg-elev); border: 1px solid var(--line-strong);
     border-radius: 14px; padding: 28px; width: 100%; max-width: 460px;
     display: flex; flex-direction: column; gap: 18px;
+    max-height: 90vh; overflow-y: auto;
   }
   .cal-modal h3 { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--ink); margin: 0; }
   .cal-field { display: flex; flex-direction: column; gap: 6px; }
@@ -1111,6 +1112,7 @@ body {
     background: var(--bg-elev); border: 1px solid var(--line-strong);
     border-radius: 14px; padding: 28px; width: 100%; max-width: 440px;
     display: flex; flex-direction: column; gap: 16px;
+    max-height: 90vh; overflow-y: auto;
   }
   .cal-modal h3 { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--ink); margin: 0; }
   .cal-field { display: flex; flex-direction: column; gap: 6px; }
@@ -1546,6 +1548,9 @@ body {
   .cal-btn-option { flex: 1; padding: 9px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg-elev-2); color: var(--ink-soft); font-size: 13px; cursor: pointer; transition: all .15s; white-space: nowrap; font-family: var(--font-sans); text-align: center; }
   .cal-btn-option:hover { border-color: var(--accent); color: var(--ink); background: rgba(255,140,30,0.04); }
   .cal-btn-option.active { border-color: var(--accent); background: rgba(255,140,30,0.12); color: var(--accent); font-weight: 600; }
+  .cal-tone-btn { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg-elev-2); color: var(--ink-soft); font-size: 12px; cursor: pointer; transition: all .15s; font-family: var(--font-sans); white-space: nowrap; }
+  .cal-tone-btn:hover { border-color: var(--accent); color: var(--ink); }
+  .cal-tone-btn.active { border-color: var(--accent); background: rgba(255,140,30,0.12); color: var(--accent); font-weight: 600; }
 .queue-row { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; background: var(--bg-elev-2); }
 .queue-main { flex: 1; min-width: 0; }
 .queue-cap { font-size: 13px; color: var(--ink); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -2551,14 +2556,15 @@ body {
         </div>
         
         <!-- OPZIONI AI AVANZATE -->
-        <div id="calAiOptions" style="display:flex; gap:8px; margin-bottom:8px;">
-          <select id="calAiTone" style="flex: 1; font-size:11px; padding:6px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink-soft);">
-            <option value="coinvolgente">🗣 Coinvolgente (Community)</option>
-            <option value="tecnico">📊 Tecnico (Statistiche & Numeri)</option>
-            <option value="ironico">🤪 Ironico / Sarcastico</option>
-            <option value="hype">🔥 Hype / Provocatorio</option>
-          </select>
-          <input type="text" id="calAiExtra" placeholder="Dettagli chiave (es. cita Retegui, sconsiglia Vlahovic...)" style="flex: 2; font-size:11px; padding:6px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink);">
+        <div id="calAiOptions" style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;">
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button type="button" class="cal-tone-btn active" data-tone="coinvolgente" onclick="calSetTone('coinvolgente')">🗣 Community</button>
+            <button type="button" class="cal-tone-btn" data-tone="tecnico" onclick="calSetTone('tecnico')">📊 Tecnico</button>
+            <button type="button" class="cal-tone-btn" data-tone="ironico" onclick="calSetTone('ironico')">🤪 Ironico</button>
+            <button type="button" class="cal-tone-btn" data-tone="hype" onclick="calSetTone('hype')">🔥 Hype</button>
+          </div>
+          <input type="text" id="calAiExtra" placeholder="Dettagli chiave (es. cita Fazzini, gioca sul nome...)" style="font-size:12px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink); width:100%; box-sizing:border-box; outline:none;">
+          <input type="hidden" id="calAiTone" value="coinvolgente">
         </div>
 
         <textarea id="calNotes" placeholder="Testo, riferimenti, hashtag… (diventa la caption se carichi un media)"></textarea>
@@ -5609,6 +5615,15 @@ function calSetType(val) {
   calOnTypeChange();
 }
 
+// Imposta il tono AI via pulsante
+function calSetTone(val) {
+  const hidden = document.getElementById('calAiTone');
+  if (hidden) hidden.value = val;
+  document.querySelectorAll('.cal-tone-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.tone === val)
+  );
+}
+
 function calOnTypeChange() {
   calToggleHostField();
   calUpdateUploadInputMultiple();
@@ -8258,5 +8273,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 27 -->
+<!-- build trigger: 28 -->
 </html>
