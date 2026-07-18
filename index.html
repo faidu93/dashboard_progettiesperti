@@ -6053,7 +6053,15 @@ function calShowDetail(e, encoded) {
 function calEditPlanned(e, id, platform) {
   e.stopPropagation();
   platform = platform || 'ig';
-  const item = (platform === 'yt' ? ytCalLoad() : calLoad()).find(i => i.id === id);
+  
+  let itemList = [];
+  if (typeof gcalSignedIn !== 'undefined' && gcalSignedIn) {
+    itemList = platform === 'yt' ? gcalGetYtPlanned() : gcalGetIgPlanned();
+  } else {
+    itemList = platform === 'yt' ? ytCalLoad() : calLoad();
+  }
+  
+  const item = itemList.find(i => i.id === id);
   if (!item) {
     console.warn('calEditPlanned: evento non trovato', { id, platform });
     return;
