@@ -77,13 +77,19 @@ body {
 .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 2s ease-in-out infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 .nav-btn {
-  background: transparent; border: 1px solid var(--line-strong);
-  color: var(--ink-soft); padding: 7px 14px; border-radius: 6px;
-  cursor: pointer; font-size: 12px; font-family: inherit;
-  transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px;
+  background: var(--bg-elev-2); border: 1px solid var(--line);
+  color: var(--ink-soft); padding: 6px 14px; border-radius: 100px;
+  cursor: pointer; font-size: 11px; font-family: var(--font-mono);
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+  transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
 }
-.nav-btn:hover { border-color: var(--accent); color: var(--accent); }
-.nav-btn .material-symbols-rounded { font-size: 16px; }
+.nav-btn:hover { border-color: var(--ink-mute); color: var(--ink); }
+.nav-btn .material-symbols-rounded { font-size: 15px; }
+#subRefreshBtnTop { background: rgba(90,174,240,0.06); border: 1px solid rgba(90,174,240,0.18); color: var(--info); }
+#subRefreshBtnTop:hover { background: rgba(90,174,240,0.12); border-color: rgba(90,174,240,0.3); color: var(--info); }
+#btnForceRefreshAllTop { background: rgba(255,140,30,0.06); border: 1px solid rgba(255,140,30,0.18); color: var(--accent); }
+#btnForceRefreshAllTop:hover { background: rgba(255,140,30,0.12); border-color: rgba(255,140,30,0.3); color: var(--accent); }
 
 .container { max-width: 1360px; margin: 0 auto; padding: 44px 28px 60px; }
 
@@ -797,24 +803,10 @@ body {
 
 
   /* ============ FRESHNESS BADGE ============ */
-  .freshness {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 8px 12px;
-    background: var(--bg-elev); border: 1px solid var(--line);
-    border-radius: 8px; font-family: var(--font-mono);
-    font-size: 11px; color: var(--ink-soft);
-    margin-top: 14px;
-  }
-  .freshness.fresh { border-color: rgba(54,201,118,0.3); background: rgba(54,201,118,0.05); }
-  .freshness.stale { border-color: rgba(255,140,30,0.3); background: rgba(255,140,30,0.05); }
-  .freshness.old { border-color: rgba(239,90,90,0.3); background: rgba(239,90,90,0.05); }
-  .freshness-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-mute); flex-shrink: 0; }
-  .freshness.fresh .freshness-dot { background: var(--pos); box-shadow: 0 0 6px var(--pos); }
-  .freshness.stale .freshness-dot { background: var(--accent); }
-  .freshness.old .freshness-dot { background: var(--neg); }
-  .freshness-main { color: var(--ink); font-weight: 600; }
-  .freshness-sep { color: var(--ink-mute); margin: 0 4px; }
-  .freshness-warn { color: var(--accent-bright); font-size: 10.5px; }
+  .nav-status.fresh { background: rgba(54,201,118,0.08) !important; border-color: rgba(54,201,118,0.2) !important; color: var(--pos) !important; }
+  .nav-status.stale { background: rgba(255,140,30,0.08) !important; border-color: rgba(255,140,30,0.2) !important; color: var(--accent-bright) !important; }
+  .nav-status.old { background: rgba(239,90,90,0.08) !important; border-color: rgba(239,90,90,0.2) !important; color: var(--neg) !important; }
+  .nav-period { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-soft); font-family: var(--font-mono); background: var(--bg-elev-2); border: 1px solid var(--line); padding: 6px 12px; border-radius: 100px; }
 
 
 
@@ -1508,7 +1500,7 @@ body {
       font-size: 12px !important;
     }
     .hero-meta span { gap: 6px !important; }
-    .freshness { font-size: 11px !important; padding: 7px 11px !important; }
+    #navPeriodContainer { display: none !important; }
   }
   @media (max-width: 480px) {
     /* Su iPhone piccolo, nascondo il brand-tag */
@@ -1846,27 +1838,27 @@ body {
       <span class="nav-status" id="navStatus"><span class="nav-dot"></span><span id="navStatusText">Caricamento…</span></span>
       
       <!-- Periodo dei Dati -->
-      <div id="navPeriodContainer" style="display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft); font-family:var(--font-mono); background:var(--bg-elev-2); border:1px solid var(--line); padding:6px 12px; border-radius:6px;">
-        <span class="material-symbols-rounded" style="font-size:15px; color:var(--ink-mute);">calendar_month</span>
+      <div id="navPeriodContainer" class="nav-period">
+        <span class="material-symbols-rounded" style="font-size:14px; color:var(--ink-mute);">calendar_month</span>
         <span id="metaPeriod">—</span>
       </div>
 
       <!-- Freschezza Dati (Meta) -->
-      <div class="nav-status live" id="freshness" style="display:inline-flex; align-items:center; gap:6px;" title="Ultimo allineamento dati da Meta">
+      <div class="nav-status live" id="freshness" title="Ultimo allineamento dati da Meta">
         <span class="nav-dot"></span>
         <span id="freshnessText">Verifica freschezza...</span>
       </div>
 
       <!-- Pulsante Aggiorna Iscritti -->
-      <button class="nav-btn" id="subRefreshBtnTop" onclick="onSubscribersRefresh()" style="display:inline-flex; align-items:center; gap:6px; background:rgba(90,174,240,0.12); border:1px solid rgba(90,174,240,0.25); color:var(--info); font-weight:600; cursor:pointer;">
-        <span class="material-symbols-rounded" style="font-size:16px; transition: transform 0.5s ease;" id="subRefreshIconTop">sync</span>
-        <span>Aggiorna Iscritti</span>
+      <button class="nav-btn" id="subRefreshBtnTop" onclick="onSubscribersRefresh()">
+        <span class="material-symbols-rounded" style="transition: transform 0.5s ease;" id="subRefreshIconTop">sync</span>
+        <span>Iscritti</span>
       </button>
 
       <!-- Pulsante Aggiorna Tutto -->
-      <button class="nav-btn" id="btnForceRefreshAllTop" onclick="forceRefreshAllAnalytics(event)" style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,140,30,0.12); border:1px solid rgba(255,140,30,0.25); color:var(--accent); font-weight:600; cursor:pointer;">
-        <span class="material-symbols-rounded" style="font-size:16px; transition: transform 0.5s ease;" id="iconForceRefreshAllTop">refresh</span>
-        <span>Aggiorna Tutto</span>
+      <button class="nav-btn" id="btnForceRefreshAllTop" onclick="forceRefreshAllAnalytics(event)">
+        <span class="material-symbols-rounded" style="transition: transform 0.5s ease;" id="iconForceRefreshAllTop">refresh</span>
+        <span>Dati</span>
       </button>
 
       <button class="nav-btn" id="btnConfig"><span class="material-symbols-rounded">settings</span>Configura</button>
@@ -3852,8 +3844,8 @@ function renderKPIs(daily, profile, posts) {
   const dStart = new Date(period[0].date);
   const dEnd = new Date(period[period.length-1].date);
 
-  document.getElementById('metaPeriod').textContent = `${fmtDate(dStart)} – ${fmtDate(dEnd)} · ${period.length} giorni di dati`;
-  document.getElementById('reachPanelSub').textContent = `${period.length} giorni di dati`;
+  document.getElementById('metaPeriod').textContent = `${fmtDate(dStart)} – ${fmtDate(dEnd)} · ${period.length}g`;
+  document.getElementById('reachPanelSub').textContent = `${period.length} giorni`;
 
   // === TARGET DINAMICI (basati sul profilo) ===
   // Calcolo target a partire dai dati storici/medie del profilo stesso
@@ -5438,51 +5430,37 @@ function renderFreshness(daily) {
   const txt = document.getElementById('freshnessText');
   if (!el || !txt || daily.length === 0) return;
 
-  // Trova l'ultimo giorno con dati "significativi" (reach > 10 e interazioni non null)
-  // perché il giorno corrente Meta lo restituisce spesso con valori parziali/null
   const sorted = [...daily].sort((a, b) => new Date(b.date) - new Date(a.date));
   const today = new Date(); today.setHours(0, 0, 0, 0);
   
-  // Ultimo giorno COMPLETO (con valori non parziali — euristica: follows_and_unfollows non null)
   const lastComplete = sorted.find(d => d.follows_and_unfollows != null && d.reach != null);
-  // Giorno PIÙ recente in assoluto (anche se parziale)
   const lastAny = sorted[0];
   
   if (!lastComplete) {
-    el.className = 'freshness old';
-    txt.innerHTML = `<span class="freshness-warn">⚠️ Nessun dato completo disponibile</span>`;
+    el.className = 'nav-status old';
+    txt.innerHTML = `Nessun dato`;
     return;
   }
 
-  const lastCompleteDate = new Date(lastComplete.date);
-  const daysAgo = Math.floor((today - lastCompleteDate) / (24*60*60*1000));
-  const lastAnyDate = new Date(lastAny.date);
-  const isPartialToday = lastAny.follows_and_unfollows == null;
+  const lastCompleteDate = new Date(lastComplete.date + 'T00:00:00');
+  const todayCopy = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const diffTime = todayCopy - lastCompleteDate;
+  const daysAgo = Math.round(diffTime / (24 * 60 * 60 * 1000));
   
   // Età relativa
   let ageLabel;
-  if (daysAgo === 0) ageLabel = 'oggi';
+  if (daysAgo <= 0) ageLabel = 'oggi';
   else if (daysAgo === 1) ageLabel = 'ieri';
-  else if (daysAgo < 7) ageLabel = `${daysAgo} giorni fa`;
-  else ageLabel = `oltre ${daysAgo} giorni fa`;
+  else ageLabel = `${daysAgo}g fa`;
 
   // Stato del badge
   let cls = 'fresh';
   if (daysAgo >= 2) cls = 'stale';
   if (daysAgo >= 3) cls = 'old';
-  el.className = `freshness ${cls}`;
+  el.className = `nav-status ${cls}`;
 
-  // Compose testo
-  let html = `<span class="freshness-main">Dati fino a ${fmtDate(lastCompleteDate)}</span>`;
-  html += `<span class="freshness-sep">·</span>`;
-  html += `<span>${ageLabel}</span>`;
-  
-  if (isPartialToday && lastAny.date !== lastComplete.date) {
-    html += `<span class="freshness-sep">·</span>`;
-    html += `<span class="freshness-warn">${fmtDate(lastAnyDate)} in arrivo</span>`;
-  }
-  
-  txt.innerHTML = html;
+  // Compose testo minimale e pulito
+  txt.innerHTML = `Dati: ${fmtDate(lastCompleteDate)} (${ageLabel})`;
 }
 
 
@@ -8313,5 +8291,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 31 -->
+<!-- build trigger: 32 -->
 </html>
