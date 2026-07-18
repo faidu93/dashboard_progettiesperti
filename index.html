@@ -5922,7 +5922,7 @@ function calRender() {
 
     let posts = '';
     igPub.forEach(p => {
-      const t = calShortTitle(p.media_caption);
+      const t = calShortTitle(p.media_caption).replace(/"/g, '&quot;');
       const reach = p.media_reach ? ' · ' + numIt(p.media_reach) : '';
       const encoded = encodeURIComponent(JSON.stringify({
         type: p.media_type,
@@ -5930,13 +5930,13 @@ function calRender() {
         reach: p.media_reach,
         ts: p.timestamp,
         url: p.media_permalink||''
-      }));
+      })).replace(/'/g, '%27');
       posts += `<div class="cal-post pub ${p.media_type}"
         onclick="calShowDetail(event,'${encoded}')"
         title="IG · ${t}${reach}">${calPostChip('ig', p.media_type, (p.time?p.time.slice(0,5)+' ':'')+t)}</div>`;
     });
     ytPub.forEach(v => {
-      const shortT = v.title.length > 25 ? v.title.slice(0,25)+'…' : v.title;
+      const shortT = (v.title.length > 25 ? v.title.slice(0,25)+'…' : v.title).replace(/"/g, '&quot;');
       const ytUrl = v.videoId ? 'https://www.youtube.com/watch?v=' + v.videoId : '';
       const encoded = encodeURIComponent(JSON.stringify({
         type: 'YT_VIDEO',
@@ -5945,30 +5945,32 @@ function calRender() {
         likes: v.likes,
         date: v.date,
         url: ytUrl
-      }));
+      })).replace(/'/g, '%27');
       // Determino il tipo YT: la dashboard salva 'VIDEO','SHORT','LIVE' — uso VIDEO come default
       const ytType = v.ytType || 'VIDEO';
       posts += `<div class="cal-post pub ${ytType}"
         onclick="calShowYtDetail(event,'${encoded}')"
-        title="YT · ${v.title} · ${v.views} views">${calPostChip('yt', ytType, shortT)}</div>`;
+        title="YT · ${(v.title||'').replace(/"/g, '&quot;')} · ${v.views} views">${calPostChip('yt', ytType, shortT)}</div>`;
     });
     igPlanned.forEach(p => {
       // Un post si auto-pubblica se è stato salvato con media caricato:
       // lo riconosco dal ✅ nel titolo o dal marcatore nelle note.
       const isAutoPub = /✅/.test(p.title || '') || /Pubblicazione automatica/i.test(p.notes || '');
+      const safeTitle = (p.title||'').replace(/"/g,'&quot;');
       posts += `<div class="cal-post plan ${p.type}${isAutoPub ? ' autopub' : ''}"
         draggable="true"
-        data-evid="${p.id}" data-platform="ig" data-evtype="${p.type}" data-evtitle="${(p.title||'').replace(/"/g,'&quot;')}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}"
+        data-evid="${p.id}" data-platform="ig" data-evtype="${p.type}" data-evtitle="${safeTitle}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}"
         onclick="calEditPlanned(event,'${p.id}','ig')"
-        title="${isAutoPub ? '✅ Pubblicazione automatica · ' : ''}IG · ${p.time||''} ${p.title||''} (trascina per spostare)">${calPostChip('ig', p.type, (p.time?p.time.slice(0,5)+' ':'')+(p.title||''))}</div>`;
+        title="${isAutoPub ? '✅ Pubblicazione automatica · ' : ''}IG · ${p.time||''} ${safeTitle} (trascina per spostare)">${calPostChip('ig', p.type, (p.time?p.time.slice(0,5)+' ':'')+safeTitle)}</div>`;
     });
     ytPlanned.forEach(p => {
-      const hostSuffix = p.host ? ` · Host: ${p.host}` : '';
+      const hostSuffix = p.host ? ` · Host: ${(p.host||'').replace(/"/g, '&quot;')}` : '';
+      const safeTitle = (p.title||'').replace(/"/g,'&quot;');
       posts += `<div class="cal-post plan ${p.type||'VIDEO'}"
         draggable="true"
-        data-evid="${p.id}" data-platform="yt" data-evtype="${p.type}" data-evtitle="${(p.title||'').replace(/"/g,'&quot;')}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}" data-evhost="${(p.host||'').replace(/"/g,'&quot;')}"
+        data-evid="${p.id}" data-platform="yt" data-evtype="${p.type}" data-evtitle="${safeTitle}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}" data-evhost="${(p.host||'').replace(/"/g,'&quot;')}"
         onclick="calEditPlanned(event,'${p.id}','yt')"
-        title="YT · ${p.time||''} ${p.title||''}${hostSuffix} (trascina per spostare)">${calPostChip('yt', p.type||'VIDEO', (p.time?p.time.slice(0,5)+' ':'')+(p.title||''))}</div>`;
+        title="YT · ${p.time||''} ${safeTitle}${hostSuffix} (trascina per spostare)">${calPostChip('yt', p.type||'VIDEO', (p.time?p.time.slice(0,5)+' ':'')+safeTitle)}</div>`;
     });
 
     h += `<div class="cal-day${cls}" data-date="${ds}"
