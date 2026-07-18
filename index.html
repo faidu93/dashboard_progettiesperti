@@ -6106,7 +6106,6 @@ async function calGenerateAiCaption() {
   let selectedModel = 'claude-sonnet-5';
   try { selectedModel = localStorage.getItem('intel_model') || 'claude-sonnet-5'; } catch(e) {}
 
-  const tone = document.getElementById('calAiTone').value;
   const extra = document.getElementById('calAiExtra').value.trim();
 
   // Estrai dinamicamente fino a 3 didascalie reali per fare da esempio
@@ -6136,17 +6135,6 @@ async function calGenerateAiCaption() {
       `Tu ci punterai alla prossima asta? E soprattutto: in che ruolo pensi possa fare svoltare la tua rosa?\n` +
       `Lascia un commento qui sotto. Parliamone. 💬\n\n` +
       `#ProgettoEsperti #Lazio #Fantacalcio`;
-  }
-
-  let systemInstructions = '';
-  if (tone === 'coinvolgente') {
-    systemInstructions = "Stile molto coinvolgente ed empatico focalizzato sulla community. Parla come un amico esperto al bar dello sport, stimolando la discussione senza mai metterti in cattedra o fare il presuntuoso.";
-  } else if (tone === 'tecnico') {
-    systemInstructions = "Stile tecnico, tattico e basato sui dati. Analizza statistiche, andamento e numeri con professionalità e concretezza, fornendo consigli utili senza fare congetture arroganti.";
-  } else if (tone === 'ironico') {
-    systemInstructions = "Stile ironico, leggero e goliardico. Scherza amichevolmente sui tipici drammi dei fantallenatori (es. pupillo preso all'asta che prende 5 in pagella), mantenendo un tono complice e divertente, mai da 'fenomeno'.";
-  } else if (tone === 'hype') {
-    systemInstructions = "Stile energetico e stimolante. Fai nascere riflessioni importanti e domande dirette, spingendo gli utenti a confrontarsi in modo pulito e costruttivo.";
   }
 
   const sysPrompt = `Sei l'AI Copywriter ufficiale di "Progetto Esperti", community di riferimento in Italia per il fantacalcio e l'analisi di Serie A. Il tuo stile di scrittura è diretto, professionale ma estremamente amichevole, cordiale ed empatico. Parla da appassionato esperto che vuole dare valore concreto ai fantallenatori, evitando assolutamente toni arroganti o da "fenomeno" (non ergerti a guru infallibile).
@@ -8425,5 +8413,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 35 -->
+<!-- build trigger: 36 -->
 </html>
