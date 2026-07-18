@@ -6067,6 +6067,12 @@ async function repurposeYoutubeToInstagram(url) {
     const ideas = await callClaudeForIdeas(claudePrompt, "igIdeas", "ig");
     
     loadingDone('yt_claude', 'Idee generate e salvate!');
+    
+    document.getElementById('igIntelConfig').style.display = 'none';
+    document.getElementById('igIntelOutput').style.display = 'block';
+    const nowStr = new Date().toLocaleString('it-IT');
+    document.getElementById('igIntelOutTitle').textContent = 'Idee da YouTube · ' + nowStr;
+    
     renderIdeas(ideas, "igIdeas", "ig", null, {});
     setTimeout(() => loadingFinish(true), 800);
 
