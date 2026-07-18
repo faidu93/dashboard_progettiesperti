@@ -6045,7 +6045,7 @@ async function repurposeYoutubeToInstagram(url) {
     document.getElementById('loadingTitle').textContent = 'Riciclo Contenuti AI';
     loadingStep('yt_sub', 'Estraggo i sottotitoli del video YouTube...', 'active');
 
-    const res = await fetch(BACKEND_BASE + "/api/youtube-transcript?videoId=" + videoId);
+    const res = await fetch(BACKEND_BASE + "/api/youtube-videos?action=transcript&videoId=" + videoId);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Errore fetch transcript");
 
