@@ -2699,7 +2699,10 @@ body {
         <span style="display:flex;align-items:center;gap:8px;">
           <span class="material-symbols-rounded">schedule_send</span>Coda di pubblicazione automatica
         </span>
-        <button class="cal-btn" id="queueRefreshBtn" title="Aggiorna la coda"><span class="material-symbols-rounded">refresh</span></button>
+        <div style="display:flex; gap:6px;">
+          <button class="cal-btn" id="queueCleanBtn" onclick="clearPublishedQueue()" title="Rimuovi post già pubblicati dalla lista"><span class="material-symbols-rounded">sweep</span></button>
+          <button class="cal-btn" id="queueRefreshBtn" title="Aggiorna la coda"><span class="material-symbols-rounded">refresh</span></button>
+        </div>
       </div>
       <div class="panel-sub">Post Instagram in attesa di pubblicazione dal backend · si aggiorna dalla coda reale</div>
       <div id="queueList" style="margin-top:14px;">
@@ -3476,6 +3479,33 @@ async function deleteFromQueue(id) {
     loadPublishQueue(); // ricarico
   } catch (e) {
     alert('Eliminazione fallita: ' + e.message);
+  }
+}
+
+async function clearPublishedQueue() {
+  if (!confirm('Rimuovere definitivamente dalla lista tutti i post già pubblicati con successo?')) return;
+  const secret = getPublishSecret();
+  if (!secret) { alert('Password di pubblicazione mancante.'); return; }
+  
+  const btn = document.getElementById('queueCleanBtn');
+  const oldHtml = btn.innerHTML;
+  btn.innerHTML = '<span class="material-symbols-rounded" style="animation:spin 1s linear infinite;">progress_activity</span>';
+  
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/schedule?action=clear_published`, {
+      method: 'POST',
+      headers: { 'X-Publish-Secret': secret }
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || j.error) {
+      if (res.status === 401) clearPublishSecret();
+      throw new Error(j.error || `HTTP ${res.status}`);
+    }
+    loadPublishQueue(); // ricarico
+  } catch (e) {
+    alert('Pulizia fallita: ' + e.message);
+  } finally {
+    btn.innerHTML = oldHtml;
   }
 }
 
