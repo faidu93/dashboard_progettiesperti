@@ -8315,7 +8315,7 @@ async function init() {
     loadingStep('yt', 'Caricamento video YouTube…');
     loadingProgress(40);
     try {
-      const yt = await fetchCachedBackend('/api/youtube-videos', 'cache_yt_videos');
+      const yt = await fetchCachedBackend('/api/youtube-videos', 'cache_yt_videos_v2');
       const ytRaw = yt.data || yt.videos || [];
       // Deduplicazione per titolo: ogni video ha una sola published_at reale
       const ytMap = {};
@@ -8325,11 +8325,12 @@ async function init() {
         if (!pubDate) return;
         const key = t + '|' + pubDate;
         if (!ytMap[key]) {
-          ytMap[key] = { date: pubDate, title: t, views: 0, likes: 0, videoId: r.video || '' };
+          ytMap[key] = { date: pubDate, title: t, views: 0, likes: 0, videoId: r.video || '', ytType: r.ytType || 'VIDEO' };
         }
         ytMap[key].views += (r.views || 0);
         ytMap[key].likes += (r.likes || 0);
         if (r.video && !ytMap[key].videoId) ytMap[key].videoId = r.video;
+        if (r.ytType && r.ytType !== 'VIDEO') ytMap[key].ytType = r.ytType;
       });
       window.ytPublishedVideos = Object.values(ytMap);
       loadingDone('yt', `YouTube · ${window.ytPublishedVideos.length} video caricati`);
