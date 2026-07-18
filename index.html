@@ -2629,7 +2629,7 @@ body {
       </div>
       <div class="cal-detail-caption" id="cdCaption"></div>
       <div class="cal-detail-actions">
-        <a id="cdLink" href="#" target="_blank" rel="noopener" class="cal-btn"><span class="material-symbols-rounded">open_in_new</span>Apri su Instagram</a>
+        <a id="cdLink" href="#" target="_blank" rel="noopener" class="cal-btn"><svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Apri su Instagram</a>
         <button class="cal-btn" id="cdClose">Chiudi</button>
       </div>
     </div>
@@ -3466,8 +3466,8 @@ function renderPublishQueue(queue) {
     const dt = p.scheduledAt ? new Date(p.scheduledAt) : null;
     const when = dt ? `${fmtDate(dt)} · ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}` : '—';
     const cap = (p.caption || '').replace(/</g,'&lt;').slice(0, 70) || '(senza caption)';
-    const kindMap = { REELS: '🎬 Reel', CAROUSEL_ALBUM: '🖼️ Carosello', IMAGE: '📸 Foto', STORY: '◈ Story' };
-    const kind = kindMap[p.mediaType] || '📸 Foto';
+    const kindMap = { REELS: '<svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Reel', CAROUSEL_ALBUM: '<svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Carosello', IMAGE: '<svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Foto', STORY: '<svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Story' };
+    const kind = kindMap[p.mediaType] || '<svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Foto';
     const canDelete = p.status === 'pending' || p.status === 'error';
     const escapedCaption = (p.caption || '').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
     h += `<div class="queue-row">
@@ -4890,7 +4890,7 @@ function renderLatest(posts) {
       </div>
       <div class="latest-content">
         <div class="latest-caption">${shortCaption(p.media_caption)}</div>
-        <a class="latest-link" href="${p.media_permalink}" target="_blank" rel="noopener"><span class="material-symbols-rounded">open_in_new</span>Apri su Instagram</a>
+        <a class="latest-link" href="${p.media_permalink}" target="_blank" rel="noopener"><svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Apri su Instagram</a>
       </div>
       <div class="latest-stats">
         <div class="latest-stat"><span class="latest-stat-label">Reach</span><span class="latest-stat-val${pi>=1.5?' accent':''}">${numIt(reach)}</span></div>
@@ -6024,7 +6024,7 @@ function calDayClick(e, ds) {
 function calShowYtDetail(e, encoded) {
   e.stopPropagation();
   const d = JSON.parse(decodeURIComponent(encoded));
-  document.getElementById('cdBadge').textContent = '🎬 YT VIDEO';
+  document.getElementById('cdBadge').innerHTML = '<svg class="brand-ico yt" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C.5 8.056.5 12 .5 12s0 3.944.501 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.377.55 9.377.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C23.5 15.944 23.5 12 23.5 12s0-3.944-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YT VIDEO';
   document.getElementById('cdBadge').style.background = 'rgba(255,0,0,0.2)';
   document.getElementById('cdBadge').style.color = '#ff6666';
   document.getElementById('cdTitle').textContent = d.title;
@@ -6054,7 +6054,7 @@ function calShowDetail(e, encoded) {
   const dateLabel = dt.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
   const timeLabel = dt.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Rome'});
   const badge = document.getElementById('cdBadge');
-  badge.textContent = TYPE[d.type]||d.type;
+  badge.innerHTML = '<svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> ' + (TYPE[d.type]||d.type);
   badge.className = 'cal-detail-badge ' + d.type;
   // Reset stile inline che YT detail aveva potenzialmente applicato
   badge.style.background = '';
