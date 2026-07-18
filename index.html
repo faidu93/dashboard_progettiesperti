@@ -6023,34 +6023,69 @@ async function calGenerateAiCaption() {
   const tone = document.getElementById('calAiTone').value;
   const extra = document.getElementById('calAiExtra').value.trim();
 
+  // Estrai dinamicamente fino a 3 didascalie reali per fare da esempio
+  let examplesText = "";
+  const realPosts = (calPublishedPosts || [])
+    .filter(p => p.media_caption && p.media_caption.trim().length > 40)
+    .slice(0, 3);
+
+  if (realPosts.length > 0) {
+    examplesText = "Ecco alcuni esempi reali di didascalie pubblicate in precedenza su questa pagina per comprenderne lo stile, la lunghezza e la struttura:\n\n";
+    realPosts.forEach((p, idx) => {
+      examplesText += `--- ESEMPIO ${idx + 1} ---\n${p.media_caption.trim()}\n\n`;
+    });
+  } else {
+    // Fallback statico basato sui migliori post reali analizzati
+    examplesText = `Ecco lo stile esatto da seguire, preso da post di successo già pubblicati su questa pagina:\n\n` +
+      `--- ESEMPIO 1 ---\n` +
+      `Fazzini al Cagliari 👀 \n` +
+      `Un talento che sembrava esplodere all'Empoli, ora riparte in una piazza calda e affamata di calcio come Cagliari.\n\n` +
+      `Per lui può essere la stagione della svolta definitiva — o un altro step di crescita rimandato.\n\n` +
+      `Al fanta la domanda è una sola: **talento da lanciare o scommessa troppo rischiosa?**\n\n` +
+      `Voi ci punterete al fantacalcio? Scrivetelo nei commenti 👇\n\n` +
+      `#Fazzini #FantacalcioSerieA #Cagliari\n\n` +
+      `--- ESEMPIO 2 ---\n` +
+      `Taylor alla Lazio: scommessa da bonus o regolarista? 🔍\n` +
+      `Ambidestro, visione di gioco, tiro in porta e tanta corsa. Kenneth Taylor ha tutto per accendere la luce a Formello, ma la sua appetibilità al Fantacalcio dipenderà interamente dal ruolo. Più lontano dalla porta perde fascino, dietro la punta diventa un potenziale top di reparto.\n\n` +
+      `Tu ci punterai alla prossima asta? E soprattutto: in che ruolo pensi possa fare svoltare la tua rosa?\n` +
+      `Lascia un commento qui sotto. Parliamone. 💬\n\n` +
+      `#ProgettoEsperti #Lazio #Fantacalcio #AstaFantacalcio`;
+  }
+
   let systemInstructions = '';
   if (tone === 'coinvolgente') {
-    systemInstructions = "Usa uno stile estremamente coinvolgente incentrato sulla community del fantacalcio. Inizia con un gancio (hook) forte e scioccante o una domanda intrigante nei primi 10-15 caratteri. Chiudi sempre con una domanda aperta e chiara per invitare la community a scrivere nei commenti (es. 'Chi prenderete tra questi due? Ditecelo sotto! 👇'). Mantieni un tono amichevole e appassionato.";
+    systemInstructions = "Stile estremamente coinvolgente e focalizzato sulla community. Inizia con un gancio (hook) diretto sui primi 15 caratteri del post (es. nome giocatore o tema caldo in MAIUSCOLO con emoji). Evita le ovvietà, vai subito al punto e chiudi con una domanda aperta e accattivante per generare commenti e interazione.";
   } else if (tone === 'tecnico') {
-    systemInstructions = "Usa uno stile tecnico, analitico e professionale. Concentrati su dati reali, statistiche di gioco, andamento recente (gol, assist, ammonizioni), fantamedia e indicazioni tattiche. Evita luoghi comuni o frasi ad effetto superficiali, dai valore concreto ai fantallenatori tramite numeri precisi.";
+    systemInstructions = "Stile tecnico, tattico e basato sui dati. Parla di numeri, fantamedia, statistiche, andamento (gol, assist, infortuni, gerarchie). Fornisci indicazioni tattiche reali ed evita fuffa o discorsi generici.";
   } else if (tone === 'ironico') {
-    systemInstructions = "Usa uno stile ironico, divertente e sarcastico. Utilizza il tipico gergo dei fantallenatori italiani (es. 'il pupillo', 'il fantacalcista medio', 'bonus', 'malus'), scherza sugli errori frequenti o le delusioni costose e mantieni un tono colloquiale, divertente e dissacrante.";
+    systemInstructions = "Stile ironico, scherzoso e pungente. Usa il tipico gergo dei fantallenatori italiani (es. 'pupillo', 'scommessa', 'chiamarsi', 'piangere', 'bonus', 'malus'), ironizzando su situazioni calcistiche reali o hype esagerato.";
   } else if (tone === 'hype') {
-    systemInstructions = "Usa uno stile ad alto tasso di hype e provocatorio. Fai dichiarazioni audaci (hot takes), lancia previsioni coraggiose o polemiche costruttive, crea grande attesa e curiosità per stimolare dibattiti accesi tra fazioni opposte nei commenti.";
+    systemInstructions = "Stile provocatorio, energico, con dichiarazioni forti (hot takes). Lancia un dibattito acceso spingendo gli utenti a schierarsi apertamente nei commenti.";
   }
 
-  const sysPrompt = `Sei un copywriter professionista di social media, esperto di calcio e fantacalcio italiano. Scrivi una caption accattivante, originale e per nulla banale pronta da pubblicare su Instagram.
+  const sysPrompt = `Sei l'AI Copywriter ufficiale di "Progetto Esperti", community leader in Italia per il fantacalcio e l'analisi tattica di Serie A. Il tuo stile di scrittura è informale, diretto, calcistico, estremamente coinvolgente e privo di preamboli o giri di parole da intelligenza artificiale.
+
+REGOLE DI SCRITTURA TASSATIVE (DA SEGUIRE RIGIDAMENTE):
+1. NO PREAMBOLI/CHIUSURE: Inizia direttamente con il testo da copiare. Non scrivere mai frasi come "Ecco la didascalia...", né delimitare il testo con virgolette o parentesi.
+2. HOOK INIZIALE: Inizia sempre la prima riga con un gancio forte, con parole o nomi in MAIUSCOLO seguiti da un'emoji (es. "FAZZINI AL CAGLIARI 👀" o "🇳🇬 AKOR ADAMS AL VENEZIA").
+3. CONCISIONE E RITMO: Scrivi didascalie brevi e dinamiche (max 80-120 parole). Paragrafi corti (1-2 frasi) separati da una riga vuota.
+4. GRASSETTO TATTICO: Usa il grassetto markdown (**) solo una volta nel post, per evidenziare la domanda strategica o la scelta cruciale al fanta (es. **talento da lanciare o scommessa troppo rischiosa?**).
+5. EVITA CLICHÉ DA AI: Non iniziare mai con parole come "Benvenuti", "Ehi fantallenatori", "Scopriamo insieme", "Nel panorama", "Incredibile". Evita transizioni come "infatti", "tuttavia", "quindi". Usa parole reali, gergali ed esperte di calcio ("asta", "fanta", "fantamedia", "regolarista", "gerarchie", "titolarità").
+6. CHIAMATA ALL'AZIONE (CTA): Finisci sempre il post con una domanda aperta rivolta ai follower per invitarli a commentare. Lascia una riga vuota prima di questa domanda.
+7. HASHTAG: Alla fine del post, lascia una riga vuota e inserisci ESATTAMENTE da 3 a 5 hashtag specifici (es. #Fantacalcio #SerieA #Cagliari).
+
 ${systemInstructions}
 
-Regole di formattazione e scrittura (Ottimizzate per l'Algoritmo Instagram 2026):
-- Usa paragrafi brevi di 1 o 2 frasi ciascuno, separati da una riga vuota, per favorire la lettura veloce.
-- Ottimizzazione SEO: Incorpora parole chiave descrittive e termini di ricerca naturali all'interno del testo (nomi dei calciatori, squadre, ruoli, termini del fantacalcio) per aiutare l'indicizzazione dei contenuti.
-- Inserisci emoji coerenti e mirate per guidare l'attenzione (evita di metterne troppe).
-- Alla fine del post aggiungi al massimo 3 hashtag altamente specifici e coerenti col post. È fondamentale NON superare i 3 hashtag.
-- Non usare mai formule introduttive o di chiusura dell'AI (es. "Ecco la caption"). Inizia subito con il testo pronto per la pubblicazione.
-- Non inserire spiegazioni o virgolette che delimitano il testo. Restituisci solo il corpo del post.`;
+${examplesText}`;
 
-  let promptText = `Scrivi la caption per questo post:\nTitolo/Idea: ${title}\nFormato post: ${type}`;
+  let promptText = `Crea ora una didascalia personalizzata basandoti su queste informazioni:\n`;
+  promptText += `Titolo/Idea del post: ${title}\n`;
+  promptText += `Formato del post: ${type}\n`;
   if (notes) {
-    promptText += `\nNote/Contenuto di partenza: ${notes}`;
+    promptText += `Contesto/Note di partenza: ${notes}\n`;
   }
   if (extra) {
-    promptText += `\nElementi o parole chiave da inserire assolutamente: ${extra}`;
+    promptText += `Informazioni o parole chiave da inserire assolutamente: ${extra}\n`;
   }
 
   try {
@@ -8291,5 +8326,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 32 -->
+<!-- build trigger: 33 -->
 </html>
