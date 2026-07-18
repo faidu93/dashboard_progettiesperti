@@ -5746,6 +5746,13 @@ function calPostChip(platform, type, label) {
   return `<span class="cp-ico material-symbols-rounded" aria-hidden="true">${icon}</span><span class="cp-lbl">${label}</span>`;
 }
 
+function cleanStringForMatch(str) {
+  if (!str) return '';
+  return str.toLowerCase()
+    .replace(/^[0-9]{1,2}[:.][0-9]{2}\s*/, '')
+    .replace(/[^\w]/g, '');
+}
+
 function calRender() {
   const grid = document.getElementById('calGrid');
   const titleEl = document.getElementById('calMonthTitle');
@@ -5795,9 +5802,29 @@ function calRender() {
     let igPlanned = [], ytPlanned = [];
     if (calCurrentFilter !== 'yt') {
       igPlanned = (gcalSignedIn ? gcalGetIgPlanned() : (JSON.parse(localStorage.getItem(CAL_KEY)||'[]'))).filter(p => p.date === ds);
+      // Deduplicazione: nascondo il pianificato se esiste un post pubblicato corrispondente su IG
+      igPlanned = igPlanned.filter(p => {
+        const cleanPlan = cleanStringForMatch(p.title);
+        if (!cleanPlan) return true;
+        const isPublished = igPub.some(pub => {
+          const cleanPub = cleanStringForMatch(pub.media_caption);
+          return cleanPub.includes(cleanPlan) || cleanPlan.includes(cleanPub);
+        });
+        return !isPublished;
+      });
     }
     if (calCurrentFilter !== 'ig') {
       ytPlanned = (gcalSignedIn ? gcalGetYtPlanned() : (JSON.parse(localStorage.getItem(YT_CAL_KEY)||'[]'))).filter(p => p.date === ds);
+      // Deduplicazione: nascondo il pianificato se esiste un video pubblicato corrispondente su YT
+      ytPlanned = ytPlanned.filter(p => {
+        const cleanPlan = cleanStringForMatch(p.title);
+        if (!cleanPlan) return true;
+        const isPublished = ytPub.some(pub => {
+          const cleanPub = cleanStringForMatch(pub.title);
+          return cleanPub.includes(cleanPlan) || cleanPlan.includes(cleanPub);
+        });
+        return !isPublished;
+      });
     }
 
     let posts = '';
@@ -8286,5 +8313,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 29 -->
+<!-- build trigger: 30 -->
 </html>
