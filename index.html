@@ -3332,7 +3332,7 @@ function clearPublishSecret() {
 
 // Upload di un file su Supabase Storage tramite signed URL (bypass limite Vercel)
 // Flusso: 1) backend genera URL firmato → 2) PUT diretto al bucket Supabase
-async function uploadMediaToBlob(file) {
+async function uploadMediaToSupabase(file) {
   const secret = getPublishSecret();
   if (!secret) throw new Error('Password di pubblicazione mancante.');
 
@@ -3524,7 +3524,7 @@ async function calHandleFiles(files) {
 
     try {
       status.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;">progress_activity</span> Caricamento file ${i + 1}/${filesToUpload.length}…`;
-      const url = await uploadMediaToBlob(file);
+      const url = await uploadMediaToSupabase(file);
       urls.push(url);
       kinds.push(isVideo ? 'video' : 'image');
     } catch (e) {
@@ -8313,5 +8313,5 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
-<!-- build trigger: 30 -->
+<!-- build trigger: 31 -->
 </html>
