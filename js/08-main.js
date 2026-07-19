@@ -26,19 +26,45 @@ async function init() {
   loadingProgress(10);
 
   try {
+    // 1. Avvio dei fetch in parallelo (concorrenza per caricamento veloce)
+    let savedSecret = '';
+    try { savedSecret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
+
+    const igPromise = fetchCachedBackend('/api/instagram-insights', 'cache_ig_insights')
+      .catch(e => {
+        console.warn('Errore connessione backend Instagram:', e);
+        return { isMock: true, data: generateMockInstagramData() };
+      });
+      
+    const ytPromise = fetchCachedBackend('/api/youtube-videos', 'cache_yt_videos_v2')
+      .catch(e => {
+        console.warn('YouTube non disponibile:', e);
+        return { error: true };
+      });
+
+    const demoPromise = fetchCachedBackend('/api/instagram-demographics', 'cache_ig_demo')
+      .catch(e => {
+        console.warn('Dati demografici non disponibili:', e);
+        return null;
+      });
+
+    const subPromise = savedSecret
+      ? fetch(`${BACKEND_BASE}/api/subscribers`, { headers: { 'X-Publish-Secret': savedSecret } })
+          .then(res => res.ok ? res.json() : (res.status === 401 ? { unauthorized: true } : { error: true }))
+          .catch(e => ({ error: true }))
+      : Promise.resolve({ unauthorized: true });
+
     // === FASE 1: Instagram Insights ===
     loadingStep('ig', 'Connessione Instagram Graph API…');
     loadingProgress(15);
-    let ig = null;
-    let isMockIg = false;
-    try {
-      ig = await fetchCachedBackend('/api/instagram-insights', 'cache_ig_insights');
-    } catch(e) {
-      console.warn('Errore connessione backend Instagram, uso dati di test:', e);
+    let igResult = await igPromise;
+    let ig = igResult.isMock ? igResult.data : igResult;
+    let isMockIg = !!igResult.isMock;
+    
+    if (isMockIg) {
       loadingWarn('ig', 'Instagram non disponibile (uso dati di test)');
-      ig = generateMockInstagramData();
-      isMockIg = true;
     }
+    
     const daily = ig.daily || [];
     const posts = ig.posts || [];
     const profile = ig.profile || {};
@@ -52,17 +78,15 @@ async function init() {
     loadingProgress(35);
 
     renderFreshness(daily);
-    // Calendario: assegno i post pubblicati e re-render
     calPublishedPosts = posts;
     calRender();
 
     // === FASE 2: YouTube ===
     loadingStep('yt', 'Caricamento video YouTube…');
     loadingProgress(40);
-    try {
-      const yt = await fetchCachedBackend('/api/youtube-videos', 'cache_yt_videos_v2');
-      const ytRaw = yt.data || yt.videos || [];
-      // Deduplicazione per titolo: ogni video ha una sola published_at reale
+    const ytResult = await ytPromise;
+    if (ytResult && !ytResult.error) {
+      const ytRaw = ytResult.data || ytResult.videos || [];
       const ytMap = {};
       ytRaw.forEach(r => {
         const t = r.video_title || 'Video';
@@ -79,7 +103,7 @@ async function init() {
       });
       window.ytPublishedVideos = Object.values(ytMap);
       loadingDone('yt', `YouTube · ${window.ytPublishedVideos.length} video caricati`);
-    } catch(e) {
+    } else {
       loadingWarn('yt', 'YouTube non disponibile (continuo)');
       window.ytPublishedVideos = [];
     }
@@ -115,55 +139,35 @@ async function init() {
 
     // === FASE 4: Dati demografici ===
     loadingStep('demo', 'Caricamento demografia e orari…');
-    try {
-      const demo = await fetchCachedBackend('/api/instagram-demographics', 'cache_ig_demo');
+    const demo = await demoPromise;
+    if (demo) {
       window.CACHED_DEMO = demo;
       renderDemographics(demo);
       renderOnlineFollowers(demo);
       loadingDone('demo', 'Dati demografici e orari attivi');
-    } catch(e) {
+    } else {
       loadingWarn('demo', 'Dati demografici non disponibili');
     }
     loadingProgress(92);
 
     // === FASE 5: Dati iscritti ===
     loadingStep('subscribers', 'Caricamento dati iscritti…');
-    try {
-      let savedSecret = '';
-      try { savedSecret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
-      
-      if (savedSecret) {
-        const subRes = await fetch(`${BACKEND_BASE}/api/subscribers`, {
-          headers: { 'X-Publish-Secret': savedSecret }
-        });
-        if (subRes.ok) {
-          const subData = await subRes.json();
-          if (subData && Array.isArray(subData.subscribers)) {
-            window.CACHED_SUBSCRIBERS = subData;
-            renderSubscribersKPIs(subData);
-            loadingDone('subscribers', `Iscritti · ${subData.subscribers.length} totali`);
-          } else {
-            console.warn('Dati iscritti non validi (manca array subscribers):', subData);
-            window.CACHED_SUBSCRIBERS = { error: true };
-            renderSubscribersError();
-            loadingWarn('subscribers', 'Iscritti · dati non validi');
-          }
-        } else if (subRes.status === 401) {
-          window.CACHED_SUBSCRIBERS = { unauthorized: true };
-          renderSubscribersUnauthorized();
-          loadingDone('subscribers', 'Iscritti · sbloccare con password');
-        } else {
-          window.CACHED_SUBSCRIBERS = { error: true };
-          renderSubscribersError();
-          loadingWarn('subscribers', 'Iscritti · errore caricamento');
-        }
-      } else {
+    const subData = await subPromise;
+    if (subData) {
+      if (Array.isArray(subData.subscribers)) {
+        window.CACHED_SUBSCRIBERS = subData;
+        renderSubscribersKPIs(subData);
+        loadingDone('subscribers', `Iscritti · ${subData.subscribers.length} totali`);
+      } else if (subData.unauthorized) {
         window.CACHED_SUBSCRIBERS = { unauthorized: true };
         renderSubscribersUnauthorized();
-        loadingDone('subscribers', 'Iscritti · inserire password per sbloccare');
+        loadingDone('subscribers', 'Iscritti · sbloccare con password');
+      } else {
+        window.CACHED_SUBSCRIBERS = { error: true };
+        renderSubscribersError();
+        loadingWarn('subscribers', 'Iscritti non disponibili');
       }
-    } catch(e) {
-      console.warn('Errore iscritti:', e);
+    } else {
       window.CACHED_SUBSCRIBERS = { error: true };
       renderSubscribersError();
       loadingWarn('subscribers', 'Iscritti non disponibili');
