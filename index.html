@@ -977,23 +977,53 @@
         </button>
       </div>
 
-      <!-- ────── SUB-TAB 1: AI Chat Assistant ────── -->
+      <!-- ────── SUB-TAB 1: AI Chat Assistant (Bynor Style) ────── -->
       <div id="panelIntelChat" style="display:block;">
-        <div class="chat-container">
-          <div class="chat-header">
-            <span class="material-symbols-rounded" style="color:var(--accent);font-size:20px;">chat_bubble</span>
-            <span style="font-weight:600;">AI Content Assistant</span>
-            <span style="font-size:10px;color:var(--ink-mute);font-weight:400;margin-left:auto;">Brainstorming e Scripting in Tempo Reale</span>
-          </div>
-          
-          <div class="chat-chips" id="chatChips">
-            <button class="chat-chip" onclick="chatSendPrompt('Genera 3 idee di Reel per Instagram sul modificatore di difesa')">💡 3 Reel Modificatore</button>
-            <button class="chat-chip" onclick="chatSendPrompt('Dammi 5 idee per caroselli grafici sul calciomercato Serie A')">📊 5 Caroselli Mercato</button>
-            <button class="chat-chip" onclick="chatSendPrompt('Consiglia 3 idee video YouTube per l\'asta di fantacalcio')">🎥 3 Video Asta YT</button>
-            <button class="chat-chip" onclick="chatSendPrompt('Scrivi uno script completo per un reel su 3 scommesse low-cost')">✍ Reel Scommesse</button>
+        <!-- Prompter Landing Page (dentro la tab) -->
+        <div class="intel-prompter-page">
+          <div class="prompter-hero">
+            <span class="material-symbols-rounded prompter-hero-icon" style="font-size: 48px; color: var(--accent); margin-bottom: 16px;">chat_bubble</span>
+            <h2 class="prompter-hero-title">Cosa vuoi creare oggi?</h2>
+            <p class="prompter-hero-subtitle">Genera script, didascalie, idee di contenuti per i tuoi social con l'intelligenza artificiale di Claude.</p>
           </div>
 
-          <div class="chat-messages" id="chatMessages">
+          <div class="prompter-box">
+            <div class="prompter-field">
+              <input type="password" id="chatSecret" placeholder="PUBLISH_SECRET..." style="max-width:140px; font-size:11px; padding:6px 10px; border:none; outline:none; background:none; color:var(--ink);" oninput="intelSaveSecret('chatSecret')">
+              <div style="width: 1px; height: 24px; background: var(--line); margin: 0 8px;"></div>
+              <input type="text" id="chatInput" placeholder="Chiedi qualcosa all'AI... (es. 'Genera 3 idee di Reel sul modificatore di difesa')" onkeydown="if(event.key==='Enter') chatStartWithPrompt()">
+              <button class="prompter-send-btn" id="chatSendBtn" onclick="chatStartWithPrompt()">
+                <span class="material-symbols-rounded" style="font-size:18px;">send</span>
+              </button>
+            </div>
+            
+            <div class="prompter-suggest">
+              <button class="prompter-chip" onclick="chatStartWithPrompt('Genera 3 idee di Reel per Instagram sul modificatore di difesa')">💡 3 Reel Modificatore</button>
+              <button class="prompter-chip" onclick="chatStartWithPrompt('Dammi 5 idee per caroselli grafici sul calciomercato Serie A')">📊 5 Caroselli Mercato</button>
+              <button class="prompter-chip" onclick="chatStartWithPrompt('Consiglia 3 idee video YouTube per l\'asta di fantacalcio')">🎥 3 Video Asta YT</button>
+              <button class="prompter-chip" onclick="chatStartWithPrompt('Scrivi uno script completo per un reel su 3 scommesse low-cost')">✍ Reel Scommesse</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fullscreen Chat Overlay (Bynor Style) -->
+        <div id="chatOverlay" class="chat-overlay">
+          <!-- Overlay Header Bar -->
+          <div class="chat-overlay-bar">
+            <div class="chat-overlay-logo">
+              <span class="material-symbols-rounded" style="font-size:18px; color:#fff;">chat_bubble</span>
+            </div>
+            <div>
+              <div class="chat-overlay-t">AI Content Assistant</div>
+              <div class="chat-overlay-s">Brainstorming e Scripting con Claude</div>
+            </div>
+            <button class="chat-overlay-close" onclick="chatCloseOverlay()">
+              <span class="material-symbols-rounded">close</span>
+            </button>
+          </div>
+
+          <!-- Overlay Thread -->
+          <div class="chat-overlay-thread" id="chatMessages">
             <div class="chat-msg system">
               Ciao! Sono il tuo assistente AI dedicato. Chiedimi di brainstormare idee, scrivere script completi di Reel parola per parola, o creare caroselli e didascalie per il fantacalcio.
               <br><br>
@@ -1001,12 +1031,19 @@
             </div>
           </div>
 
-          <div class="chat-input-area">
-            <input type="password" id="chatSecret" placeholder="PUBLISH_SECRET..." style="max-width:140px;margin-right:8px;font-size:11px;padding:6px 10px;" oninput="intelSaveSecret('chatSecret')">
-            <input type="text" id="chatInput" placeholder="Chiedi qualcosa all'AI... (es. 'Scrivimi uno script per reel sull\'esperto dell\'Inter')" onkeydown="if(event.key==='Enter') chatSendMessage()">
-            <button class="cal-btn primary" id="chatSendBtn" onclick="chatSendMessage()" style="padding:8px 12px;background:var(--accent);border-color:var(--accent);">
-              <span class="material-symbols-rounded" style="font-size:16px;">send</span>
-            </button>
+          <!-- Overlay Footer Input -->
+          <div class="chat-overlay-foot">
+            <div class="chat-overlay-bar2">
+              <input type="password" id="chatSecretOverlay" placeholder="PUBLISH_SECRET..." style="max-width:140px; font-size:12px; padding:6px 10px; border:none; outline:none; background:none; color:var(--ink);" oninput="intelSaveSecret('chatSecretOverlay')">
+              <div style="width: 1px; height: 24px; background: var(--line); margin: 0 8px;"></div>
+              <input type="text" id="chatInputOverlay" placeholder="Scrivi un messaggio o chiedi modifiche..." onkeydown="if(event.key==='Enter') chatSendMessageOverlay()">
+              <button class="chat-overlay-send" onclick="chatSendMessageOverlay()">
+                <span class="material-symbols-rounded">send</span>
+              </button>
+            </div>
+            <div class="chat-overlay-note">
+              Claude può generare errori. Controlla le informazioni importanti riguardanti giocatori e statistiche.
+            </div>
           </div>
         </div>
       </div>

@@ -773,7 +773,7 @@ function intelRestoreFields() {
   try {
     const s = localStorage.getItem('publish_secret') || sessionStorage.getItem('publish_secret') || '';
     if (s) {
-      ['chatSecret', 'ytSecret', 'igSecret', 'calSecret'].forEach(id => {
+      ['chatSecret', 'chatSecretOverlay', 'ytSecret', 'igSecret', 'calSecret'].forEach(id => {
         const el = document.getElementById(id);
         if (el && !el.value) el.value = s;
       });
@@ -1879,23 +1879,51 @@ function intelSaveSecret(id) {
     sessionStorage.setItem('publish_secret', val);
     localStorage.setItem('publish_secret', val);
   } catch(e) {}
-  ['chatSecret', 'ytSecret', 'igSecret', 'calSecret'].forEach(pid => {
+  ['chatSecret', 'chatSecretOverlay', 'ytSecret', 'igSecret', 'calSecret'].forEach(pid => {
     const el = document.getElementById(pid);
     if (el) el.value = val;
   });
 }
 
-// ── AI Chat Assistant Logic ──
+// ── AI Chat Assistant Logic (Bynor Style) ──
 let chatHistory = [
   { role: 'system', content: 'Sei un assistente editoriale intelligente per la community fantacalcio "Esperti Profeta". Il tuo compito è aiutare lo strategist a creare contenuti per Instagram (Reel, caroselli, grafiche) e YouTube (video, short). Sii creativo, pratico, specifico con i dati dei giocatori di Serie A e ottimizzato per il target dei fantaallenatori.' }
 ];
 
-async function chatSendMessage() {
-  const inputEl = document.getElementById('chatInput');
+function chatStartWithPrompt(text) {
+  const overlay = document.getElementById('chatOverlay');
+  if (!overlay) return;
+
+  const prompterInput = document.getElementById('chatInput');
+  const inputVal = text || prompterInput.value.trim();
+  
+  if (!inputVal) return;
+  
+  // Apri l'overlay
+  overlay.classList.add('is-open');
+  
+  // Sincronizza input e pulisci
+  document.getElementById('chatInputOverlay').value = '';
+  prompterInput.value = '';
+
+  // Invia il messaggio
+  chatSendMessageWithText(inputVal);
+}
+
+function chatCloseOverlay() {
+  const overlay = document.getElementById('chatOverlay');
+  if (overlay) overlay.classList.remove('is-open');
+}
+
+function chatSendMessageOverlay() {
+  const inputEl = document.getElementById('chatInputOverlay');
   const text = inputEl.value.trim();
   if (!text) return;
   inputEl.value = '';
+  chatSendMessageWithText(text);
+}
 
+async function chatSendMessageWithText(text) {
   const messagesBox = document.getElementById('chatMessages');
 
   // Aggiungi messaggio utente
@@ -1908,23 +1936,29 @@ async function chatSendMessage() {
   // Salva nella history
   chatHistory.push({ role: 'user', content: text });
 
-  // Aggiungi messaggio loading dell'assistente
+  // Aggiungi messaggio loading dell'assistente con i puntini oscillanti in stile Bynor
   const loadingMsgDiv = document.createElement('div');
   loadingMsgDiv.className = 'chat-msg assistant loading';
-  loadingMsgDiv.innerHTML = '<span class="material-symbols-rounded" style="animation:spin 1s linear infinite;font-size:16px;margin-right:6px;">progress_activity</span> Claude sta elaborando…';
+  loadingMsgDiv.innerHTML = `
+    <div class="cbot-typing">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <span style="font-size:12px;margin-left:4px;">Claude sta elaborando…</span>
+  `;
   messagesBox.appendChild(loadingMsgDiv);
   messagesBox.scrollTop = messagesBox.scrollHeight;
 
   // Recupera la password
   let secret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || '';
   if (!secret) {
-    secret = document.getElementById('chatSecret')?.value || document.getElementById('igSecret')?.value || '';
+    secret = document.getElementById('chatSecretOverlay')?.value || document.getElementById('chatSecret')?.value || '';
   }
 
   if (!secret) {
-    loadingMsgDiv.classList.remove('loading');
     loadingMsgDiv.className = 'chat-msg assistant error';
-    loadingMsgDiv.innerHTML = '❌ <b>Password di pubblicazione mancante.</b> Inserisci PUBLISH_SECRET nel campo segreto a sinistra dell\'input della chat per sbloccare l\'AI.';
+    loadingMsgDiv.innerHTML = '❌ <b>Password di pubblicazione mancante.</b> Inserisci PUBLISH_SECRET nel campo segreto per sbloccare l\'AI.';
     return;
   }
 
@@ -1934,7 +1968,7 @@ async function chatSendMessage() {
 
     const messagesToSend = [
       chatHistory[0],
-      ...chatHistory.slice(-8) // passiamo gli ultimi 8 messaggi per mantenere il contesto
+      ...chatHistory.slice(-8)
     ];
 
     const res = await fetch(BACKEND_BASE + '/api/claude', {
@@ -1954,12 +1988,12 @@ async function chatSendMessage() {
     const formattedHtml = formatMarkdown(aiText);
 
     loadingMsgDiv.innerHTML = `
-      <div class="chat-msg-body" style="text-align:left;">${formattedHtml}</div>
+      <div class="chat-msg-body">${formattedHtml}</div>
       <div class="chat-msg-actions">
-        <button class="chat-action-btn copy">
+        <button class="chat-action-btn copy" style="background:transparent;border:1px solid var(--line);color:var(--ink-soft);border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all 0.15s ease;">
           <span class="material-symbols-rounded" style="font-size:12px;">content_copy</span> Copia
         </button>
-        <button class="chat-action-btn plan">
+        <button class="chat-action-btn plan" style="background:transparent;border:1px solid var(--line);color:var(--ink-soft);border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all 0.15s ease;">
           <span class="material-symbols-rounded" style="font-size:12px;">calendar_month</span> Pianifica
         </button>
       </div>
@@ -1971,6 +2005,7 @@ async function chatSendMessage() {
     };
 
     loadingMsgDiv.querySelector('.chat-action-btn.plan').onclick = () => {
+      chatCloseOverlay();
       calOpenModalFromIdea('', aiText, 'IMAGE', 'ig');
     };
 
@@ -1983,29 +2018,83 @@ async function chatSendMessage() {
   }
 }
 
-function chatSendPrompt(text) {
-  document.getElementById('chatInput').value = text;
-  chatSendMessage();
-}
-
 function formatMarkdown(text) {
-  const lines = text.split('\\n');
-  let inList = false;
+  const lines = text.split('\n');
   let result = [];
+  let inList = false;
+  let inTable = false;
+  let tableHeaders = [];
+  let tableRows = [];
+
+  result.push('<div class="bn-doc">');
 
   for (let line of lines) {
     let cleanLine = line.trim();
-    
-    // Bold / Italic
-    line = line.replace(/\\*\\*([^\\*]+)\\*\\*/g, '<b>$1</b>');
-    line = line.replace(/\\*([^\\*]+)\\*/g, '<i>$1</i>');
 
-    if (cleanLine.startsWith('- ') || cleanLine.startsWith('* ')) {
+    // Gestione Tabelle Markdown (es. | Header 1 | Header 2 |)
+    if (cleanLine.startsWith('|')) {
+      if (inList) { result.push('</ul>'); inList = false; }
+      
+      // Salta le linee separatore (es. |---|---|)
+      if (cleanLine.includes('---') || cleanLine.includes('===') || cleanLine === '|') {
+        continue;
+      }
+      
+      const cols = cleanLine.split('|').map(c => c.trim()).filter((c, i, arr) => i > 0 && i < arr.length - 1);
+      if (!inTable) {
+        inTable = true;
+        tableHeaders = cols;
+      } else {
+        tableRows.push(cols);
+      }
+      continue;
+    } else {
+      if (inTable) {
+        // Chiudi tabella ed emetti l'HTML della tabella
+        result.push('<div class="bn-doc-table-wrap"><table class="bn-doc-table">');
+        if (tableHeaders.length > 0) {
+          result.push('<thead><tr>' + tableHeaders.map(h => `<th>${h}</th>`).join('') + '</tr></thead>');
+        }
+        result.push('<tbody>');
+        for (let row of tableRows) {
+          result.push('<tr>' + row.map((cell, idx) => {
+            const cellHtml = cell.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\*([^*]+)\*/g, '<i>$1</i>');
+            if (idx === 0) {
+              return `<td style="font-weight:700;color:var(--accent-bright);">${cellHtml}</td>`;
+            }
+            return `<td>${cellHtml}</td>`;
+          }).join('') + '</tr>');
+        }
+        result.push('</tbody></table></div>');
+        
+        inTable = false;
+        tableHeaders = [];
+        tableRows = [];
+      }
+    }
+
+    // Bold / Italic
+    line = line.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+    line = line.replace(/\*([^*]+)\*/g, '<i>$1</i>');
+
+    // Headers
+    if (cleanLine.startsWith('### ')) {
+      if (inList) { result.push('</ul>'); inList = false; }
+      result.push(`<div class="bn-doc-h">${line.substring(4)}</div>`);
+    } else if (cleanLine.startsWith('## ')) {
+      if (inList) { result.push('</ul>'); inList = false; }
+      result.push(`<div class="bn-doc-title">${line.substring(3)}</div>`);
+    } else if (cleanLine.startsWith('# ')) {
+      if (inList) { result.push('</ul>'); inList = false; }
+      result.push(`<div class="bn-doc-title" style="font-size:20px;color:var(--accent);">${line.substring(2)}</div>`);
+    } 
+    // Liste puntate
+    else if (cleanLine.startsWith('- ') || cleanLine.startsWith('* ')) {
       if (!inList) {
-        result.push('<ul style="margin:6px 0;padding-left:18px;">');
+        result.push('<ul class="bn-doc-ul">');
         inList = true;
       }
-      result.push('<li style="margin-bottom:4px;">' + line.substring(line.indexOf(' ') + 1) + '</li>');
+      result.push(`<li>${line.substring(line.indexOf(' ') + 1)}</li>`);
     } else {
       if (inList) {
         result.push('</ul>');
@@ -2014,13 +2103,30 @@ function formatMarkdown(text) {
       if (cleanLine === '') {
         result.push('<br>');
       } else {
-        result.push('<p style="margin: 4px 0;">' + line + '</p>');
+        result.push(`<p class="bn-doc-p">${line}</p>`);
       }
     }
   }
-  if (inList) {
-    result.push('</ul>');
+
+  // Chiusure in caso di fine testo aperti
+  if (inList) result.push('</ul>');
+  if (inTable) {
+    result.push('<div class="bn-doc-table-wrap"><table class="bn-doc-table">');
+    if (tableHeaders.length > 0) {
+      result.push('<thead><tr>' + tableHeaders.map(h => `<th>${h}</th>`).join('') + '</tr></thead>');
+    }
+    result.push('<tbody>');
+    for (let row of tableRows) {
+      result.push('<tr>' + row.map((cell, idx) => {
+        const cellHtml = cell.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\*([^*]+)\*/g, '<i>$1</i>');
+        if (idx === 0) return `<td style="font-weight:700;color:var(--accent-bright);">${cellHtml}</td>`;
+        return `<td>${cellHtml}</td>`;
+      }).join('') + '</tr>');
+    }
+    result.push('</tbody></table></div>');
   }
+
+  result.push('</div>');
   return result.join('');
 }
 
@@ -2032,7 +2138,7 @@ function intelInitHistoryBars() {
   let secret = '';
   try { secret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
   if (secret) {
-    ['chatSecret', 'ytSecret', 'igSecret', 'calSecret'].forEach(pid => {
+    ['chatSecret', 'chatSecretOverlay', 'ytSecret', 'igSecret', 'calSecret'].forEach(pid => {
       const el = document.getElementById(pid);
       if (el) el.value = secret;
     });
