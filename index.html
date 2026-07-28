@@ -7,7 +7,7 @@
 <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANS4hEUgAAACAAAAAgCAYAAABzenr0AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAARGVYSWZNTQAqAAAACAABh2kABAAAAAEAAAAaAAAAAAADoAEAAwAAAAEAAQAAoAIABAAAAAEAAAAgoAMABAAAAAEAAAAgAAAAAKyGYvMAAAHNaVRYdFhNTDpjb20uYWRvYmUueG1wAAAAAAA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJYTVAgQ29yZSA2LjAuMCI+CiAgIDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+CiAgICAgIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiCiAgICAgICAgICAgIHhtbG5zOmV4aWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vZXhpZi8xLjAvIj4KICAgICAgICAgPGV4aWY6Q29sb3JTcGFjZT4xPC9leGlmOkNvbG9yU3BhY2U+CiAgICAgICAgIDxleGlmOlBpeGVsWERpbWVuc2lvbj4yMDAwPC9leGlmOkNpeGVsWERpbWVuc2lvbj4KICAgICAgICAgPGV4aWY6UGl4ZWxZRGltZW5zaW9uPjIwMDA8L2V4aWY6UGl4ZWxZRGltZW5zaW9uPgogICAgICA8L3JkZjpEZXNjcmlwdGlvbj4KICAgPC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4KPWeK9QAAAh1JREFUWAntlb9LHFEQx12NiKaJQQxES5sUKgRC4JConYWKIHYWkYOgpLASTBcCiXD6H8RCSxGDjRbRQolpRAtBm+CBQhQERYNoY5LL53u8gc3h4r5D0GIHPszcvHnf2X0/bktKEktWIFmBO16BwLd/LpdrYE4PtMBTN/8AvwbzQRBkXe52HY0fwhicQZSdMvARqm61O4I1sAxx7SuFj+M8xI1bgNADhL5AV0hQyzwDWyCNZugDbY/ZPEEfW/LbEkV5HiBd8NqT172dcvC5oDZdVFObhFglbIdE54hLNY5vhBEYhZcuV0qsGrMdgkrT8/ZMTsFfp3aBf+Ya9RKfu7zG30OZG2sgVq3ZK+/GNgGFQVPB65rpzR/BkcvP4htD9VqVWfjjxvfxKRv39kx+54TkdOj0AM9hHTpNkPgJZMBWRX5ceaspyiMwDGbfCALQuaiQIL4c3sAemOkMNFlD4nKLvT2TO5zqJf4T5A+ghIi7YBPMNgi6rQmx/jsmoM1y3p7JWtopeBGezG+d9iFYhSV4C/nTji+DAciCtqI2PLfoGKFq+ACvo0QYa4UVMMtE1XrlUeuBXaeqazcNbVAH9dAOyl2B2Q+CGq9GUcUIqdmxKYf8L2JRaIck/tu2KO3YeQR1x78Xdrrm95pqYwv7FCJcAf2wCAeg2yF+wgJoLH9F4+re+DWMEqJRNWP2yT3hq3cWVZvkkxVIVuBer8A/DgLt886/IkUAAAAASUVORK5CYII=">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -790,7 +790,12 @@
           </div>
           
           <div class="cal-field" id="calMediaField" style="display:none;">
-            <label>Caricamento Media <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· per pubblicazione reale</span></label>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <label>Caricamento Media <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· per pubblicazione reale</span></label>
+              <button type="button" class="cal-btn" id="calGenerateSlidesBtn" onclick="openSlideGenerator()" style="font-size:10px; padding:3px 8px; height:auto; display:inline-flex; align-items:center; gap:4px; background:rgba(255,107,0,0.08); border-color:var(--accent); color:var(--accent);">
+                <span class="material-symbols-rounded" style="font-size:12px;">layers</span>✨ Genera Slide AI
+              </button>
+            </div>
             <div class="cal-upload" id="calUpload">
               <input type="file" id="calUploadInput" accept="image/*,video/*" style="display:none;">
               <span class="material-symbols-rounded">cloud_upload</span>
@@ -1569,6 +1574,132 @@
         <button type="button" class="cal-btn-sec" onclick="closeEditQueueModal()" style="padding:10px 16px; background:rgba(255,255,255,0.05); border:none; color:#fff; border-radius:8px; cursor:pointer;">Annulla</button>
         <button type="button" class="cal-btn-pri" id="saveEditQueueBtn" onclick="saveEditQueueModal()" style="padding:10px 16px; background:var(--accent); border:none; color:#fff; border-radius:8px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:6px;">Salva Modifiche</button>
       </div>
+    </div>
+  </div>
+
+  <!-- OVERLAY: Generatore Slide Carosello Stile Bynor -->
+  <div class="slide-gen-overlay" id="slideGeneratorOverlay" style="display:none;">
+    <div class="slide-gen-container">
+      
+      <!-- Testata Generatore -->
+      <div class="slide-gen-header">
+        <div class="sg-title-group">
+          <span class="material-symbols-rounded text-accent" style="font-size:22px; color:var(--accent);">layers</span>
+          <div>
+            <h2 class="sg-main-title" style="font-family:var(--font-display); font-size:17px; font-weight:800; color:var(--ink); margin:0;">Generatore Slide AI</h2>
+            <p class="sg-sub-title" style="font-size:11px; color:var(--ink-mute); margin:2px 0 0 0;">Crea visual e caroselli per Progetto Esperti</p>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button class="cal-btn" onclick="addNewSlide()" style="background:var(--bg-elev-2); border-color:var(--line); color:var(--ink); font-size:11px; font-weight:600; padding:6px 12px; height:auto; display:inline-flex; align-items:center; gap:6px;">
+            <span class="material-symbols-rounded" style="font-size:15px;">add</span>Nuova Slide
+          </button>
+          <button class="cal-btn" onclick="generateSlidesFromScriptText()" style="background:rgba(255,107,0,0.1); border-color:var(--accent); color:var(--accent); font-size:11px; font-weight:600; padding:6px 12px; height:auto; display:inline-flex; align-items:center; gap:6px;">
+            <span class="material-symbols-rounded" style="font-size:15px;">auto_awesome</span>Genera da Script
+          </button>
+          <button class="cal-btn" onclick="closeSlideGenerator()" style="border-radius:50%; width:32px; height:32px; padding:0; display:grid; place-items:center; background:var(--bg-elev-2); border-color:var(--line); color:var(--ink-soft);">
+            <span class="material-symbols-rounded" style="font-size:18px;">close</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Layout a Griglia -->
+      <div class="slide-gen-layout">
+        
+        <!-- SIDEBAR SINISTRA: Lista Slide & Editor Form -->
+        <div class="slide-gen-sidebar">
+          
+          <!-- Lista delle slide (miniature/card) -->
+          <div class="sg-sidebar-section">
+            <div class="sg-section-title" style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">Le tue slide</div>
+            <div class="sg-slide-list" id="sgSlideList" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:8px;">
+              <!-- Renderizzato dinamicamente in JS -->
+            </div>
+          </div>
+          
+          <!-- Editor Form per la slide selezionata -->
+          <div class="sg-sidebar-section" style="flex:1; border-top:1px solid var(--line); padding-top:14px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+            <div class="sg-section-title" id="sgSelectedSlideTitle" style="font-family:var(--font-mono); font-size:11px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">Modifica Slide 1</div>
+            
+            <div class="cal-field">
+              <label>Layout / Template</label>
+              <div class="cal-btn-group" style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                <button type="button" class="cal-btn-option active" id="sgBtnLayoutCover" onclick="setSlideLayout('cover')">Cover (Copertina)</button>
+                <button type="button" class="cal-btn-option" id="sgBtnLayoutPoints" onclick="setSlideLayout('points')">Punti Elenco</button>
+                <button type="button" class="cal-btn-option" id="sgBtnLayoutCompare" onclick="setSlideLayout('compare')">Confronto Box</button>
+                <button type="button" class="cal-btn-option" id="sgBtnLayoutCta" onclick="setSlideLayout('cta')">CTA (Chiusura)</button>
+              </div>
+            </div>
+            
+            <div class="cal-field">
+              <label>Logo da visualizzare</label>
+              <select id="sgSlideLogo" onchange="updateSlideDataFromForm()">
+                <option value="logo.png">Cerchio Esperti (Bianco)</option>
+                <option value="asta-logo.png">Logo "C'è Asta Per Te"</option>
+                <option value="none">Nessun Logo</option>
+              </select>
+            </div>
+            
+            <div class="cal-field">
+              <label>Titolo Slide</label>
+              <input type="text" id="sgSlideTitle" oninput="updateSlideDataFromForm()" placeholder="Es: FAZZINI AL CAGLIARI 👀">
+            </div>
+            
+            <div class="cal-field" id="sgFieldContent">
+              <label>Testo o Punti Elenco (uno per riga)</label>
+              <textarea id="sgSlideContent" rows="4" oninput="updateSlideDataFromForm()" placeholder="Es:
+- 3 Gol e 2 Assist
+- low cost strategico
+- dubbio titolarità"></textarea>
+            </div>
+            
+            <div class="cal-field" id="sgFieldPlayer" style="display:none;">
+              <label>Nome Giocatore (evidenziato sotto il titolo)</label>
+              <input type="text" id="sgSlidePlayer" oninput="updateSlideDataFromForm()" placeholder="Es: Kenneth Taylor">
+            </div>
+            
+            <div class="cal-field">
+              <label>Parole da evidenziare in Arancione (separate da virgola)</label>
+              <input type="text" id="sgSlideHighlights" oninput="updateSlideDataFromForm()" placeholder="Es: low cost, dubbio, asta">
+            </div>
+            
+            <button class="cal-btn" onclick="deleteCurrentSlide()" style="color:var(--neg); border-color:rgba(255,80,80,0.2); background:rgba(255,80,80,0.03); margin-top:12px; font-size:11px; font-weight:600; padding:8px 12px; display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;">
+              <span class="material-symbols-rounded" style="font-size:14px;">delete</span>Elimina questa Slide
+            </button>
+            
+          </div>
+          
+        </div>
+        
+        <!-- PREVIEW CENTRALE: Visualizzazione Slide in Canvas -->
+        <div class="slide-gen-preview-area">
+          <div class="sg-canvas-wrap">
+            <canvas id="sgCanvas" width="1080" height="1080"></canvas>
+          </div>
+          
+          <!-- Indicatori paginazione -->
+          <div class="sg-pagination" id="sgPaginationDots" style="display:flex; gap:6px; justify-content:center; margin-top:12px;">
+            <!-- Renderizzati in JS -->
+          </div>
+        </div>
+        
+      </div>
+      
+      <!-- Barra Azioni Bottom -->
+      <div class="slide-gen-footer">
+        <div style="font-size:11px; color:var(--ink-mute); font-family:var(--font-mono);">
+          Dimensioni: 1080x1080 px (Instagram Quadrato)
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button class="cal-btn" onclick="downloadSlidesAsJpegs()" style="background:var(--bg-elev-2); border-color:var(--line); color:var(--ink); font-weight:600; font-size:12px; padding:8px 16px; display:inline-flex; align-items:center; gap:6px;">
+            <span class="material-symbols-rounded" style="font-size:16px;">download</span>Scarica JPEGs
+          </button>
+          <button class="cal-btn primary" id="sgSaveToPostBtn" onclick="exportSlidesToPost()" style="font-weight:600; font-size:12px; padding:8px 20px; display:inline-flex; align-items:center; gap:6px;">
+            <span class="material-symbols-rounded" style="font-size:16px;">cloud_upload</span>Carica nel Post
+          </button>
+        </div>
+      </div>
+      
     </div>
   </div>
 

@@ -1009,4 +1009,636 @@ function calSetupEvents() {
   };
 }
 
+// ============================================================================
+/* CAROUSEL SLIDE GENERATOR LOGIC - STILE BYNOR.AI */
+// ============================================================================
+let slideBuilderList = [];
+let slideBuilderIndex = 0;
+const loadedLogos = {};
+
+function preloadLogoAssets() {
+  const logos = ['logo.png', 'asta-logo.png'];
+  logos.forEach(name => {
+    if (loadedLogos[name]) return;
+    const img = new Image();
+    img.src = 'assets/' + name;
+    img.onload = () => {
+      loadedLogos[name] = img;
+      // se l'overlay è visibile, aggiorniamo la preview
+      const overlay = document.getElementById('slideGeneratorOverlay');
+      if (overlay && overlay.style.display === 'flex') {
+        renderSlidePreview();
+      }
+    };
+  });
+}
+
+function openSlideGenerator() {
+  preloadLogoAssets();
+  const scriptText = document.getElementById('calScript').value.trim();
+  
+  if (scriptText) {
+    slideBuilderList = parseScriptToSlides(scriptText);
+  } else {
+    // mazzo di default
+    slideBuilderList = [
+      {
+        title: 'TITOLO COPERTINA',
+        content: ['Sottotitolo o gancio forte della tua copertina'],
+        layout: 'cover',
+        logo: 'logo.png',
+        player: '',
+        highlights: ''
+      },
+      {
+        title: 'I DATI PRINCIPALI',
+        content: ['- 3 Gol e 2 Assist in stagione', '- Ruolo: trequartista di spinta', '- Prezzo all\'asta: scommessa low-cost'],
+        layout: 'points',
+        logo: 'logo.png',
+        player: '',
+        highlights: 'low-cost, scommessa'
+      },
+      {
+        title: 'IL NOSTRO VERDETTO',
+        content: ['PRENDERE\nScommessa da 5° slot', 'LASCIARE\nSe pagato oltre 15 crediti'],
+        layout: 'compare',
+        logo: 'logo.png',
+        player: '',
+        highlights: 'PRENDERE, LASCIARE'
+      },
+      {
+        title: 'SEGUI PROGETTO ESPERTI',
+        content: ['Commenta "ASTA" per ricevere la guida completa', 'Salva il Reel per non perderlo'],
+        layout: 'cta',
+        logo: 'logo.png',
+        player: '',
+        highlights: 'guida, Salva'
+      }
+    ];
+  }
+  
+  slideBuilderIndex = 0;
+  document.getElementById('slideGeneratorOverlay').style.display = 'flex';
+  renderSlideList();
+  loadSlideDataIntoForm();
+  renderSlidePreview();
+}
+
+function closeSlideGenerator() {
+  document.getElementById('slideGeneratorOverlay').style.display = 'none';
+}
+
+function renderSlideList() {
+  const container = document.getElementById('sgSlideList');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  slideBuilderList.forEach((slide, idx) => {
+    const card = document.createElement('div');
+    card.className = `sg-slide-card ${idx === slideBuilderIndex ? 'active' : ''}`;
+    card.onclick = () => {
+      slideBuilderIndex = idx;
+      renderSlideList();
+      loadSlideDataIntoForm();
+      renderSlidePreview();
+    };
+    
+    card.innerHTML = `
+      <div style="font-size: 13px; font-weight: 800;">${idx + 1}</div>
+      <div class="sg-slide-card-layout">${slide.layout}</div>
+    `;
+    container.appendChild(card);
+  });
+  
+  renderPaginationDots();
+}
+
+function renderPaginationDots() {
+  const dotsContainer = document.getElementById('sgPaginationDots');
+  if (!dotsContainer) return;
+  dotsContainer.innerHTML = '';
+  slideBuilderList.forEach((_, idx) => {
+    const dot = document.createElement('div');
+    dot.className = `sg-dot ${idx === slideBuilderIndex ? 'active' : ''}`;
+    dot.onclick = () => {
+      slideBuilderIndex = idx;
+      renderSlideList();
+      loadSlideDataIntoForm();
+      renderSlidePreview();
+    };
+    dotsContainer.appendChild(dot);
+  });
+}
+
+function loadSlideDataIntoForm() {
+  const slide = slideBuilderList[slideBuilderIndex];
+  if (!slide) return;
+  
+  document.getElementById('sgSelectedSlideTitle').textContent = `Modifica Slide ${slideBuilderIndex + 1}`;
+  
+  document.querySelectorAll('.cal-btn-option[id^="sgBtnLayout"]').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  const layoutBtn = document.getElementById('sgBtnLayout' + slide.layout.charAt(0).toUpperCase() + slide.layout.slice(1));
+  if (layoutBtn) layoutBtn.classList.add('active');
+  
+  document.getElementById('sgSlideLogo').value = slide.logo || 'logo.png';
+  document.getElementById('sgSlideTitle').value = slide.title || '';
+  document.getElementById('sgSlideContent').value = (slide.content || []).join('\n');
+  document.getElementById('sgSlidePlayer').value = slide.player || '';
+  document.getElementById('sgSlideHighlights').value = slide.highlights || '';
+  
+  if (slide.layout === 'compare') {
+    document.getElementById('sgFieldPlayer').style.display = 'block';
+    document.getElementById('sgFieldContent').querySelector('label').textContent = 'Confronto Box 1 e Box 2 (dividi con riga vuota)';
+  } else {
+    document.getElementById('sgFieldPlayer').style.display = 'none';
+    document.getElementById('sgFieldContent').querySelector('label').textContent = 'Testo o Punti Elenco (uno per riga)';
+  }
+}
+
+function updateSlideDataFromForm() {
+  const slide = slideBuilderList[slideBuilderIndex];
+  if (!slide) return;
+  
+  slide.logo = document.getElementById('sgSlideLogo').value;
+  slide.title = document.getElementById('sgSlideTitle').value;
+  slide.content = document.getElementById('sgSlideContent').value.split('\n');
+  slide.player = document.getElementById('sgSlidePlayer').value;
+  slide.highlights = document.getElementById('sgSlideHighlights').value;
+  
+  renderSlidePreview();
+}
+
+function setSlideLayout(layout) {
+  const slide = slideBuilderList[slideBuilderIndex];
+  if (!slide) return;
+  slide.layout = layout;
+  loadSlideDataIntoForm();
+  renderSlidePreview();
+  renderSlideList();
+}
+
+function addNewSlide() {
+  slideBuilderList.push({
+    title: 'NUOVA SLIDE',
+    content: ['Inserisci qui i punti elenco'],
+    layout: 'points',
+    logo: 'logo.png',
+    player: '',
+    highlights: ''
+  });
+  slideBuilderIndex = slideBuilderList.length - 1;
+  renderSlideList();
+  loadSlideDataIntoForm();
+  renderSlidePreview();
+}
+
+function deleteCurrentSlide() {
+  if (slideBuilderList.length <= 1) {
+    alert('Devi mantenere almeno una slide.');
+    return;
+  }
+  slideBuilderList.splice(slideBuilderIndex, 1);
+  if (slideBuilderIndex >= slideBuilderList.length) {
+    slideBuilderIndex = slideBuilderList.length - 1;
+  }
+  renderSlideList();
+  loadSlideDataIntoForm();
+  renderSlidePreview();
+}
+
+function generateSlidesFromScriptText() {
+  const scriptText = document.getElementById('calScript').value.trim();
+  if (!scriptText) {
+    alert('Il campo Copione è vuoto. Scrivi o genera uno script per popolarlo.');
+    return;
+  }
+  if (confirm('Sei sicuro di voler rigenerare le slide? Questo sovrascriverà le modifiche correnti.')) {
+    slideBuilderList = parseScriptToSlides(scriptText);
+    slideBuilderIndex = 0;
+    renderSlideList();
+    loadSlideDataIntoForm();
+    renderSlidePreview();
+  }
+}
+
+function parseScriptToSlides(text) {
+  const slides = [];
+  if (!text) return slides;
+  
+  const regex = /(?:^|\n)(?:Slide|SLIDE|slide|Copertina|COPERTINA)\s*\d*[:\-#]*\s*/g;
+  
+  const matches = [];
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    matches.push({ index: match.index, length: match[0].length, text: match[0] });
+  }
+  
+  const blocks = [];
+  if (matches.length === 0) {
+    blocks.push(text);
+  } else {
+    if (matches[0].index > 0) {
+      blocks.push(text.substring(0, matches[0].index));
+    }
+    for (let i = 0; i < matches.length; i++) {
+      const start = matches[i].index + matches[i].length;
+      const end = (i + 1 < matches.length) ? matches[i+1].index : text.length;
+      const blockText = text.substring(start, end).trim();
+      blocks.push(blockText);
+    }
+  }
+  
+  blocks.forEach((block, idx) => {
+    const trimmedBlock = block.trim();
+    if (!trimmedBlock) return;
+    
+    const lines = trimmedBlock.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length === 0) return;
+    
+    let title = lines[0].replace(/^#+\s*/, '');
+    lines.shift();
+    
+    let layout = 'points';
+    if (idx === 0) {
+      layout = 'cover';
+    } else if (idx === blocks.length - 1 || title.toLowerCase().includes('segui') || title.toLowerCase().includes('cta') || lines.join(' ').toLowerCase().includes('segui')) {
+      layout = 'cta';
+    }
+    
+    slides.push({
+      title: title || `Slide ${idx + 1}`,
+      content: lines,
+      layout: layout,
+      logo: 'logo.png',
+      player: '',
+      highlights: ''
+    });
+  });
+  
+  if (slides.length === 0) {
+    slides.push({
+      title: 'TITOLO COPERTINA',
+      content: ['Sottotitolo della copertina'],
+      layout: 'cover',
+      logo: 'logo.png',
+      player: '',
+      highlights: ''
+    });
+  }
+  
+  return slides;
+}
+
+function renderSlidePreview() {
+  const canvas = document.getElementById('sgCanvas');
+  const slide = slideBuilderList[slideBuilderIndex];
+  if (!canvas || !slide) return;
+  drawSlideCanvas(canvas, slide);
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight, highlightWords) {
+  const words = text.split(' ');
+  let line = '';
+  let lines = [];
+  
+  for (let n = 0; n < words.length; n++) {
+    let testLine = line + words[n] + ' ';
+    let metrics = ctx.measureText(testLine);
+    let testWidth = metrics.width;
+    if (testWidth > maxWidth && n > 0) {
+      lines.push(line.trim());
+      line = words[n] + ' ';
+    } else {
+      line = testLine;
+    }
+  }
+  lines.push(line.trim());
+  
+  const highlights = highlightWords ? highlightWords.split(',').map(w => w.trim().toLowerCase()).filter(w => w.length > 0) : [];
+  
+  let currentY = y;
+  lines.forEach(l => {
+    if (highlights.length === 0) {
+      ctx.fillText(l, x, currentY);
+    } else {
+      const lineWords = l.split(' ');
+      let currentX = x;
+      if (ctx.textAlign === 'center') {
+        const totalWidth = ctx.measureText(l).width;
+        currentX = x - totalWidth / 2;
+      }
+      
+      const prevAlign = ctx.textAlign;
+      ctx.textAlign = 'left';
+      
+      lineWords.forEach((word, wordIdx) => {
+        const cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").toLowerCase();
+        const isHighlighted = highlights.some(hl => cleanWord.includes(hl));
+        
+        ctx.fillStyle = isHighlighted ? '#FF6B00' : '#E5E2E1';
+        ctx.fillText(word, currentX, currentY);
+        currentX += ctx.measureText(word + ' ').width;
+      });
+      
+      ctx.textAlign = prevAlign;
+    }
+    currentY += lineHeight;
+  });
+  
+  return currentY;
+}
+
+function drawSlideCanvas(canvas, data) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+  
+  // 1. Sfondo scuro e vibrante
+  ctx.fillStyle = '#131313';
+  ctx.fillRect(0, 0, W, H);
+  
+  // 2. Texture e bagliori d'atmosfera
+  const grad = ctx.createRadialGradient(W * 0.8, H * 0.8, 10, W * 0.8, H * 0.8, 400);
+  grad.addColorStop(0, 'rgba(255, 107, 0, 0.04)');
+  grad.addColorStop(1, 'rgba(255, 107, 0, 0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+  
+  const grad2 = ctx.createRadialGradient(W * 0.2, H * 0.2, 10, W * 0.2, H * 0.2, 300);
+  grad2.addColorStop(0, 'rgba(255, 107, 0, 0.02)');
+  grad2.addColorStop(1, 'rgba(255, 107, 0, 0)');
+  ctx.fillStyle = grad2;
+  ctx.fillRect(0, 0, W, H);
+  
+  // 3. Disegna il Logo ufficiale se presente
+  if (data.logo && data.logo !== 'none') {
+    const logoImg = loadedLogos[data.logo];
+    if (logoImg) {
+      if (data.layout === 'cover' || data.layout === 'cta') {
+        const logoW = 140;
+        const logoH = logoW * (logoImg.height / logoImg.width);
+        ctx.drawImage(logoImg, (W - logoW)/2, H * 0.2, logoW, logoH);
+      } else {
+        const logoW = 80;
+        const logoH = logoW * (logoImg.height / logoImg.width);
+        ctx.drawImage(logoImg, W - logoW - 60, 50, logoW, logoH);
+      }
+    }
+  }
+  
+  // 4. Renders basati sul layout
+  if (data.layout === 'cover') {
+    ctx.textAlign = 'center';
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '800 68px "Space Grotesk", sans-serif';
+    const titleY = H * 0.52;
+    wrapText(ctx, (data.title || '').toUpperCase(), W / 2, titleY, W - 160, 80, data.highlights);
+    
+    ctx.fillStyle = '#A0A0A5';
+    ctx.font = '500 32px "Plus Jakarta Sans", sans-serif';
+    const subText = (data.content && data.content[0]) ? data.content[0] : '';
+    wrapText(ctx, subText, W / 2, H * 0.76, W - 200, 44, data.highlights);
+    
+    ctx.fillStyle = '#FF6B00';
+    ctx.font = '800 28px "Space Grotesk", sans-serif';
+    ctx.fillText('SWIPE ➡️', W / 2, H * 0.9);
+    
+  } else if (data.layout === 'points') {
+    ctx.textAlign = 'left';
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '800 52px "Space Grotesk", sans-serif';
+    wrapText(ctx, (data.title || '').toUpperCase(), 80, 110, W - 260, 64, data.highlights);
+    
+    ctx.strokeStyle = 'rgba(255, 107, 0, 0.3)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(80, 150);
+    ctx.lineTo(240, 150);
+    ctx.stroke();
+    
+    let currentY = 240;
+    const items = data.content || [];
+    
+    items.forEach(item => {
+      if (!item.trim()) return;
+      
+      ctx.fillStyle = '#FF6B00';
+      ctx.font = 'bold 36px "Space Grotesk", sans-serif';
+      ctx.fillText('✓', 80, currentY + 6);
+      
+      ctx.fillStyle = '#E5E2E1';
+      ctx.font = '400 32px "Plus Jakarta Sans", sans-serif';
+      
+      const cleanText = item.replace(/^[\s\-\*•]+/, '');
+      const nextY = wrapText(ctx, cleanText, 130, currentY, W - 210, 46, data.highlights);
+      currentY = nextY + 36;
+    });
+    
+    ctx.fillStyle = '#55555A';
+    ctx.font = '700 20px "Space Grotesk", sans-serif';
+    ctx.fillText('@PROGETTOESPERTI', 80, H - 60);
+    
+  } else if (data.layout === 'compare') {
+    ctx.textAlign = 'center';
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '800 52px "Space Grotesk", sans-serif';
+    wrapText(ctx, (data.title || '').toUpperCase(), W / 2, 110, W - 260, 64, data.highlights);
+    
+    if (data.player) {
+      ctx.fillStyle = '#FF6B00';
+      ctx.font = '700 28px "Space Grotesk", sans-serif';
+      ctx.fillText(data.player.toUpperCase(), W / 2, 175);
+    }
+    
+    const boxW = 420;
+    const boxH = 500;
+    const boxY = 240;
+    const gap = 60;
+    
+    const x1 = (W - boxW * 2 - gap) / 2;
+    const x2 = x1 + boxW + gap;
+    
+    ctx.fillStyle = '#1C1B1B';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 1;
+    roundRect(ctx, x1, boxY, boxW, boxH, 16, true, true);
+    
+    ctx.fillStyle = '#1C1B1B';
+    roundRect(ctx, x2, boxY, boxW, boxH, 16, true, true);
+    
+    const lines = data.content || [];
+    let leftContent = [];
+    let rightContent = [];
+    
+    const half = Math.ceil(lines.length / 2);
+    leftContent = lines.slice(0, half);
+    rightContent = lines.slice(half);
+    
+    ctx.textAlign = 'center';
+    let currentY1 = boxY + 60;
+    leftContent.forEach((txt, idx) => {
+      if (idx === 0) {
+        ctx.fillStyle = '#FF6B00';
+        ctx.font = '800 36px "Space Grotesk", sans-serif';
+      } else {
+        ctx.fillStyle = '#E5E2E1';
+        ctx.font = '500 26px "Plus Jakarta Sans", sans-serif';
+      }
+      const next = wrapText(ctx, txt, x1 + boxW/2, currentY1, boxW - 60, 36, data.highlights);
+      currentY1 = next + 20;
+    });
+    
+    let currentY2 = boxY + 60;
+    rightContent.forEach((txt, idx) => {
+      if (idx === 0) {
+        ctx.fillStyle = '#FF6B00';
+        ctx.font = '800 36px "Space Grotesk", sans-serif';
+      } else {
+        ctx.fillStyle = '#E5E2E1';
+        ctx.font = '500 26px "Plus Jakarta Sans", sans-serif';
+      }
+      const next = wrapText(ctx, txt, x2 + boxW/2, currentY2, boxW - 60, 36, data.highlights);
+      currentY2 = next + 20;
+    });
+    
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#55555A';
+    ctx.font = '700 20px "Space Grotesk", sans-serif';
+    ctx.fillText('@PROGETTOESPERTI', 80, H - 60);
+    
+  } else if (data.layout === 'cta') {
+    ctx.textAlign = 'center';
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '800 64px "Space Grotesk", sans-serif';
+    const mainY = H * 0.5;
+    wrapText(ctx, (data.title || 'SEGUI PROGETTO ESPERTI').toUpperCase(), W / 2, mainY, W - 160, 78, data.highlights);
+    
+    ctx.fillStyle = '#A0A0A5';
+    ctx.font = '500 30px "Plus Jakarta Sans", sans-serif';
+    let currentY = H * 0.68;
+    (data.content || []).forEach(txt => {
+      if (!txt.trim()) return;
+      const next = wrapText(ctx, txt, W / 2, currentY, W - 200, 42, data.highlights);
+      currentY = next + 24;
+    });
+    
+    ctx.fillStyle = '#FF6B00';
+    ctx.font = '800 26px "Space Grotesk", sans-serif';
+    ctx.fillText('LASCIA UN LIKE ❤️', W / 2, H * 0.88);
+  }
+}
+
+function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+  if (typeof radius === 'undefined') radius = 5;
+  if (typeof radius === 'number') {
+    radius = {tl: radius, tr: radius, br: radius, bl: radius};
+  } else {
+    var defaultRadius = {tl: 0, tr: 0, br: 0, bl: 0};
+    for (var side in defaultRadius) {
+      radius[side] = radius[side] || defaultRadius[side];
+    }
+  }
+  ctx.beginPath();
+  ctx.moveTo(x + radius.tl, y);
+  ctx.lineTo(x + width - radius.tr, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+  ctx.lineTo(x + width, y + height - radius.br);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+  ctx.lineTo(x + radius.bl, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+  ctx.lineTo(x, y + radius.tl);
+  ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+  ctx.closePath();
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
+
+async function exportSlidesToPost() {
+  const saveBtn = document.getElementById('sgSaveToPostBtn');
+  const prevLabel = saveBtn.innerHTML;
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<span class="material-symbols-rounded">progress_activity</span>Caricamento in corso…';
+  
+  try {
+    const urls = [];
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = 1080;
+    tempCanvas.height = 1080;
+    
+    for (let i = 0; i < slideBuilderList.length; i++) {
+      const slide = slideBuilderList[i];
+      drawSlideCanvas(tempCanvas, slide);
+      
+      const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/jpeg', 0.92));
+      const file = new File([blob], `slide_${i+1}.jpg`, { type: 'image/jpeg' });
+      
+      saveBtn.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;animation:spin 1s linear infinite;">progress_activity</span> Caricamento slide ${i+1}/${slideBuilderList.length}…`;
+      const url = await uploadMediaToSupabase(file);
+      urls.push(url);
+    }
+    
+    document.getElementById('calMediaUrl').value = urls.join(',');
+    document.getElementById('calMediaKind').value = 'carousel';
+    
+    const prevContainer = document.getElementById('calUploadPreview');
+    if (prevContainer) {
+      prevContainer.innerHTML = urls.map(u => {
+        return `<div class="cal-upload-thumb" style="background-image:url('${u}')"></div>`;
+      }).join('');
+    }
+    
+    const removeBtn = document.getElementById('calUploadRemove');
+    if (removeBtn) removeBtn.style.display = 'inline-flex';
+    
+    const uploadStatus = document.getElementById('calUploadStatus');
+    if (uploadStatus) {
+      uploadStatus.className = 'cal-upload-status ok';
+      uploadStatus.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> ${slideBuilderList.length} Slide AI generate e caricate con successo!`;
+    }
+    
+    closeSlideGenerator();
+    
+  } catch (e) {
+    alert('Errore durante l\'esportazione e il caricamento delle slide: ' + e.message);
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = prevLabel;
+  }
+}
+
+function downloadSlidesAsJpegs() {
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = 1080;
+  tempCanvas.height = 1080;
+  
+  slideBuilderList.forEach((slide, i) => {
+    drawSlideCanvas(tempCanvas, slide);
+    const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.95);
+    
+    const link = document.createElement('a');
+    link.download = `slide_${i+1}.jpg`;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+}
+
+// Redraw whenever fonts are loaded to guarantee visual correctness
+if (document.fonts) {
+  document.fonts.ready.then(() => {
+    const overlay = document.getElementById('slideGeneratorOverlay');
+    if (overlay && overlay.style.display === 'flex') {
+      renderSlidePreview();
+    }
+  });
+}
+
+
 
