@@ -1047,6 +1047,9 @@ function openSlideGenerator() {
         content: ['Sottotitolo o gancio forte della tua copertina'],
         layout: 'cover',
         logo: 'logo.png',
+        pattern: 'glow',
+        accent: 'none',
+        watermark: 'none',
         player: '',
         highlights: ''
       },
@@ -1055,6 +1058,9 @@ function openSlideGenerator() {
         content: ['- 3 Gol e 2 Assist in stagione', '- Ruolo: trequartista di spinta', '- Prezzo all\'asta: scommessa low-cost'],
         layout: 'points',
         logo: 'logo.png',
+        pattern: 'glow',
+        accent: 'none',
+        watermark: 'none',
         player: '',
         highlights: 'low-cost, scommessa'
       },
@@ -1063,6 +1069,9 @@ function openSlideGenerator() {
         content: ['PRENDERE\nScommessa da 5° slot', 'LASCIARE\nSe pagato oltre 15 crediti'],
         layout: 'compare',
         logo: 'logo.png',
+        pattern: 'glow',
+        accent: 'none',
+        watermark: 'none',
         player: '',
         highlights: 'PRENDERE, LASCIARE'
       },
@@ -1071,6 +1080,9 @@ function openSlideGenerator() {
         content: ['Commenta "ASTA" per ricevere la guida completa', 'Salva il Reel per non perderlo'],
         layout: 'cta',
         logo: 'logo.png',
+        pattern: 'glow',
+        accent: 'none',
+        watermark: 'none',
         player: '',
         highlights: 'guida, Salva'
       }
@@ -1143,6 +1155,9 @@ function loadSlideDataIntoForm() {
   if (layoutBtn) layoutBtn.classList.add('active');
   
   document.getElementById('sgSlideLogo').value = slide.logo || 'logo.png';
+  document.getElementById('sgSlidePattern').value = slide.pattern || 'glow';
+  document.getElementById('sgSlideAccent').value = slide.accent || 'none';
+  document.getElementById('sgSlideWatermark').value = slide.watermark || 'none';
   document.getElementById('sgSlideTitle').value = slide.title || '';
   document.getElementById('sgSlideContent').value = (slide.content || []).join('\n');
   document.getElementById('sgSlidePlayer').value = slide.player || '';
@@ -1162,6 +1177,9 @@ function updateSlideDataFromForm() {
   if (!slide) return;
   
   slide.logo = document.getElementById('sgSlideLogo').value;
+  slide.pattern = document.getElementById('sgSlidePattern').value;
+  slide.accent = document.getElementById('sgSlideAccent').value;
+  slide.watermark = document.getElementById('sgSlideWatermark').value;
   slide.title = document.getElementById('sgSlideTitle').value;
   slide.content = document.getElementById('sgSlideContent').value.split('\n');
   slide.player = document.getElementById('sgSlidePlayer').value;
@@ -1272,6 +1290,9 @@ function parseScriptToSlides(text) {
       content: lines,
       layout: layout,
       logo: 'logo.png',
+      pattern: 'glow',
+      accent: 'none',
+      watermark: 'none',
       player: '',
       highlights: ''
     });
@@ -1283,6 +1304,9 @@ function parseScriptToSlides(text) {
       content: ['Sottotitolo della copertina'],
       layout: 'cover',
       logo: 'logo.png',
+      pattern: 'glow',
+      accent: 'none',
+      watermark: 'none',
       player: '',
       highlights: ''
     });
@@ -1359,18 +1383,52 @@ function drawSlideCanvas(canvas, data) {
   ctx.fillStyle = '#131313';
   ctx.fillRect(0, 0, W, H);
   
-  // 2. Texture e bagliori d'atmosfera
-  const grad = ctx.createRadialGradient(W * 0.8, H * 0.8, 10, W * 0.8, H * 0.8, 400);
-  grad.addColorStop(0, 'rgba(255, 107, 0, 0.04)');
-  grad.addColorStop(1, 'rgba(255, 107, 0, 0)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
+  // 2. Disegna Watermark di Sfondo (Ultra sfumato)
+  if (data.watermark === 'logo' && data.logo && data.logo !== 'none') {
+    const logoImg = loadedLogos[data.logo];
+    if (logoImg) {
+      ctx.save();
+      ctx.globalAlpha = 0.02; // ultra-low opacity
+      const watermarkSize = 600;
+      const watermarkH = watermarkSize * (logoImg.height / logoImg.width);
+      ctx.drawImage(logoImg, (W - watermarkSize)/2, (H - watermarkH)/2, watermarkSize, watermarkH);
+      ctx.restore();
+    }
+  }
   
-  const grad2 = ctx.createRadialGradient(W * 0.2, H * 0.2, 10, W * 0.2, H * 0.2, 300);
-  grad2.addColorStop(0, 'rgba(255, 107, 0, 0.02)');
-  grad2.addColorStop(1, 'rgba(255, 107, 0, 0)');
-  ctx.fillStyle = grad2;
-  ctx.fillRect(0, 0, W, H);
+  // 3. Texture e bagliori d'atmosfera in base al pattern (default: glow)
+  const pattern = data.pattern || 'glow';
+  if (pattern === 'glow' || pattern === 'glow_grid') {
+    const grad = ctx.createRadialGradient(W * 0.8, H * 0.8, 10, W * 0.8, H * 0.8, 400);
+    grad.addColorStop(0, 'rgba(255, 107, 0, 0.04)');
+    grad.addColorStop(1, 'rgba(255, 107, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    
+    const grad2 = ctx.createRadialGradient(W * 0.2, H * 0.2, 10, W * 0.2, H * 0.2, 300);
+    grad2.addColorStop(0, 'rgba(255, 107, 0, 0.02)');
+    grad2.addColorStop(1, 'rgba(255, 107, 0, 0)');
+    ctx.fillStyle = grad2;
+    ctx.fillRect(0, 0, W, H);
+  }
+  
+  if (pattern === 'grid' || pattern === 'glow_grid') {
+    ctx.strokeStyle = 'rgba(255, 107, 0, 0.015)';
+    ctx.lineWidth = 1;
+    const gridSize = 60;
+    for (let x = 0; x < W; x += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, H);
+      ctx.stroke();
+    }
+    for (let y = 0; y < H; y += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(W, y);
+      ctx.stroke();
+    }
+  }
   
   // 3. Disegna il Logo ufficiale se presente
   if (data.logo && data.logo !== 'none') {
@@ -1531,6 +1589,17 @@ function drawSlideCanvas(canvas, data) {
     ctx.fillStyle = '#FF6B00';
     ctx.font = '800 26px "Space Grotesk", sans-serif';
     ctx.fillText('LASCIA UN LIKE ❤️', W / 2, H * 0.88);
+  }
+  
+  // 5. Cornici o Linee d'accento superiori (data.accent)
+  const accent = data.accent || 'none';
+  if (accent === 'border') {
+    ctx.strokeStyle = '#FF6B00';
+    ctx.lineWidth = 2;
+    roundRect(ctx, 16, 16, W - 32, H - 32, 12, false, true);
+  } else if (accent === 'top_line') {
+    ctx.fillStyle = '#FF6B00';
+    ctx.fillRect(0, 0, W, 4);
   }
 }
 

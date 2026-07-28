@@ -1641,6 +1641,33 @@
             </div>
             
             <div class="cal-field">
+              <label>Pattern Sfondo</label>
+              <select id="sgSlidePattern" onchange="updateSlideDataFromForm()">
+                <option value="glow">Bagliori Aurora (Default)</option>
+                <option value="grid">Griglia Geometrica</option>
+                <option value="glow_grid">Griglia + Bagliori</option>
+                <option value="solid">Nero Opaco Solido</option>
+              </select>
+            </div>
+            
+            <div class="cal-field">
+              <label>Cornice / Accento</label>
+              <select id="sgSlideAccent" onchange="updateSlideDataFromForm()">
+                <option value="none">Nessuno (Default)</option>
+                <option value="border">Bordo Arancione Inscatolato</option>
+                <option value="top_line">Linea Superiore Arancione</option>
+              </select>
+            </div>
+            
+            <div class="cal-field">
+              <label>Watermark di Sfondo</label>
+              <select id="sgSlideWatermark" onchange="updateSlideDataFromForm()">
+                <option value="none">Nessuno (Default)</option>
+                <option value="logo">Logo Gigante Sfumato</option>
+              </select>
+            </div>
+            
+            <div class="cal-field">
               <label>Titolo Slide</label>
               <input type="text" id="sgSlideTitle" oninput="updateSlideDataFromForm()" placeholder="Es: FAZZINI AL CAGLIARI 👀">
             </div>
