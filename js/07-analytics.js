@@ -1708,11 +1708,11 @@ function renderFavorites() {
 }
 
 // ── Pianifica idea nel calendario ──
-function calOpenModalFromIdea(title, type, slot, platform) {
+function calOpenModalFromIdea(title, type, slot, platform, aiText) {
   // Determino data: prossimo giorno utile in base allo slot (es. "Martedi 10:30")
   const days = { 'luned':1,'marted':2,'mercoled':3,'gioved':4,'vened':5,'sabat':6,'domenic':0 };
   let targetDate = new Date();
-  const slotLower = slot.toLowerCase();
+  const slotLower = (slot || '').toLowerCase();
   for (const [key, dow] of Object.entries(days)) {
     if (slotLower.includes(key)) {
       const today = targetDate.getDay();
@@ -1722,25 +1722,44 @@ function calOpenModalFromIdea(title, type, slot, platform) {
     }
   }
   // Estraggo ora
-  const timeMatch = slot.match(/(\d{1,2})[:\.](\d{2})/);
+  const timeMatch = (slot || '').match(/(\d{1,2})[:\.](\d{2})/);
   const time = timeMatch ? timeMatch[1].padStart(2,'0') + ':' + timeMatch[2] : '10:00';
   const dateStr = targetDate.toISOString().slice(0,10);
+  
   // Apro il modal del calendario
   calOpenModal(dateStr, null);
+  
   // Precompilo i campi
   setTimeout(() => {
     const titleEl = document.getElementById('calTitle');
     const timeEl = document.getElementById('calTime');
     const typeEl = document.getElementById('calType');
     const platEl = document.getElementById('calPlatform');
+    
     if (titleEl) titleEl.value = title;
     if (timeEl) timeEl.value = time;
+    
     // Imposto piattaforma
     const isYt = platform === 'yt' || type === 'VIDEO' || type === 'SHORT' || type === 'LIVE' || type === 'ASTA_LIVE';
     if (platEl) { platEl.value = isYt ? 'yt' : 'ig'; calOnPlatformChange(); }
+    
     // Imposto tipo
     if (typeEl) typeEl.value = type;
     calUpdateSlotHint();
+    
+    // Se c'è del testo AI, lo decodifichiamo e popoliamo le sezioni del Bynor Editor
+    if (aiText) {
+      const parsed = parseAiTextToEditorFields(aiText);
+      const strategyEl = document.getElementById('calStrategy');
+      const visualEl = document.getElementById('calVisual');
+      const scriptEl = document.getElementById('calScript');
+      const notesEl = document.getElementById('calNotes');
+      
+      if (strategyEl) strategyEl.value = parsed.strategy;
+      if (visualEl) visualEl.value = parsed.visual;
+      if (scriptEl) scriptEl.value = parsed.script;
+      if (notesEl) notesEl.value = parsed.caption;
+    }
     
     // Cambia tab a Calendario per far vedere il modal aperto!
     const calTabBtn = document.querySelector('button[data-tab="calendario"]');
@@ -1826,6 +1845,9 @@ Rispondi direttamente ed esclusivamente con lo script o copione, formattato in m
         <button class="cal-btn copy-btn" style="font-size:10px;padding:3px 8px;margin-left:auto;">
           <span class="material-symbols-rounded" style="font-size:12px;">content_copy</span>Copia
         </button>
+        <button class="cal-btn plan-btn" style="font-size:10px;padding:3px 8px;margin-left:6px;">
+          <span class="material-symbols-rounded" style="font-size:12px;">calendar_month</span>Pianifica
+        </button>
       </div>
       <div class="script-content" style="white-space:pre-wrap;font-size:12.5px;margin-top:8px;line-height:1.55;color:var(--ink-mid);text-align:left;"></div>
     `;
@@ -1833,6 +1855,9 @@ Rispondi direttamente ed esclusivamente con lo script o copione, formattato in m
     scriptBox.querySelector('.copy-btn').onclick = () => {
       navigator.clipboard.writeText(text);
       alert('Script copiato negli appunti!');
+    };
+    scriptBox.querySelector('.plan-btn').onclick = () => {
+      calOpenModalFromIdea(idea.title || '', idea.format || 'IMAGE', idea.slot || 'Oggi 10:00', platform, text);
     };
   } catch(e) {
     scriptBox.classList.remove('loading');

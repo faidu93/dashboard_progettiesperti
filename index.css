@@ -2274,3 +2274,50 @@ body {
   margin-bottom: 6px;
 }
 
+/* ── BYNOR CONTENT CREATOR & EDITOR MODAL ── */
+.cal-editor-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 24px;
+  margin: 16px 0;
+}
+.cal-editor-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+@media (min-width: 769px) {
+  .cal-modal {
+    max-width: 900px !important;
+    width: 95% !important;
+  }
+}
+@media (max-width: 768px) {
+  .cal-editor-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+.cal-field label {
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  color: var(--accent) !important;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cal-field textarea {
+  font-size: 13px !important;
+  line-height: 1.5;
+  background: var(--bg-elev-2) !important;
+  border-color: var(--line) !important;
+}
+.cal-field textarea:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(255, 140, 30, 0.1);
+}
+
+
+
+
+

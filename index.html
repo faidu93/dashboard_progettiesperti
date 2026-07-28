@@ -681,110 +681,161 @@
   </section>
 
 
-  <!-- MODAL: aggiungi post pianificato -->
+  <!-- MODAL: aggiungi post pianificato (Editor di Contenuti Stile Bynor) -->
   <div class="cal-modal-bg" id="calModal">
-    <div class="cal-modal">
-      <h3 id="calModalTitle">Pianifica un post</h3>
-      <input type="hidden" id="calEditId">
-      <div class="cal-field">
-        <label>Social</label>
-        <div class="cal-btn-group" id="calPlatformGroup">
-          <button type="button" class="cal-btn-option active" data-val="ig" onclick="calSetPlatform('ig')"><svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Instagram</button>
-          <button type="button" class="cal-btn-option" data-val="yt" onclick="calSetPlatform('yt')"><svg class="brand-ico yt" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C.5 8.056.5 12 .5 12s0 3.944.501 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.377.55 9.377.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C23.5 15.944 23.5 12 23.5 12s0-3.944-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YouTube</button>
-        </div>
-        <select id="calPlatform" style="display:none">
-          <option value="ig">Instagram</option>
-          <option value="yt">YouTube</option>
-        </select>
-      </div>
-      <!-- Banner YouTube: solo pianificazione -->
-      <div id="calYtBanner" style="display:none; align-items:center; gap:8px; padding:9px 12px; border-radius:8px; background:rgba(255,80,80,0.07); border:1px solid rgba(255,80,80,0.2); font-family:var(--font-mono); font-size:11px; color:var(--ink-soft); margin-bottom:4px;">
-        <span class="material-symbols-rounded" style="font-size:16px; color:#ff5050; flex-shrink:0;">info</span>
-        <span>YouTube in <strong>sola pianificazione</strong> — il post viene salvato nel calendario ma non pubblicato automaticamente.</span>
-      </div>
-      <div class="cal-modal-row">
-        <div class="cal-field">
-          <label>Data</label>
-          <input type="date" id="calDate" oninput="calUpdateSlotHint()">
-        </div>
-        <div class="cal-field">
-          <label>Ora</label>
-          <input type="time" id="calTime" value="10:00" oninput="calUpdateSlotHint()">
-        </div>
-      </div>
-      <div id="calSlotHint" style="display:none;font-family:var(--font-mono);font-size:11px;padding:8px 11px;border-radius:7px;margin-bottom:4px;"></div>
-      <div class="cal-field">
-        <label>Formato</label>
-        <div class="cal-btn-group" id="calTypeGroup"></div>
-        <select id="calType" style="display:none">
-          <option value="IMAGE">📷 Foto</option>
-          <option value="CAROUSEL_ALBUM">⊞ Carosello</option>
-          <option value="REELS">▶ Reel</option>
-          <option value="STORY">◈ Story</option>
-        </select>
-      </div>
-      <div class="cal-field">
-        <label>Titolo / Idea</label>
-        <input type="text" id="calTitle" placeholder="Es: TOP 10 marcatori stagione 25/26">
-      </div>
-      <div class="cal-field" id="calHostField" style="display:none;">
-        <label>Host della diretta</label>
-        <input type="text" id="calHost" placeholder="Es: Profeta, Carmy, Borghi...">
-      </div>
-      <div class="cal-field" id="calMediaField" style="display:none;">
-        <label>Media <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· caricando qui il post viene pubblicato su Instagram</span></label>
-        <div class="cal-upload" id="calUpload">
-          <input type="file" id="calUploadInput" accept="image/*,video/*" style="display:none;">
-          <span class="material-symbols-rounded">cloud_upload</span>
-          <div class="cal-upload-text">Trascina qui o clicca per caricare</div>
-          <div class="cal-upload-hint">JPEG, PNG, MP4 · senza media resta solo un promemoria</div>
-        </div>
-        <div class="cal-upload-preview" id="calUploadPreview"></div>
-        <div class="cal-upload-status" id="calUploadStatus"></div>
-        <button type="button" class="cal-upload-remove" id="calUploadRemove" style="display:none;">Rimuovi media</button>
-        <input type="hidden" id="calMediaUrl">
-        <input type="hidden" id="calMediaKind">
-      </div>
-      <div class="cal-field" id="calCoverField" style="display:none;">
-        <label>Copertina Reel <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· immagine da usare come copertina del Reel (opzionale)</span></label>
-        <div class="cal-upload" id="calCoverUpload">
-          <input type="file" id="calCoverUploadInput" accept="image/*" style="display:none;">
-          <span class="material-symbols-rounded">image</span>
-          <div class="cal-upload-text">Carica copertina Reel</div>
-          <div class="cal-upload-hint">Solo immagini (JPEG, PNG)</div>
-        </div>
-        <div class="cal-upload-preview" id="calCoverUploadPreview"></div>
-        <div class="cal-upload-status" id="calCoverUploadStatus"></div>
-        <button type="button" class="cal-upload-remove" id="calCoverUploadRemove" style="display:none;">Rimuovi copertina</button>
-        <input type="hidden" id="calCoverUrl">
-      </div>
-      <div class="cal-field" id="calCollabField" style="display:none;">
-        <label>Collaboratori (Co-author) <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· username Instagram da invitare come co-autori (separati da virgola, es: pag1, pag2)</span></label>
-        <input type="text" id="calCollaborators" placeholder="Es: carmyminardi, profeta_del_fanta" style="font-size:12px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink); width:100%; box-sizing:border-box; outline:none;">
-      </div>
-      <div class="cal-field" id="calNotesField">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <label>Note / Caption</label>
-          <button type="button" class="cal-btn" id="calAiCaptionBtn" style="font-size:11px; padding:4px 8px; height:auto; display:inline-flex; align-items:center; gap:4px; background:rgba(255,140,30,0.08); border-color:var(--accent); color:var(--accent);">
-            <span class="material-symbols-rounded" style="font-size:14px;">auto_awesome</span>✨ Genera con AI
-          </button>
-        </div>
-        
-        <!-- OPZIONI AI AVANZATE -->
-        <div id="calAiOptions" style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;">
-          <input type="text" id="calAiExtra" placeholder="Dettagli chiave (es. cita Fazzini, gioca sul nome...)" style="font-size:12px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink); width:100%; box-sizing:border-box; outline:none;">
-          <input type="hidden" id="calAiTone" value="coinvolgente">
-        </div>
-
-        <textarea id="calNotes" placeholder="Testo, riferimenti, hashtag… (diventa la caption se carichi un media)"></textarea>
-      </div>
-      <div class="cal-modal-actions">
-        <button class="cal-btn" id="calDeleteBtn" style="color:var(--neg);display:none;">Elimina</button>
-        <button class="cal-btn" id="calCancelBtn">Annulla</button>
-        <button class="cal-btn primary" id="calSaveBtn">
-          <span class="material-symbols-rounded">save</span>Salva
+    <div class="cal-modal" style="max-width: 900px; width: 95%;">
+      
+      <!-- Testata Modal -->
+      <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:8px;">
+        <h3 id="calModalTitle" style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink); margin:0;">Pianifica un post</h3>
+        <button class="cal-btn" onclick="document.getElementById('calModal').classList.remove('show')" style="border-radius:50%; width:32px; height:32px; padding:0; display:grid; place-items:center; background:var(--bg-elev-2); border-color:var(--line);">
+          <span class="material-symbols-rounded" style="font-size:18px;">close</span>
         </button>
       </div>
+      
+      <input type="hidden" id="calEditId">
+      
+      <!-- Layout a due colonne Bynor Editor -->
+      <div class="cal-editor-grid">
+        
+        <!-- COLONNA SINISTRA: Strategia, Contesto Visivo, Script -->
+        <div class="cal-editor-col">
+          <div class="cal-field">
+            <label>Social Network</label>
+            <div class="cal-btn-group" id="calPlatformGroup">
+              <button type="button" class="cal-btn-option active" data-val="ig" onclick="calSetPlatform('ig')">
+                <svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Instagram
+              </button>
+              <button type="button" class="cal-btn-option" data-val="yt" onclick="calSetPlatform('yt')">
+                <svg class="brand-ico yt" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C.5 8.056.5 12 .5 12s0 3.944.501 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.377.55 9.377.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C23.5 15.944 23.5 12 23.5 12s0-3.944-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YouTube
+              </button>
+            </div>
+            <select id="calPlatform" style="display:none">
+              <option value="ig">Instagram</option>
+              <option value="yt">YouTube</option>
+            </select>
+          </div>
+          
+          <div id="calYtBanner" style="display:none; align-items:center; gap:8px; padding:9px 12px; border-radius:8px; background:rgba(255,80,80,0.07); border:1px solid rgba(255,80,80,0.2); font-family:var(--font-mono); font-size:11px; color:var(--ink-soft); margin-bottom:4px;">
+            <span class="material-symbols-rounded" style="font-size:16px; color:#ff5050; flex-shrink:0;">info</span>
+            <span>YouTube in <strong>sola pianificazione</strong> — il post viene salvato nel calendario ma non pubblicato automaticamente.</span>
+          </div>
+
+          <div class="cal-modal-row">
+            <div class="cal-field">
+              <label>Data di pubblicazione</label>
+              <input type="date" id="calDate" oninput="calUpdateSlotHint()">
+            </div>
+            <div class="cal-field">
+              <label>Orario consigliato</label>
+              <input type="time" id="calTime" value="10:00" oninput="calUpdateSlotHint()">
+            </div>
+          </div>
+          
+          <div id="calSlotHint" style="display:none;font-family:var(--font-mono);font-size:11px;padding:8px 11px;border-radius:7px;margin-bottom:4px;"></div>
+          
+          <div class="cal-field">
+            <label>Formato Contenuto</label>
+            <div class="cal-btn-group" id="calTypeGroup"></div>
+            <select id="calType" style="display:none">
+              <option value="IMAGE">📷 Foto</option>
+              <option value="CAROUSEL_ALBUM">⊞ Carosello</option>
+              <option value="REELS">▶ Reel</option>
+              <option value="STORY">◈ Story</option>
+            </select>
+          </div>
+          
+          <div class="cal-field">
+            <label>1. Strategia editoriale</label>
+            <textarea id="calStrategy" style="min-height:60px;" placeholder="Qual è lo scopo del post? Es. Posizionare un talento low cost strategico per l'asta..."></textarea>
+          </div>
+          
+          <div class="cal-field">
+            <label>2. Suggerimento grafico / Contesto visivo</label>
+            <textarea id="calVisual" style="min-height:65px;" placeholder="Come deve presentarsi graficamente il post? Es. Sfondo scuro, cerchio arancio neon con Fazzini in primo piano, testo 'SCOMMESSA FREGATURA?'..."></textarea>
+          </div>
+          
+          <div class="cal-field">
+            <label>3. Struttura del post / Copione Reel</label>
+            <textarea id="calScript" style="min-height:100px;" placeholder="Inserisci il copione parola per parola per il video o la scaletta slide per slide per il carosello..."></textarea>
+          </div>
+        </div>
+
+        <!-- COLONNA DESTRA: Titolo, Note/Caption, Media Upload, Collaboratori -->
+        <div class="cal-editor-col">
+          <div class="cal-field">
+            <label>Titolo / Idea di base</label>
+            <input type="text" id="calTitle" placeholder="Es: TOP 10 scommesse low cost asta">
+          </div>
+
+          <div class="cal-field" id="calNotesField">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label>4. Caption finale / Didascalia</label>
+              <button type="button" class="cal-btn" id="calAiCaptionBtn" style="font-size:11px; padding:4px 8px; height:auto; display:inline-flex; align-items:center; gap:4px; background:rgba(255,140,30,0.08); border-color:var(--accent); color:var(--accent);">
+                <span class="material-symbols-rounded" style="font-size:14px;">auto_awesome</span>✨ Genera con AI
+              </button>
+            </div>
+            
+            <div id="calAiOptions" style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;">
+              <input type="text" id="calAiExtra" placeholder="Note per l'AI (es. cita Fazzini e Belahyane...)" style="font-size:12px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink); width:100%; box-sizing:border-box; outline:none;">
+              <input type="hidden" id="calAiTone" value="coinvolgente">
+            </div>
+
+            <textarea id="calNotes" style="min-height:120px;" placeholder="Testo, emoji, hashtag pronti per essere pubblicati..."></textarea>
+          </div>
+
+          <div class="cal-field" id="calHostField" style="display:none;">
+            <label>Host della diretta</label>
+            <input type="text" id="calHost" placeholder="Es: Profeta, Carmy, Borghi...">
+          </div>
+          
+          <div class="cal-field" id="calMediaField" style="display:none;">
+            <label>Caricamento Media <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· per pubblicazione reale</span></label>
+            <div class="cal-upload" id="calUpload">
+              <input type="file" id="calUploadInput" accept="image/*,video/*" style="display:none;">
+              <span class="material-symbols-rounded">cloud_upload</span>
+              <div class="cal-upload-text">Trascina qui o clicca per caricare</div>
+              <div class="cal-upload-hint">Supportati: JPEG, PNG, MP4</div>
+            </div>
+            <div class="cal-upload-preview" id="calUploadPreview"></div>
+            <div class="cal-upload-status" id="calUploadStatus"></div>
+            <button type="button" class="cal-upload-remove" id="calUploadRemove" style="display:none;">Rimuovi media</button>
+            <input type="hidden" id="calMediaUrl">
+            <input type="hidden" id="calMediaKind">
+          </div>
+          
+          <div class="cal-field" id="calCoverField" style="display:none;">
+            <label>Copertina Reel <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· copertina personalizzata (opzionale)</span></label>
+            <div class="cal-upload" id="calCoverUpload">
+              <input type="file" id="calCoverUploadInput" accept="image/*" style="display:none;">
+              <span class="material-symbols-rounded">image</span>
+              <div class="cal-upload-text">Carica copertina Reel</div>
+            </div>
+            <div class="cal-upload-preview" id="calCoverUploadPreview"></div>
+            <div class="cal-upload-status" id="calCoverUploadStatus"></div>
+            <button type="button" class="cal-upload-remove" id="calCoverUploadRemove" style="display:none;">Rimuovi copertina</button>
+            <input type="hidden" id="calCoverUrl">
+          </div>
+          
+          <div class="cal-field" id="calCollabField" style="display:none;">
+            <label>Collaboratori (Co-author) <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· username IG co-autori (separati da virgola)</span></label>
+            <input type="text" id="calCollaborators" placeholder="Es: carmyminardi, profeta_del_fanta" style="font-size:12px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink); width:100%; box-sizing:border-box; outline:none;">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Azioni finali dell'editor -->
+      <div class="cal-modal-actions" style="border-top:1px solid var(--line); padding-top:16px; margin-top:8px;">
+        <button class="cal-btn" id="calDeleteBtn" style="color:var(--neg);display:none;margin-right:auto;">
+          <span class="material-symbols-rounded" style="font-size:14px;">delete</span>Elimina
+        </button>
+        <button class="cal-btn" id="calCancelBtn">Annulla</button>
+        <button class="cal-btn primary" id="calSaveBtn">
+          <span class="material-symbols-rounded">calendar_today</span>Programma contenuto
+        </button>
+      </div>
+
     </div>
   </div>
 

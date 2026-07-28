@@ -45,6 +45,89 @@ function calDateStr(date) {
     String(date.getDate()).padStart(2,'0');
 }
 
+function parseStructuredNotes(notes) {
+  const result = {
+    strategy: '',
+    visual: '',
+    script: '',
+    caption: notes || ''
+  };
+  
+  if (!notes) return result;
+  
+  const strategyMatch = notes.match(/\[STRATEGIA\]\n([\s\S]*?)(?=\n\[|$)/);
+  const visualMatch = notes.match(/\[CONTESTO VISIVO\]\n([\s\S]*?)(?=\n\[|$)/);
+  const scriptMatch = notes.match(/\[COPIONE\]\n([\s\S]*?)(?=\n\[|$)/);
+  const captionMatch = notes.match(/\[CAPTION\]\n([\s\S]*?)(?=\n\[|$)/);
+  
+  if (strategyMatch || visualMatch || scriptMatch || captionMatch) {
+    if (strategyMatch) result.strategy = strategyMatch[1].trim();
+    if (visualMatch) result.visual = visualMatch[1].trim();
+    if (scriptMatch) result.script = scriptMatch[1].trim();
+    if (captionMatch) result.caption = captionMatch[1].trim();
+  }
+  
+  return result;
+}
+
+function serializeStructuredNotes(strategy, visual, script, caption) {
+  let parts = [];
+  if (strategy && strategy.trim()) parts.push(`[STRATEGIA]\n${strategy.trim()}`);
+  if (visual && visual.trim()) parts.push(`[CONTESTO VISIVO]\n${visual.trim()}`);
+  if (script && script.trim()) parts.push(`[COPIONE]\n${script.trim()}`);
+  if (caption && caption.trim()) parts.push(`[CAPTION]\n${caption.trim()}`);
+  
+  if (parts.length === 0) return '';
+  if (parts.length === 1 && caption && caption.trim()) return caption.trim();
+  
+  return parts.join('\n\n');
+}
+
+function parseAiTextToEditorFields(text) {
+  const result = {
+    strategy: '',
+    visual: '',
+    script: '',
+    caption: ''
+  };
+  
+  if (!text) return result;
+  
+  // Dividiamo in blocchi usando lookahead per intercettare i tag
+  const sections = text.split(/(?=\n(?:STRATEGIA|Strategia|OBIETTIVO|Obiettivo|VISUAL|Visual|CONTESTO VISIVO|Contesto visivo|COPIONE|Copione|SCRIPT|Script|DIDASCALIA|Didascalia|CAPTION|Caption|Slide \d|SLIDE \d)[:\n\-#])/i);
+  
+  let unclassified = [];
+  
+  sections.forEach(sec => {
+    const trimmed = sec.trim();
+    if (!trimmed) return;
+    
+    if (trimmed.match(/^(?:STRATEGIA|Strategia|OBIETTIVO|Obiettivo)[:\n\-#\s]/i)) {
+      result.strategy = trimmed.replace(/^(?:STRATEGIA|Strategia|OBIETTIVO|Obiettivo)[:\n\-#\s]+/i, '').trim();
+    } else if (trimmed.match(/^(?:VISUAL|Visual|CONTESTO VISIVO|Contesto visivo|GRAFICA|Grafica)[:\n\-#\s]/i)) {
+      result.visual = trimmed.replace(/^(?:VISUAL|Visual|CONTESTO VISIVO|Contesto visivo|GRAFICA|Grafica)[:\n\-#\s]+/i, '').trim();
+    } else if (trimmed.match(/^(?:COPIONE|Copione|SCRIPT|Script|STRUTTURA|Struttura)[:\n\-#\s]/i)) {
+      result.script = trimmed.replace(/^(?:COPIONE|Copione|SCRIPT|Script|STRUTTURA|Struttura)[:\n\-#\s]+/i, '').trim();
+    } else if (trimmed.match(/^(?:DIDASCALIA|Didascalia|CAPTION|Caption)[:\n\-#\s]/i)) {
+      result.caption = trimmed.replace(/^(?:DIDASCALIA|Didascalia|CAPTION|Caption)[:\n\-#\s]+/i, '').trim();
+    } else {
+      unclassified.push(trimmed);
+    }
+  });
+  
+  if (!result.caption && !result.script) {
+    result.caption = text.trim();
+  } else if (unclassified.length > 0) {
+    if (result.caption) {
+      result.caption += '\n\n' + unclassified.join('\n\n');
+    } else {
+      result.script += '\n\n' + unclassified.join('\n\n');
+    }
+  }
+  
+  return result;
+}
+
 
 function calSetFilter(btn) {
   document.querySelectorAll('.cal-filter').forEach(b => b.classList.remove('active'));
@@ -532,7 +615,9 @@ function calEditPlanned(e, id, platform) {
   document.getElementById('calDate').value = item.date;
   document.getElementById('calTime').value = item.time || '10:00';
   calSetType(item.type); // aggiorna pulsante tipo attivo
+
   document.getElementById('calTitle').value = item.title;
+  
   // Estrai il tag [COLLAB:...] dalle note e ripristina il campo collaboratori
   let editNotes = item.notes || '';
   let editCollaborators = '';
@@ -541,7 +626,14 @@ function calEditPlanned(e, id, platform) {
     editCollaborators = collabMatch[1];
     editNotes = editNotes.replace(/\s*\[COLLAB:[^\]]+\]/, '').trim();
   }
-  document.getElementById('calNotes').value = editNotes;
+  
+  // Destrutturiamo le note per il Bynor Editor
+  const parsed = parseStructuredNotes(editNotes);
+  document.getElementById('calStrategy').value = parsed.strategy;
+  document.getElementById('calVisual').value = parsed.visual;
+  document.getElementById('calScript').value = parsed.script;
+  document.getElementById('calNotes').value = parsed.caption;
+  
   document.getElementById('calCollaborators').value = editCollaborators;
   document.getElementById('calHost').value = item.host || '';
   document.getElementById('calModal').dataset.platform = platform;
@@ -561,11 +653,15 @@ function calOpenModal(ds, id) {
   document.getElementById('calPlatform').value = 'ig';
   document.getElementById('calModal').dataset.platform = 'ig';
   document.getElementById('calTitle').value = '';
+  document.getElementById('calStrategy').value = '';
+  document.getElementById('calVisual').value = '';
+  document.getElementById('calScript').value = '';
   document.getElementById('calNotes').value = '';
   document.getElementById('calHost').value = '';
   document.getElementById('calCollaborators').value = '';
   document.getElementById('calDeleteBtn').style.display = 'none';
   document.getElementById('calModalTitle').textContent = 'Pianifica post';
+  
   // Reset pulsanti piattaforma su Instagram
   document.querySelectorAll('#calPlatformGroup .cal-btn-option').forEach(b =>
     b.classList.toggle('active', b.dataset.val === 'ig')
@@ -769,12 +865,20 @@ function calSetupEvents() {
     const time = document.getElementById('calTime').value;
     const type = document.getElementById('calType').value;
     const title = document.getElementById('calTitle').value.trim();
-    const notes = document.getElementById('calNotes').value.trim();
+    
+    // Recupero e serializzazione dei campi del Bynor Editor
+    const strategy = document.getElementById('calStrategy').value.trim();
+    const visual = document.getElementById('calVisual').value.trim();
+    const script = document.getElementById('calScript').value.trim();
+    const caption = document.getElementById('calNotes').value.trim();
+    
+    const serialized = serializeStructuredNotes(strategy, visual, script, caption);
     const collaboratorsRaw = (document.getElementById('calCollaborators') ? document.getElementById('calCollaborators').value.trim() : '');
+    
     // Appende il tag [COLLAB:...] in fondo alle note se ci sono collaboratori e siamo su IG
     const finalNotes = (collaboratorsRaw && platform === 'ig')
-      ? (notes + (notes ? '\n\n' : '') + '[COLLAB:' + collaboratorsRaw + ']')
-      : notes;
+      ? (serialized + (serialized ? '\n\n' : '') + '[COLLAB:' + collaboratorsRaw + ']')
+      : serialized;
     const host = (platform === 'yt' && (type === 'LIVE' || type === 'ASTA_LIVE')) ? document.getElementById('calHost').value.trim() : '';
     if (!date || !title) { alert('Inserisci almeno data e titolo.'); return; }
 
