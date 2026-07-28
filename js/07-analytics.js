@@ -741,11 +741,6 @@ function updateOnboarding() {
 }
 
 // ── Persistenza campi Intelligence ──
-function intelSaveSecret(fieldId) {
-  const val = document.getElementById(fieldId)?.value?.trim();
-  if (!val) return;
-  try { localStorage.setItem('publish_secret', val); sessionStorage.setItem('publish_secret', val); } catch(e) {}
-}
 
 const INTEL_KEYS = {
   ytApiKey:'intel_yt_apikey', ytChannels:'intel_yt_channels', ytVideoCount:'intel_yt_count',
@@ -778,7 +773,7 @@ function intelRestoreFields() {
   try {
     const s = localStorage.getItem('publish_secret') || sessionStorage.getItem('publish_secret') || '';
     if (s) {
-      ['ytSecret','igSecret'].forEach(id => {
+      ['chatSecret', 'ytSecret', 'igSecret', 'calSecret'].forEach(id => {
         const el = document.getElementById(id);
         if (el && !el.value) el.value = s;
       });
@@ -1614,6 +1609,9 @@ function renderIdeas(ideas, targetId, platform, sessionId, votes) {
         '<button class="idea-plan-btn" onclick="calOpenModalFromIdea(\'' + planTitle + '\',\'' + planType + '\',\'' + planSlot + '\',\'' + platform + '\')">' +
           '<span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span>Pianifica' +
         '</button>' +
+        '<button class="idea-plan-btn" style="background:#5e72e4;border-color:#5e72e4;margin-left:6px;" onclick="intelGenerateScript(\'' + sid + '\',' + idea.num + ',\'' + platform + '\',this)">' +
+          '<span class="material-symbols-rounded" style="font-size:14px;">edit_note</span>Script' +
+        '</button>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -1678,7 +1676,7 @@ function renderFavorites() {
     const sessionInfo = (idea._label||'') + ' · ' + d.getDate() + '/' + (d.getMonth()+1);
     const planTitle = (idea.title||'').replace(/'/g,"\\'").slice(0,80);
     const planSlot = (idea.slot||'').replace(/'/g,"'");
-    return '<div class="idea-card fav-card">' +
+    return '<div class="idea-card fav-card" id="idea-' + idea._sessionId + '-' + idea.num + '">' +
       '<div class="idea-header">' +
         '<span class="idea-format ' + cls + '">' + lbl + '</span>' +
         (idea.slot ? '<span class="idea-slot">⏰ ' + idea.slot + '</span>' : '') +
@@ -1692,6 +1690,9 @@ function renderFavorites() {
         '<button class="idea-vote up active" title="Rimuovi dai preferiti" onclick="intelVote(\'' + idea._sessionId + '\',' + idea.num + ',\'up\',this)">👍 preferita</button>' +
         '<button class="idea-plan-btn" onclick="calOpenModalFromIdea(\'' + planTitle + '\',\'' + fmt + '\',\'' + planSlot + '\',\'' + idea._platform + '\')">' +
           '<span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span>Pianifica' +
+        '</button>' +
+        '<button class="idea-plan-btn" style="background:#5e72e4;border-color:#5e72e4;margin-left:6px;" onclick="intelGenerateScript(\'' + idea._sessionId + '\',' + idea.num + ',\'' + idea._platform + '\',this)">' +
+          '<span class="material-symbols-rounded" style="font-size:14px;">edit_note</span>Script' +
         '</button>' +
       '</div>' +
     '</div>';
@@ -1740,12 +1741,303 @@ function calOpenModalFromIdea(title, type, slot, platform) {
     // Imposto tipo
     if (typeEl) typeEl.value = type;
     calUpdateSlotHint();
+    
+    // Cambia tab a Calendario per far vedere il modal aperto!
+    const calTabBtn = document.querySelector('button[data-tab="calendario"]');
+    if (calTabBtn) {
+      tabSwitch(calTabBtn);
+    }
   }, 50);
+}
+
+// ── Generatore Script ed Espansione Idee con Claude ──
+async function intelGenerateScript(sessionId, ideaNum, platform, btn) {
+  const card = document.getElementById('idea-' + sessionId + '-' + ideaNum);
+  if (!card) return;
+
+  const oldBox = card.querySelector('.idea-script-box');
+  if (oldBox) {
+    oldBox.remove();
+    return;
+  }
+
+  const scriptBox = document.createElement('div');
+  scriptBox.className = 'idea-script-box loading';
+  scriptBox.innerHTML = '<span class="material-symbols-rounded" style="animation:spin 1s linear infinite;font-size:16px;margin-right:8px;">progress_activity</span> Scrittura copione con l\'IA…';
+  card.appendChild(scriptBox);
+
+  const sessions = intelHistoryLoad();
+  const s = sessions.find(x => x.id === sessionId);
+  const idea = s ? (s.ideas || []).find(i => String(i.num) === String(ideaNum)) : null;
+  if (!idea) {
+    scriptBox.innerHTML = '❌ Errore: idea non trovata.';
+    scriptBox.classList.remove('loading');
+    return;
+  }
+
+  const secret = intelGetSecret(platform);
+  if (!secret) {
+    scriptBox.innerHTML = '❌ Password di pubblicazione mancante. Inseriscila nel campo segreto sopra per abilitare Claude.';
+    scriptBox.classList.remove('loading');
+    return;
+  }
+
+  const prompt = `Sei un copywriter e content writer professionista specializzato in fantacalcio Serie A.
+Espandi questa idea di contenuto in uno script completo, pronto da essere utilizzato.
+
+IDEA AI:
+- Formato: ${idea.format}
+- Titolo: ${idea.title}
+- Angolo unico: ${idea.angle || 'Non specificato'}
+- Brief: ${idea.body}
+
+ISTRUZIONI DI SCRITTURA:
+${idea.format === 'REELS' ? 
+`Scrivi un copione Reel parola per parola:
+1. HOOK iniziale (0-3 sec): la prima frase esatta ad altissimo impatto.
+2. CORPO (3-25 sec): il testo parola per parola che l'esperto del club deve recitare davanti alla camera. Sii preciso, diretto, evita frasi vuote.
+3. CTA finale: cosa dire per far commentare gli utenti sotto il video.`
+:
+`Scrivi il testo per il Post/Carosello:
+1. TESTO DI CIASCUNA SLIDE: scrivi il testo sintetico e d'impatto da inserire su ogni singola slide della grafica (Slide 1, Slide 2, ..., Slide Finale).
+2. DIDASCALIA (Caption): scrivi il testo del post pronto da pubblicare, strutturato con emoji, paragrafi ariosi e CTA.
+3. HASHTAG: includi 5 hashtag target per fantacalcio.`
+}
+
+Rispondi direttamente ed esclusivamente con lo script o copione, formattato in modo chiaro e leggibile, senza commenti iniziali o finali dell'AI.`;
+
+  try {
+    let selectedModel = 'claude-sonnet-5';
+    try { selectedModel = localStorage.getItem('intel_model') || 'claude-sonnet-5'; } catch(e) {}
+
+    const res = await fetch(BACKEND_BASE + '/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret },
+      body: JSON.stringify({ model: selectedModel, max_tokens: 2500, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+
+    scriptBox.classList.remove('loading');
+    scriptBox.innerHTML = `
+      <div class="script-header">
+        <span class="material-symbols-rounded" style="font-size:14px;color:var(--accent);">edit_note</span>Script Completo
+        <button class="cal-btn copy-btn" style="font-size:10px;padding:3px 8px;margin-left:auto;">
+          <span class="material-symbols-rounded" style="font-size:12px;">content_copy</span>Copia
+        </button>
+      </div>
+      <div class="script-content" style="white-space:pre-wrap;font-size:12.5px;margin-top:8px;line-height:1.55;color:var(--ink-mid);text-align:left;"></div>
+    `;
+    scriptBox.querySelector('.script-content').textContent = text;
+    scriptBox.querySelector('.copy-btn').onclick = () => {
+      navigator.clipboard.writeText(text);
+      alert('Script copiato negli appunti!');
+    };
+  } catch(e) {
+    scriptBox.classList.remove('loading');
+    scriptBox.innerHTML = '❌ Errore nella generazione: ' + e.message;
+  }
+}
+
+// ── Navigazione Sotto-Tab Intelligence ──
+function intelSwitchSubTab(tab) {
+  const btnChat = document.getElementById('btnSubIntelChat');
+  const btnStudio = document.getElementById('btnSubIntelStudio');
+  const btnComp = document.getElementById('btnSubIntelCompetitor');
+  
+  const panelChat = document.getElementById('panelIntelChat');
+  const panelStudio = document.getElementById('panelIntelStudio');
+  const panelComp = document.getElementById('panelIntelCompetitor');
+
+  if (!btnChat || !btnStudio || !btnComp || !panelChat || !panelStudio || !panelComp) return;
+
+  btnChat.classList.remove('active');
+  btnStudio.classList.remove('active');
+  btnComp.classList.remove('active');
+  
+  panelChat.style.display = 'none';
+  panelStudio.style.display = 'none';
+  panelComp.style.display = 'none';
+
+  if (tab === 'chat') {
+    btnChat.classList.add('active');
+    panelChat.style.display = 'block';
+  } else if (tab === 'studio') {
+    btnStudio.classList.add('active');
+    panelStudio.style.display = 'block';
+  } else if (tab === 'competitor') {
+    btnComp.classList.add('active');
+    panelComp.style.display = 'block';
+  }
+}
+
+// Sincronizzazione automatica delle password inserite
+function intelSaveSecret(id) {
+  const val = document.getElementById(id).value;
+  try {
+    sessionStorage.setItem('publish_secret', val);
+    localStorage.setItem('publish_secret', val);
+  } catch(e) {}
+  ['chatSecret', 'ytSecret', 'igSecret', 'calSecret'].forEach(pid => {
+    const el = document.getElementById(pid);
+    if (el) el.value = val;
+  });
+}
+
+// ── AI Chat Assistant Logic ──
+let chatHistory = [
+  { role: 'system', content: 'Sei un assistente editoriale intelligente per la community fantacalcio "Esperti Profeta". Il tuo compito è aiutare lo strategist a creare contenuti per Instagram (Reel, caroselli, grafiche) e YouTube (video, short). Sii creativo, pratico, specifico con i dati dei giocatori di Serie A e ottimizzato per il target dei fantaallenatori.' }
+];
+
+async function chatSendMessage() {
+  const inputEl = document.getElementById('chatInput');
+  const text = inputEl.value.trim();
+  if (!text) return;
+  inputEl.value = '';
+
+  const messagesBox = document.getElementById('chatMessages');
+
+  // Aggiungi messaggio utente
+  const userMsgDiv = document.createElement('div');
+  userMsgDiv.className = 'chat-msg user';
+  userMsgDiv.textContent = text;
+  messagesBox.appendChild(userMsgDiv);
+  messagesBox.scrollTop = messagesBox.scrollHeight;
+
+  // Salva nella history
+  chatHistory.push({ role: 'user', content: text });
+
+  // Aggiungi messaggio loading dell'assistente
+  const loadingMsgDiv = document.createElement('div');
+  loadingMsgDiv.className = 'chat-msg assistant loading';
+  loadingMsgDiv.innerHTML = '<span class="material-symbols-rounded" style="animation:spin 1s linear infinite;font-size:16px;margin-right:6px;">progress_activity</span> Claude sta elaborando…';
+  messagesBox.appendChild(loadingMsgDiv);
+  messagesBox.scrollTop = messagesBox.scrollHeight;
+
+  // Recupera la password
+  let secret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || '';
+  if (!secret) {
+    secret = document.getElementById('chatSecret')?.value || document.getElementById('igSecret')?.value || '';
+  }
+
+  if (!secret) {
+    loadingMsgDiv.classList.remove('loading');
+    loadingMsgDiv.className = 'chat-msg assistant error';
+    loadingMsgDiv.innerHTML = '❌ <b>Password di pubblicazione mancante.</b> Inserisci PUBLISH_SECRET nel campo segreto a sinistra dell\'input della chat per sbloccare l\'AI.';
+    return;
+  }
+
+  try {
+    let selectedModel = 'claude-sonnet-5';
+    try { selectedModel = localStorage.getItem('intel_model') || 'claude-sonnet-5'; } catch(e) {}
+
+    const messagesToSend = [
+      chatHistory[0],
+      ...chatHistory.slice(-8) // passiamo gli ultimi 8 messaggi per mantenere il contesto
+    ];
+
+    const res = await fetch(BACKEND_BASE + '/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret },
+      body: JSON.stringify({ model: selectedModel, max_tokens: 3000, messages: messagesToSend })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    const aiText = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+
+    chatHistory.push({ role: 'assistant', content: aiText });
+
+    loadingMsgDiv.classList.remove('loading');
+    loadingMsgDiv.className = 'chat-msg assistant';
+
+    const formattedHtml = formatMarkdown(aiText);
+
+    loadingMsgDiv.innerHTML = `
+      <div class="chat-msg-body" style="text-align:left;">${formattedHtml}</div>
+      <div class="chat-msg-actions">
+        <button class="chat-action-btn copy">
+          <span class="material-symbols-rounded" style="font-size:12px;">content_copy</span> Copia
+        </button>
+        <button class="chat-action-btn plan">
+          <span class="material-symbols-rounded" style="font-size:12px;">calendar_month</span> Pianifica
+        </button>
+      </div>
+    `;
+
+    loadingMsgDiv.querySelector('.chat-action-btn.copy').onclick = () => {
+      navigator.clipboard.writeText(aiText);
+      alert('Copiato negli appunti!');
+    };
+
+    loadingMsgDiv.querySelector('.chat-action-btn.plan').onclick = () => {
+      calOpenModalFromIdea('', aiText, 'IMAGE', 'ig');
+    };
+
+    messagesBox.scrollTop = messagesBox.scrollHeight;
+  } catch(e) {
+    loadingMsgDiv.classList.remove('loading');
+    loadingMsgDiv.className = 'chat-msg assistant error';
+    loadingMsgDiv.textContent = '❌ Errore: ' + e.message;
+    messagesBox.scrollTop = messagesBox.scrollHeight;
+  }
+}
+
+function chatSendPrompt(text) {
+  document.getElementById('chatInput').value = text;
+  chatSendMessage();
+}
+
+function formatMarkdown(text) {
+  const lines = text.split('\\n');
+  let inList = false;
+  let result = [];
+
+  for (let line of lines) {
+    let cleanLine = line.trim();
+    
+    // Bold / Italic
+    line = line.replace(/\\*\\*([^\\*]+)\\*\\*/g, '<b>$1</b>');
+    line = line.replace(/\\*([^\\*]+)\\*/g, '<i>$1</i>');
+
+    if (cleanLine.startsWith('- ') || cleanLine.startsWith('* ')) {
+      if (!inList) {
+        result.push('<ul style="margin:6px 0;padding-left:18px;">');
+        inList = true;
+      }
+      result.push('<li style="margin-bottom:4px;">' + line.substring(line.indexOf(' ') + 1) + '</li>');
+    } else {
+      if (inList) {
+        result.push('</ul>');
+        inList = false;
+      }
+      if (cleanLine === '') {
+        result.push('<br>');
+      } else {
+        result.push('<p style="margin: 4px 0;">' + line + '</p>');
+      }
+    }
+  }
+  if (inList) {
+    result.push('</ul>');
+  }
+  return result.join('');
 }
 
 // Ricarica la storia all'avvio della tab Intelligence
 function intelInitHistoryBars() {
   renderFavorites();
+  
+  // Ricarica la password salvata e la sincronizza
+  let secret = '';
+  try { secret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
+  if (secret) {
+    ['chatSecret', 'ytSecret', 'igSecret', 'calSecret'].forEach(pid => {
+      const el = document.getElementById(pid);
+      if (el) el.value = secret;
+    });
+  }
+
   intelRenderHistoryBar('yt', null);
   intelRenderHistoryBar('ig', null);
 }

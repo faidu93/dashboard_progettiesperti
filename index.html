@@ -961,30 +961,179 @@
     </div>
   </section>
 
-  <!-- TOOL 1: YouTube Intelligence -->
+  <!-- TOOL: AI Content Studio & Competitor Intelligence -->
   <section class="section" data-tab="intelligence">
     <div class="panel">
-      <div class="panel-title">
-        <span class="material-symbols-rounded" style="color:#f08080;">smart_display</span>
-        YouTube Intelligence · analisi canali competitor
-      </div>
-      <div class="panel-sub">Monitora i video dei competitor ed elabora idee contenuto basate sui dati reali del settore.</div>
-
-      <!-- Storia ricerche YT -->
-      <div id="ytHistoryBar" style="display:none;margin-bottom:14px;"></div>
-
       <!-- Navigazione Sotto-Tab (Novità) -->
-      <div class="intel-sub-tabs" style="display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:10px;">
-        <button class="cal-btn active" id="btnSubYtComp" onclick="ytSwitchSubTab('comp')" style="font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:6px;">
-          <span class="material-symbols-rounded" style="font-size:16px;">smart_display</span>1. Video Competitor
+      <div class="intel-sub-tabs" style="display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:10px;flex-wrap:wrap;">
+        <button class="cal-btn active" id="btnSubIntelChat" onclick="intelSwitchSubTab('chat')" style="font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:6px;">
+          <span class="material-symbols-rounded" style="font-size:16px;">chat_bubble</span>1. Assistente AI Chat
         </button>
-        <button class="cal-btn" id="btnSubYtIdeas" onclick="ytSwitchSubTab('ideas')" style="font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:6px;">
-          <span class="material-symbols-rounded" style="font-size:16px;">lightbulb</span>2. Generatore Idee
+        <button class="cal-btn" id="btnSubIntelStudio" onclick="intelSwitchSubTab('studio')" style="font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:6px;">
+          <span class="material-symbols-rounded" style="font-size:16px;">auto_awesome</span>2. AI Content Studio
+        </button>
+        <button class="cal-btn" id="btnSubIntelCompetitor" onclick="intelSwitchSubTab('competitor')" style="font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:6px;">
+          <span class="material-symbols-rounded" style="font-size:16px;">explore</span>3. Competitor Tracker
         </button>
       </div>
 
-      <!-- ────── SUB-TAB 1: Competitor ────── -->
-      <div id="panelYtComp">
+      <!-- ────── SUB-TAB 1: AI Chat Assistant ────── -->
+      <div id="panelIntelChat" style="display:block;">
+        <div class="chat-container">
+          <div class="chat-header">
+            <span class="material-symbols-rounded" style="color:var(--accent);font-size:20px;">chat_bubble</span>
+            <span style="font-weight:600;">AI Content Assistant</span>
+            <span style="font-size:10px;color:var(--ink-mute);font-weight:400;margin-left:auto;">Brainstorming e Scripting in Tempo Reale</span>
+          </div>
+          
+          <div class="chat-chips" id="chatChips">
+            <button class="chat-chip" onclick="chatSendPrompt('Genera 3 idee di Reel per Instagram sul modificatore di difesa')">💡 3 Reel Modificatore</button>
+            <button class="chat-chip" onclick="chatSendPrompt('Dammi 5 idee per caroselli grafici sul calciomercato Serie A')">📊 5 Caroselli Mercato</button>
+            <button class="chat-chip" onclick="chatSendPrompt('Consiglia 3 idee video YouTube per l\'asta di fantacalcio')">🎥 3 Video Asta YT</button>
+            <button class="chat-chip" onclick="chatSendPrompt('Scrivi uno script completo per un reel su 3 scommesse low-cost')">✍ Reel Scommesse</button>
+          </div>
+
+          <div class="chat-messages" id="chatMessages">
+            <div class="chat-msg system">
+              Ciao! Sono il tuo assistente AI dedicato. Chiedimi di brainstormare idee, scrivere script completi di Reel parola per parola, o creare caroselli e didascalie per il fantacalcio.
+              <br><br>
+              <i>Puoi copiare i testi o pianificarli direttamente nel tuo Calendario Editoriale con il tasto "Pianifica" sotto le mie risposte.</i>
+            </div>
+          </div>
+
+          <div class="chat-input-area">
+            <input type="password" id="chatSecret" placeholder="PUBLISH_SECRET..." style="max-width:140px;margin-right:8px;font-size:11px;padding:6px 10px;" oninput="intelSaveSecret('chatSecret')">
+            <input type="text" id="chatInput" placeholder="Chiedi qualcosa all'AI... (es. 'Scrivimi uno script per reel sull\'esperto dell\'Inter')" onkeydown="if(event.key==='Enter') chatSendMessage()">
+            <button class="cal-btn primary" id="chatSendBtn" onclick="chatSendMessage()" style="padding:8px 12px;background:var(--accent);border-color:var(--accent);">
+              <span class="material-symbols-rounded" style="font-size:16px;">send</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ────── SUB-TAB 2: AI Content Studio ────── -->
+      <div id="panelIntelStudio" style="display:none;">
+        <!-- Instagram Studio -->
+        <div style="margin-bottom:32px;">
+          <h4 style="font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px;margin:0 0 12px;">
+            <span class="material-symbols-rounded" style="color:#7ec8f0;font-size:18px;">photo_camera</span>
+            Instagram Ideas Studio
+          </h4>
+          
+          <div id="igHistoryBar" style="display:none;margin-bottom:14px;"></div>
+          
+          <div class="intel-config" id="igIntelConfig">
+            <div class="intel-field">
+              <label>Password pubblicazione <span style="color:var(--ink-mute);font-weight:400;">(PUBLISH_SECRET)</span></label>
+              <input type="password" id="igSecret" placeholder="La stessa password usata per pubblicare i post" oninput="intelSaveSecret('igSecret')">
+            </div>
+            <div class="intel-field">
+              <label>Profili competitor <span style="color:var(--ink-mute);font-weight:400;">(uno per riga)</span></label>
+              <textarea id="igProfiles" rows="5" placeholder="@sosfantacalcio&#10;@fantarete" oninput="intelSaveField('igProfiles')">@fantamantra_
+@fantaverso_official
+@fantacalciotattico
+@euroleghefc
+@fantacalcioaddicted
+@laboratoriocalcistico
+@fantagoal_fantacalcio
+@ilcalcioverticale
+@fantarete
+@nic.cariglia_</textarea>
+            </div>
+            <div class="intel-row">
+              <div class="intel-field">
+                <label>Focus tematico</label>
+                <input type="text" id="igFocus" value="fantacalcio Serie A consigli asta modificatore" oninput="intelSaveField('igFocus')">
+              </div>
+              <div class="intel-field" style="max-width:170px;">
+                <label>Tipo contenuto</label>
+                <select id="igFormatFilter" onchange="intelSaveField('igFormatFilter')">
+                  <option value="ALL">Tutti i formati</option>
+                  <option value="CAROUSEL_ALBUM">Solo caroselli</option>
+                  <option value="REELS">Solo reel</option>
+                  <option value="IMAGE">Solo foto</option>
+                </select>
+              </div>
+              <div class="intel-field" style="max-width:120px;">
+                <label>N° idee</label>
+                <select id="igIdeaCount" onchange="intelSaveField('igIdeaCount')">
+                  <option value="3">3 idee</option>
+                  <option value="6" selected>6 idee</option>
+                  <option value="10">10 idee</option>
+                </select>
+              </div>
+            </div>
+            <div class="intel-actions">
+              <button class="cal-btn primary" id="igIntelRunBtn" onclick="runIgIntelligence()">
+                <span class="material-symbols-rounded">travel_explore</span>Genera idee Instagram
+              </button>
+              <span id="igIntelStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
+            </div>
+          </div>
+          
+          <div id="igIntelOutput" style="display:none;margin-top:16px;">
+            <div class="intel-out-header" style="margin-top:0;">
+              <span id="igIntelOutTitle" style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mid);"></span>
+              <button class="cal-btn" onclick="igIntelNewSearch()" style="font-size:11px;padding:5px 10px;">
+                <span class="material-symbols-rounded" style="font-size:14px;">add</span>Nuova ricerca
+              </button>
+            </div>
+            <div class="intel-ideas" id="igIdeas"></div>
+          </div>
+        </div>
+
+        <div style="border-top:1px dashed var(--line);margin-bottom:32px;"></div>
+
+        <!-- YouTube Studio -->
+        <div>
+          <h4 style="font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px;margin:0 0 12px;">
+            <span class="material-symbols-rounded" style="color:#f08080;font-size:18px;">smart_display</span>
+            YouTube Ideas Studio
+          </h4>
+          
+          <div id="ytHistoryBar" style="display:none;margin-bottom:14px;"></div>
+          
+          <div class="intel-config" id="ytIdeasConfig">
+            <div class="intel-field">
+              <label>Password pubblicazione <span style="color:var(--ink-mute);font-weight:400;">(PUBLISH_SECRET)</span></label>
+              <input type="password" id="ytSecret" placeholder="La stessa password usata per pubblicare i post" oninput="intelSaveSecret('ytSecret')">
+            </div>
+            <div class="intel-row">
+              <div class="intel-field">
+                <label>Topic di ricerca / Parola chiave <span style="color:var(--ink-mute);font-weight:400;">(opzionale)</span></label>
+                <input type="text" id="ytTopic" placeholder="es. mondiale 2026, asta, scambi..." oninput="intelSaveField('ytTopic')">
+              </div>
+              <div class="intel-field" style="max-width:130px;">
+                <label>Numero di idee</label>
+                <select id="ytIdeaCount" onchange="intelSaveField('ytIdeaCount')">
+                  <option value="3">3 idee</option>
+                  <option value="6" selected>6 idee</option>
+                  <option value="10">10 idee</option>
+                </select>
+              </div>
+            </div>
+            <div class="intel-actions">
+              <button class="cal-btn primary" id="ytIntelGenBtn" onclick="runYtIdeaGeneration()" style="background:var(--accent);border-color:var(--accent);">
+                <span class="material-symbols-rounded">lightbulb</span>Genera idee YouTube
+              </button>
+              <span id="ytIntelGenStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
+            </div>
+          </div>
+          
+          <div id="ytIdeasOutput" style="display:none;margin-top:16px;">
+            <div class="intel-out-header" style="margin-top:0;">
+              <span id="ytIdeasOutTitle" style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mid);">Idee AI Generate</span>
+              <button class="cal-btn" onclick="ytIdeasNewSearch()" style="font-size:11px;padding:5px 10px;">
+                <span class="material-symbols-rounded" style="font-size:14px;">settings</span>Configura idee
+              </button>
+            </div>
+            <div class="intel-ideas" id="ytIdeas"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ────── SUB-TAB 3: Competitor Tracker ────── -->
+      <div id="panelIntelCompetitor" style="display:none;">
         <!-- Configurazione Competitor -->
         <div class="intel-config" id="ytCompConfig">
           <div class="intel-field">
@@ -1034,7 +1183,7 @@
         </div>
 
         <!-- Output Competitor -->
-        <div id="ytCompOutput" style="display:none;">
+        <div id="ytCompOutput" style="display:none;margin-top:16px;">
           <div class="intel-out-header" style="margin-top:0;">
             <span id="ytCompOutTitle" style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mid);"></span>
             <button class="cal-btn" onclick="ytCompNewSearch()" style="font-size:11px;padding:5px 10px;">
@@ -1088,7 +1237,7 @@
               <span class="material-symbols-rounded" style="color:#ff5e5e;font-size:18px;">smart_display</span>
               Feed Video Competitor
             </h4>
-            <button class="cal-btn primary" onclick="ytSwitchSubTab('ideas')" style="font-size:11px;padding:6px 12px;background:var(--accent);border-color:var(--accent);">
+            <button class="cal-btn primary" onclick="intelSwitchSubTab('studio')" style="font-size:11px;padding:6px 12px;background:var(--accent);border-color:var(--accent);">
               <span class="material-symbols-rounded" style="font-size:14px;">lightbulb</span>Genera idee da questi video →
             </button>
           </div>
@@ -1097,127 +1246,6 @@
           <div id="ytRawData" style="display:flex;flex-direction:column;gap:12px;"></div>
         </div>
       </div>
-
-      <!-- ────── SUB-TAB 2: Idee Generatore ────── -->
-      <div id="panelYtIdeas" style="display:none;">
-        <!-- Configurazione Idee -->
-        <div class="intel-config" id="ytIdeasConfig">
-          <div class="intel-field">
-            <label>Password pubblicazione <span style="color:var(--ink-mute);font-weight:400;">(PUBLISH_SECRET)</span></label>
-            <input type="password" id="ytSecret" placeholder="La stessa password usata per pubblicare i post" oninput="intelSaveSecret('ytSecret')">
-          </div>
-          <div class="intel-row">
-            <div class="intel-field">
-              <label>Topic di ricerca / Parola chiave <span style="color:var(--ink-mute);font-weight:400;">(opzionale)</span></label>
-              <input type="text" id="ytTopic" placeholder="es. mondiale 2026, asta, scambi..." oninput="intelSaveField('ytTopic')">
-            </div>
-            <div class="intel-field" style="max-width:130px;">
-              <label>Numero di idee</label>
-              <select id="ytIdeaCount" onchange="intelSaveField('ytIdeaCount')">
-                <option value="3">3 idee</option>
-                <option value="6" selected>6 idee</option>
-                <option value="10">10 idee</option>
-              </select>
-            </div>
-          </div>
-          <div class="intel-actions">
-            <button class="cal-btn primary" id="ytIntelGenBtn" onclick="runYtIdeaGeneration()" style="background:var(--accent);border-color:var(--accent);">
-              <span class="material-symbols-rounded">lightbulb</span>Genera idee con l'IA
-            </button>
-            <span id="ytIntelGenStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
-          </div>
-        </div>
-
-        <!-- Output Idee -->
-        <div id="ytIdeasOutput" style="display:none;">
-          <div class="intel-out-header" style="margin-top:0;">
-            <span id="ytIdeasOutTitle" style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mid);">Idee AI Generate</span>
-            <button class="cal-btn" onclick="ytIdeasNewSearch()" style="font-size:11px;padding:5px 10px;">
-              <span class="material-symbols-rounded" style="font-size:14px;">settings</span>Configura idee
-            </button>
-          </div>
-
-          <!-- Feed delle Idee AI -->
-          <div class="intel-ideas" id="ytIdeas"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- TOOL 2: Instagram Intelligence -->
-  <section class="section" data-tab="intelligence">
-    <div class="panel">
-      <div class="panel-title">
-        <span class="material-symbols-rounded" style="color:#7ec8f0;">photo_camera</span>
-        Instagram Intelligence · idee contenuto
-      </div>
-      <div class="panel-sub">Genera idee di contenuto Instagram ottimizzate per il tuo profilo · i risultati vengono salvati e accumulati</div>
-
-      <!-- Storia ricerche IG -->
-      <div id="igHistoryBar" style="display:none;margin-bottom:14px;"></div>
-
-      <!-- Config -->
-      <div class="intel-config" id="igIntelConfig">
-        <div class="intel-field">
-          <label>Password pubblicazione <span style="color:var(--ink-mute);font-weight:400;">(PUBLISH_SECRET)</span></label>
-          <input type="password" id="igSecret" placeholder="La stessa password usata per pubblicare i post" oninput="intelSaveSecret('igSecret')">
-        </div>
-        <div class="intel-field">
-          <label>Profili competitor <span style="color:var(--ink-mute);font-weight:400;">(uno per riga)</span></label>
-          <textarea id="igProfiles" rows="10" placeholder="@sosfantacalcio&#10;@fantarete&#10;@seriousornot.fantacalcio" oninput="intelSaveField('igProfiles')">@fantamantra_
-@fantaverso_official
-@fantacalciotattico
-@euroleghefc
-@fantacalcioaddicted
-@laboratoriocalcistico
-@fantagoal_fantacalcio
-@ilcalcioverticale
-@fantarete
-@nic.cariglia_</textarea>
-        </div>
-        <div class="intel-row">
-          <div class="intel-field">
-            <label>Focus tematico</label>
-            <input type="text" id="igFocus" value="fantacalcio Serie A consigli asta modificatore" oninput="intelSaveField('igFocus')">
-          </div>
-          <div class="intel-field" style="max-width:170px;">
-            <label>Tipo contenuto</label>
-            <select id="igFormatFilter" onchange="intelSaveField('igFormatFilter')">
-              <option value="ALL">Tutti i formati</option>
-              <option value="CAROUSEL_ALBUM">Solo caroselli</option>
-              <option value="REELS">Solo reel</option>
-              <option value="IMAGE">Solo foto</option>
-            </select>
-          </div>
-          <div class="intel-field" style="max-width:120px;">
-            <label>N° idee</label>
-            <select id="igIdeaCount" onchange="intelSaveField('igIdeaCount')">
-              <option value="3">3 idee</option>
-              <option value="6" selected>6 idee</option>
-              <option value="10">10 idee</option>
-            </select>
-          </div>
-        </div>
-        <div class="intel-actions">
-          <button class="cal-btn primary" id="igIntelRunBtn" onclick="runIgIntelligence()">
-            <span class="material-symbols-rounded">travel_explore</span>Genera idee
-          </button>
-          <span id="igIntelStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
-        </div>
-      </div>
-
-      <!-- Output -->
-      <div id="igIntelOutput" style="display:none;">
-        <div class="intel-out-header">
-          <span id="igIntelOutTitle" style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mid);"></span>
-          <button class="cal-btn" onclick="igIntelNewSearch()" style="font-size:11px;padding:5px 10px;">
-            <span class="material-symbols-rounded" style="font-size:14px;">add</span>Nuova ricerca
-          </button>
-        </div>
-        <div class="intel-ideas" id="igIdeas"></div>
-      </div>
-    </div>
-  </section>
 
   <!-- TAB: ACQUISIZIONI -->
   <section class="section" data-tab="acquisizioni">
