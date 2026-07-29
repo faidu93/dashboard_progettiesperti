@@ -694,8 +694,8 @@ function calOpenModal(ds, id) {
 }
 
 async function generateCaptionFromUploadedImage() {
-  const mediaUrlInput = document.getElementById('calMediaUrl');
   const extraNotes = document.getElementById('calAiExtra')?.value.trim() || '';
+  const mediaUrlInput = document.getElementById('calMediaUrl');
   const mediaUrl = mediaUrlInput ? mediaUrlInput.value.trim() : '';
 
   const btn = document.getElementById('calAiCaptionBtn');
@@ -704,21 +704,23 @@ async function generateCaptionFromUploadedImage() {
 
   const originalHtml = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;animation:spin 1s linear infinite;">visibility</span> Scrittura caption…';
+  btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;animation:spin 1s linear infinite;">visibility</span> Scrittura caption AI…';
+
+  const promptTopic = extraNotes || 'Analisi ed approfondimento fantacalcio Serie A per l\'asta';
 
   let prompt = `Sei il copywriter ed il content strategist ufficiale di @esperti_profeta_fantacalcio.
-Analizza l'immagine o l'argomento caricato dall'utente e genera la didascalia perfetta per Instagram.
+Genera la didascalia perfetta per Instagram basata su questo argomento/giocatore ed eventuale immagine caricata:
 
-${mediaUrl ? `L'utente ha caricato questo file media: ${mediaUrl}` : ''}
-${extraNotes ? `Note aggiuntive dell'utente: ${extraNotes}` : ''}
+TOPIC / NOMI GIOCATORI: "${promptTopic}"
+${mediaUrl ? `FILE MEDIA CARICATO: ${mediaUrl}` : ''}
 
 REGOLE TASSATIVE:
-1. HOOK D'IMPATTO INIZIALE: Inizia la prima riga con un gancio visivo fortissimo in MAIUSCOLO ed emoji (es. "TOP 5 PORTIERI SERIE A 🧤" o "FAZZINI AL CAGLIARI 👀").
-2. ANALISI DEI DATI/GIOCATORI: Leggi i nomi dei calciatori o i numeri presenti nell'immagine/argomento e scrivi 3-5 righe sintetiche ed appassionate sul fantacalcio (consigli asta, gerarchie, titolarità).
-3. CALL TO ACTION: Chiudi con una domanda per i commenti (es. "Voi chi prendete per l'asta? Scrivetelo nei commenti 👇").
+1. HOOK D'IMPATTO INIZIALE: Inizia la prima riga con un gancio visivo fortissimo in MAIUSCOLO ed emoji (es. "${promptTopic.toUpperCase()} 👀" o "NOVITÀ ASTA FANTACALCIO 🔥").
+2. ANALISI DEI DATI/GIOCATORI: Scrivi 3-5 righe sintetiche ed appassionate sul fantacalcio (consigli asta, gerarchie, titolarità, slot consigliato).
+3. CALL TO ACTION: Chiudi con una domanda aperta per i commenti (es. "Voi ci punterete per l'asta? Scrivetelo nei commenti 👇").
 4. HASHTAG: Inserisci esattamente 3-5 hashtag mirati (#fantacalcio #asta #seriea #progettoesperti).
 
-Rispondi SOLO con il testo della didascalia pronta per essere copiata e pubblicata. Zero introduzioni.`;
+Rispondi SOLO con il testo della didascalia pronta per essere copiata e pubblicata. Zero introduzioni o commenti prima.`;
 
   try {
     const res = await callClaudeForIdeas(prompt, null, 'ig');
@@ -726,163 +728,20 @@ Rispondi SOLO con il testo della didascalia pronta per essere copiata e pubblica
       notesField.value = res.trim();
     } else if (Array.isArray(res) && res[0]) {
       notesField.value = (res[0].body || res[0].title || JSON.stringify(res[0])).trim();
+    } else {
+      notesField.value = `🔥 ${promptTopic.toUpperCase()}\n\nAnalisi completa per l'asta del fantacalcio! Chi prendi tra questi nomi? Scrivilo nei commenti! 👇\n\n#fantacalcio #asta #seriea #progettoesperti`;
     }
   } catch(e) {
-    notesField.value = `🔥 TOP CONTENUTO ASTA FANTACALCIO!\n\nEcco l'analisi completa basata sui dati reali della Serie A! Chi punterà su questi nomi alla prossima asta?\n\nScrivilo qui sotto nei commenti 👇\n\n#fantacalcio #asta #seriea #progettoesperti`;
+    console.error('Caption AI error:', e);
+    notesField.value = `🔥 ${promptTopic.toUpperCase()}\n\nAnalisi strategica per la tua rosa di Fantacalcio! Titolarità, rendimento e slot consigliati per l'asta.\n\nVoi chi sceglierete? Scrivetelo qui sotto nei commenti! 👇\n\n#fantacalcio #asta #seriea #progettoesperti`;
   }
 
   btn.disabled = false;
   btn.innerHTML = originalHtml;
 }
 
-async function calGenerateAiCaption() {
-  const title = document.getElementById('calTitle').value.trim();
-  const notes = document.getElementById('calNotes').value.trim();
-  const platform = document.getElementById('calPlatform').value;
-  const type = document.getElementById('calType').value;
-
-  if (!title) {
-    alert('Inserisci prima il titolo o l\'idea del post per guidare l\'AI.');
-    return;
-  }
-
-  const secret = getPublishSecret();
-  if (!secret) {
-    const inputSecret = prompt('Inserisci la password di pubblicazione per abilitare l\'AI:');
-    if (!inputSecret) return;
-    try {
-      sessionStorage.setItem('publish_secret', inputSecret);
-      localStorage.setItem('publish_secret', inputSecret);
-    } catch(e) {}
-  }
-
-  const btn = document.getElementById('calAiCaptionBtn');
-  const originalHtml = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;animation:spin 1s linear infinite;">progress_activity</span> Scrittura…';
-
-  let selectedModel = 'claude-sonnet-5';
-  try { selectedModel = localStorage.getItem('intel_model') || 'claude-sonnet-5'; } catch(e) {}
-
-  const extra = document.getElementById('calAiExtra').value.trim();
-
-  // Estrai dinamicamente fino a 3 didascalie reali per fare da esempio
-  let examplesText = "";
-  const realPosts = (calPublishedPosts || [])
-    .filter(p => p.media_caption && p.media_caption.trim().length > 40)
-    .slice(0, 3);
-
-  if (realPosts.length > 0) {
-    examplesText = "Ecco alcuni esempi reali di didascalie pubblicate in precedenza su questa pagina per comprenderne lo stile, la lunghezza e la struttura:\n\n";
-    realPosts.forEach((p, idx) => {
-      examplesText += `--- ESEMPIO ${idx + 1} ---\n${p.media_caption.trim()}\n\n`;
-    });
-  } else {
-    // Fallback statico basato sui migliori post reali analizzati
-    examplesText = `Ecco lo stile esatto da seguire, preso da post di successo già pubblicati su questa pagina:\n\n` +
-      `--- ESEMPIO 1 ---\n` +
-      `Fazzini al Cagliari 👀 \n` +
-      `Un talento che sembrava esplodere all'Empoli, ora riparte in una piazza calda e affamata di calcio come Cagliari.\n\n` +
-      `Per lui può essere la stagione della svolta definitiva — o un altro step di crescita rimandato.\n\n` +
-      `Al fanta la domanda è una sola: **talento da lanciare o scommessa troppo rischiosa?**\n\n` +
-      `Voi ci punterete al fantacalcio? Scrivetelo nei commenti 👇\n\n` +
-      `#Fazzini #FantacalcioSerieA #Cagliari\n\n` +
-      `--- ESEMPIO 2 ---\n` +
-      `Taylor alla Lazio: scommessa da bonus o regolarista? 🔍\n` +
-      `Ambidestro, visione di gioco, tiro in porta e tanta corsa. Kenneth Taylor ha tutto per accendere la luce a Formello, ma la sua appetibilità al Fantacalcio dipenderà interamente dal ruolo. Più lontano dalla porta perde fascino, dietro la punta diventa un potenziale top di reparto.\n\n` +
-      `Tu ci punterai alla prossima asta? E soprattutto: in che ruolo pensi possa fare svoltare la tua rosa?\n` +
-      `Lascia un commento qui sotto. Parliamone. 💬\n\n` +
-      `#ProgettoEsperti #Lazio #Fantacalcio`;
-  }
-
-  const sysPrompt = `Sei l'AI Copywriter ufficiale di "Progetto Esperti", community di riferimento in Italia per il fantacalcio e l'analisi di Serie A. Il tuo stile di scrittura è diretto, professionale ma estremamente amichevole, cordiale ed empatico. Parla da appassionato esperto che vuole dare valore concreto ai fantallenatori, evitando assolutamente toni arroganti o da "fenomeno" (non ergerti a guru infallibile).
-
-REGOLE DI SCRITTURA TASSATIVE (DA SEGUIRE RIGIDAMENTE):
-1. NO PREAMBOLI/CHIUSURE: Inizia direttamente con il testo da copiare. Non scrivere mai formule introduttive o finali (es. "Ecco la didascalia..."), né racchiudere il testo in virgolette o parentesi.
-2. HOOK INIZIALE SHOCK: Inizia sempre la prima riga con un gancio visivo fortissimo ed evidente. Usa parole chiave o nomi in MAIUSCOLO seguiti da un'emoji (es. "FAZZINI AL CAGLIARI 👀" o "🇳🇬 AKOR ADAMS AL VENEZIA"). Deve costringere chi scorre il feed a fermarsi e leggere.
-3. CONCISIONE E RITMO: Scrivi didascalie brevi e dinamiche (max 80-120 parole). Paragrafi corti (1-2 frasi al massimo) separati da una riga vuota.
-4. GRASSETTO TATTICO: Usa il grassetto markdown (**) solo una volta nel post, esclusivamente per evidenziare il dubbio strategico o la scelta cruciale al fanta (es. **talento da lanciare o scommessa troppo rischiosa?**).
-5. EVITA CLICHÉ DA AI: Non usare mai formule trite come "Benvenuti", "Ehi fantallenatori", "Scopriamo insieme", "Nel panorama", "Incredibile". Evita transizioni inutili come "infatti", "tuttavia", "dunque". Usa il gergo calcistico reale ed esperto ("asta", "fanta", "gerarchie", "titolarità", "regolarista", "bonus").
-6. FINALITÀ DEL POST & CALL TO ACTION (CTA): Ogni post deve avere un singolo e chiarissimo obiettivo strategico. In base all'idea del post e alle note, determina e applica in modo naturale solo UNA delle seguenti tre finalità:
-   - DISCUSSIONE / COMMENTI (Default): Chiudi con una domanda aperta e diretta per far esprimere i follower nei commenti (es. "Voi ci punterete? Scrivetelo nei commenti 👇").
-   - RIMANDO YOUTUBE: Se il post fa riferimento a un video approfondito, a novità di calciomercato o analisi ampie, invita gli utenti a guardare il video completo su YouTube (es. "Trovi il video approfondimento al link in stories o in bio 🎬").
-   - CRESCITA CANALE TELEGRAM: Se il post parla di consigli pratici, aste, gerarchie, news H24 o supporto diretto, invita gli utenti ad entrare nel Canale Telegram Privato (es. "Per consigli continui H24 e supporto sulla tua rosa, entra nel nostro gruppo Telegram privato (link in bio) 📲").
-   Lascia sempre una riga vuota prima di questa CTA.
-7. HASHTAG — SELEZIONE INTELLIGENTE DALLA BANCA HASHTAG:
-   Alla fine del post, lascia una riga vuota e inserisci ESATTAMENTE 3 hashtag Capitalizzati scelti dalla banca qui sotto. Scegli quelli più pertinenti al contenuto specifico del post. Mescola SEMPRE: 1 hashtag brand/fisso + 2 hashtag contestuali al tema.
-
-   HASHTAG FISSO/BRAND (usa sempre UNO di questi):
-   #Fantacalcio | #FantacalcioSerieA | #ProgettoEsperti
-
-   HASHTAG CONTESTUALI — scegli 2 in base al tema del post:
-
-   • POST SU GIOCATORE SPECIFICO (acquisto, analisi, trasferimento):
-     #ConsigliFantacalcio | #FantaConsigli | #FantaAllenatori | #SerieA | #Calciomercato
-
-   • POST SU CONSIGLI / CHI SCHIERARE / FORMAZIONI:
-     #ChiSchierare | #ProbabiliFormazioni | #FantaConsigli | #ConsigliFantacalcio | #UltimeDaiCampi
-
-   • POST SU ASTA / MERCATO / RIPARAZIONE:
-     #AstaFantacalcio | #CalciomercatoFanta | #FantaMercato | #ScambiFantacalcio | #StrategiaFanta
-
-   • POST SU VOTI / GIORNATA / RISULTATI:
-     #VotiFantacalcio | #GiornataFantacalcio | #FantaVoti | #SerieA | #AnalisiFantacalcio
-
-   • POST COMMUNITY / ENGAGEMENT / SONDAGGIO:
-     #LegheFantacalcio | #FantaMaster | #Fantapazz | #FantaAllenatori | #ComunityFanta
-
-   • POST VIDEO / REEL / CONTENUTO VIRALE:
-     #CalcioReel | #ReelCalcio | #FantacalcioVideo | #SerieAHighlights | #CalcioItaliano
-
-   • POST TELEGRAM / GRUPPO / COMMUNITY:
-     #GruppoTelegram | #FantaConsigli | #LegheFantacalcio | #FantaMaster | #ConsigliFantacalcio
-
-   NON usare mai più o meno di 3 hashtag. NON inventare hashtag fuori dalla banca.
-${examplesText}`;
-
-  let promptText = `Crea ora una didascalia personalizzata basandoti su queste informazioni:\n`;
-  promptText += `Titolo/Idea del post: ${title}\n`;
-  promptText += `Formato del post: ${type}\n`;
-  if (notes) {
-    promptText += `Contesto/Note di partenza: ${notes}\n`;
-  }
-  if (extra) {
-    promptText += `Informazioni o parole chiave da inserire assolutamente: ${extra}\n`;
-  }
-
-  try {
-    const res = await fetch(BACKEND_BASE + '/api/claude', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Publish-Secret': getPublishSecret()
-      },
-      body: JSON.stringify({
-        model: selectedModel,
-        max_tokens: 1500,
-        messages: [
-          { role: 'user', content: sysPrompt + "\n\n" + promptText }
-        ]
-      })
-    });
-    
-    const data = await res.json();
-    if (!res.ok || data.error) {
-      throw new Error(data.error || `HTTP ${res.status}`);
-    }
-    
-    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
-    if (text) {
-      document.getElementById('calNotes').value = text;
-    } else {
-      alert('Nessun testo generato. Riprova.');
-    }
-  } catch (e) {
-    alert('Errore nella generazione: ' + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = originalHtml;
-  }
+function calGenerateAiCaption() {
+  return generateCaptionFromUploadedImage();
 }
 
 function calSetupEvents() {
