@@ -1111,12 +1111,13 @@ function openSlideGeneratorWithIdea(title, scriptBody) {
     s.watermark = s.watermark || 'logo_faded';
   });
 
-  currentSlideIndex = 0;
-  const modal = document.getElementById('slideGeneratorModal');
-  if (modal) {
-    modal.style.display = 'flex';
-    updateSlideFormControls();
-    renderSlideCanvas();
+  slideBuilderIndex = 0;
+  const overlay = document.getElementById('slideGeneratorOverlay');
+  if (overlay) {
+    overlay.style.display = 'flex';
+    renderSlideList();
+    loadSlideDataIntoForm();
+    renderSlidePreview();
   }
 }
 
