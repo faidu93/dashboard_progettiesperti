@@ -106,10 +106,6 @@
       <span class="material-symbols-rounded">calendar_month</span>
       <span class="tab-label">Calendario</span>
     </button>
-    <button class="tab-btn" data-tab="contentstudio" onclick="tabSwitch(this)" role="tab">
-      <span class="material-symbols-rounded">auto_awesome</span>
-      <span class="tab-label">Content Studio</span>
-    </button>
     <button class="tab-btn" data-tab="summary" onclick="tabSwitch(this)" role="tab">
       <span class="material-symbols-rounded">dashboard</span>
       <span class="tab-label">Summary</span>
@@ -754,43 +750,45 @@
             </select>
           </div>
           
-          <div class="cal-field">
-            <label>1. Strategia editoriale</label>
-            <textarea id="calStrategy" style="min-height:60px;" placeholder="Qual è lo scopo del post? Es. Posizionare un talento low cost strategico per l'asta..."></textarea>
+          <!-- CARICAMENTO MEDIA PRIMARIO -->
+          <div class="cal-field" id="calMediaField" style="display:block; margin-top:12px;">
+            <label style="font-weight:700; color:var(--ink);">1. Carica Immagine / Carosello / Video <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--pos);font-weight:400;">· per la pubblicazione su Instagram</span></label>
+            <div class="cal-upload" id="calUpload" style="margin-top:6px;">
+              <input type="file" id="calUploadInput" accept="image/*,video/*" multiple style="display:none;">
+              <span class="material-symbols-rounded" style="color:var(--accent);">cloud_upload</span>
+              <div class="cal-upload-text">Trascina qui o clicca per caricare le immagini / video</div>
+              <div class="cal-upload-hint">Supportati: JPEG, PNG, Caroselli Multi-Immagine, MP4</div>
+            </div>
+            <div class="cal-upload-preview" id="calUploadPreview"></div>
+            <div class="cal-upload-status" id="calUploadStatus"></div>
+            <button type="button" class="cal-upload-remove" id="calUploadRemove" style="display:none;">Rimuovi media</button>
+            <input type="hidden" id="calMediaUrl">
+            <input type="hidden" id="calMediaKind">
           </div>
           
-          <div class="cal-field">
-            <label>2. Suggerimento grafico / Contesto visivo</label>
-            <textarea id="calVisual" style="min-height:65px;" placeholder="Come deve presentarsi graficamente il post? Es. Sfondo scuro, cerchio arancio neon con Fazzini in primo piano, testo 'SCOMMESSA FREGATURA?'..."></textarea>
-          </div>
-          
-          <div class="cal-field">
-            <label>3. Struttura del post / Copione Reel</label>
-            <textarea id="calScript" style="min-height:100px;" placeholder="Inserisci il copione parola per parola per il video o la scaletta slide per slide per il carosello..."></textarea>
-          </div>
+          <input type="hidden" id="calStrategy" value="">
+          <input type="hidden" id="calVisual" value="">
+          <input type="hidden" id="calScript" value="">
         </div>
 
-        <!-- COLONNA DESTRA: Titolo, Note/Caption, Media Upload, Collaboratori -->
+        <!-- COLONNA DESTRA: Caption Vision AI, Collaboratori e Copertina Reel -->
         <div class="cal-editor-col">
-          <div class="cal-field">
-            <label>Titolo / Idea di base</label>
-            <input type="text" id="calTitle" placeholder="Es: TOP 10 scommesse low cost asta">
-          </div>
+          <input type="hidden" id="calTitle" value="Post Instagram">
 
           <div class="cal-field" id="calNotesField">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <label>4. Caption finale / Didascalia</label>
-              <button type="button" class="cal-btn" id="calAiCaptionBtn" style="font-size:11px; padding:4px 8px; height:auto; display:inline-flex; align-items:center; gap:4px; background:rgba(255,140,30,0.08); border-color:var(--accent); color:var(--accent);">
-                <span class="material-symbols-rounded" style="font-size:14px;">auto_awesome</span>✨ Genera con AI
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+              <label style="font-weight:700; color:var(--ink);">2. Caption Finale &amp; Hashtag</label>
+              <button type="button" class="cal-btn" id="calAiCaptionBtn" onclick="generateCaptionFromUploadedImage()" style="font-size:11.5px; padding:6px 12px; height:auto; display:inline-flex; align-items:center; gap:4px; background:rgba(255,107,0,0.12); border-color:var(--accent); color:var(--accent); font-weight:700;">
+                <span class="material-symbols-rounded" style="font-size:15px;">visibility</span>✨ Genera Caption dall'Immagine
               </button>
             </div>
             
             <div id="calAiOptions" style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;">
-              <input type="text" id="calAiExtra" placeholder="Note per l'AI (es. cita Fazzini e Belahyane...)" style="font-size:12px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink); width:100%; box-sizing:border-box; outline:none;">
+              <input type="text" id="calAiExtra" placeholder="Note aggiuntive facoltative (es. 'cita Fazzini ed invita a commentare')" style="font-size:12px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink); width:100%; box-sizing:border-box; outline:none;">
               <input type="hidden" id="calAiTone" value="coinvolgente">
             </div>
 
-            <textarea id="calNotes" style="min-height:120px;" placeholder="Testo, emoji, hashtag pronti per essere pubblicati..."></textarea>
+            <textarea id="calNotes" style="min-height:160px;" placeholder="Testo, emoji ed hashtag della didascalia... (clicca 'Genera dall'Immagine' per scriverla in automatico leggendo la foto caricata)"></textarea>
           </div>
 
           <div class="cal-field" id="calHostField" style="display:none;">
@@ -1125,208 +1123,7 @@
     </div>
   </section>
 
-  <!-- TAB: CONTENT STUDIO (AI Chat + Generatori Idee) -->
-  <section class="section" data-tab="contentstudio" style="margin-bottom:0;">
-    <div class="section-head">
-      <div>
-        <div class="section-eyebrow">✨ AI Assistente</div>
-        <div class="section-title">Content Studio</div>
-      </div>
-      <span class="section-live">● LIVE · CLAUDE AI</span>
-    </div>
-  </section>
-
-  <section class="section" data-tab="contentstudio">
-    <div class="panel">
-      <!-- Navigazione Sotto-Tab -->
-      <div class="intel-sub-tabs" style="display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:10px;flex-wrap:wrap;">
-        <button class="cal-btn active" id="btnSubIntelChat" onclick="intelSwitchSubTab('chat')" style="font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:6px;">
-          <span class="material-symbols-rounded" style="font-size:16px;">chat_bubble</span>1. Assistente AI Chat
-        </button>
-        <button class="cal-btn" id="btnSubIntelStudio" onclick="intelSwitchSubTab('studio')" style="font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:6px;">
-          <span class="material-symbols-rounded" style="font-size:16px;">auto_awesome</span>2. Generatore Idee
-        </button>
-      </div>
-
-      <!-- ────── SUB-TAB 1: AI Chat Assistant (Bynor Style) ────── -->
-      <div id="panelIntelChat" style="display:block;">
-        <!-- Prompter Landing Page (dentro la tab) -->
-        <div class="intel-prompter-page">
-          <div class="prompter-hero">
-            <span class="material-symbols-rounded prompter-hero-icon" style="font-size: 48px; color: var(--accent); margin-bottom: 16px;">chat_bubble</span>
-            <h2 class="prompter-hero-title">Cosa vuoi creare oggi?</h2>
-            <p class="prompter-hero-subtitle">Genera script, didascalie, idee di contenuti per i tuoi social con l'intelligenza artificiale di Claude.</p>
-          </div>
-
-          <div class="prompter-box">
-            <div class="prompter-field">
-              <input type="password" id="chatSecret" placeholder="PUBLISH_SECRET..." style="max-width:140px; font-size:11px; padding:6px 10px; border:none; outline:none; background:none; color:var(--ink);" oninput="intelSaveSecret('chatSecret')">
-              <div style="width: 1px; height: 24px; background: var(--line); margin: 0 8px;"></div>
-              <input type="text" id="chatInput" placeholder="Chiedi qualcosa all'AI... (es. 'Genera 3 idee di Reel sul modificatore di difesa')" onkeydown="if(event.key==='Enter') chatStartWithPrompt()">
-              <button class="prompter-send-btn" id="chatSendBtn" onclick="chatStartWithPrompt()">
-                <span class="material-symbols-rounded" style="font-size:18px;">send</span>
-              </button>
-            </div>
-            
-            <div class="prompter-suggest">
-              <button class="prompter-chip" onclick="chatStartWithPrompt('Genera 3 idee di Reel per Instagram sul modificatore di difesa')">💡 3 Reel Modificatore</button>
-              <button class="prompter-chip" onclick="chatStartWithPrompt('Dammi 5 idee per caroselli grafici sul calciomercato Serie A')">📊 5 Caroselli Mercato</button>
-              <button class="prompter-chip" onclick="chatStartWithPrompt('Consiglia 3 idee video YouTube per l\'asta di fantacalcio')">🎥 3 Video Asta YT</button>
-              <button class="prompter-chip" onclick="chatStartWithPrompt('Scrivi uno script completo per un reel su 3 scommesse low-cost')">✍ Reel Scommesse</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Fullscreen Chat Overlay (Bynor Style) -->
-        <div id="chatOverlay" class="chat-overlay">
-          <!-- Overlay Header Bar -->
-          <div class="chat-overlay-bar">
-            <div class="chat-overlay-logo">
-              <span class="material-symbols-rounded" style="font-size:18px; color:#fff;">chat_bubble</span>
-            </div>
-            <div>
-              <div class="chat-overlay-t">AI Content Assistant</div>
-              <div class="chat-overlay-s">Brainstorming e Scripting con Claude</div>
-            </div>
-            <button class="chat-overlay-close" onclick="chatCloseOverlay()">
-              <span class="material-symbols-rounded">close</span>
-            </button>
-          </div>
-
-          <!-- Overlay Thread -->
-          <div class="chat-overlay-thread" id="chatMessages">
-            <div class="chat-msg system">
-              Ciao! Sono il tuo assistente AI dedicato. Chiedimi di brainstormare idee, scrivere script completi di Reel parola per parola, o creare caroselli e didascalie per il fantacalcio.
-              <br><br>
-              <i>Puoi copiare i testi o pianificarli direttamente nel tuo Calendario Editoriale con il tasto "Pianifica" sotto le mie risposte.</i>
-            </div>
-          </div>
-
-          <!-- Overlay Footer Input -->
-          <div class="chat-overlay-foot">
-            <div class="chat-overlay-bar2">
-              <input type="password" id="chatSecretOverlay" placeholder="PUBLISH_SECRET..." style="max-width:140px; font-size:12px; padding:6px 10px; border:none; outline:none; background:none; color:var(--ink);" oninput="intelSaveSecret('chatSecretOverlay')">
-              <div style="width: 1px; height: 24px; background: var(--line); margin: 0 8px;"></div>
-              <input type="text" id="chatInputOverlay" placeholder="Scrivi un messaggio o chiedi modifiche..." onkeydown="if(event.key==='Enter') chatSendMessageOverlay()">
-              <button class="chat-overlay-send" onclick="chatSendMessageOverlay()">
-                <span class="material-symbols-rounded">send</span>
-              </button>
-            </div>
-            <div class="chat-overlay-note">
-              Claude può generare errori. Controlla le informazioni importanti riguardanti giocatori e statistiche.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ────── SUB-TAB 2: Instagram Post & Carousel Studio (0-100) ────── -->
-      <div id="panelIntelStudio" style="display:none;">
-        <div style="margin-bottom:24px;">
-          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
-            <div>
-              <h4 style="font-size:16px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px;margin:0 0 4px;">
-                <span class="material-symbols-rounded" style="color:var(--accent);font-size:22px;">view_carousel</span>
-                Instagram Post &amp; Carousel Studio (0-100)
-              </h4>
-              <div style="font-size:11.5px;color:var(--ink-soft);">
-                Crea post e caroselli completi dall'argomento alla grafica brandizzata, fino alla pubblicazione o programmazione mensile.
-              </div>
-            </div>
-            
-            <div style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:20px; background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.2); font-family:var(--font-mono); font-size:10.5px; color:var(--accent); font-weight:600;">
-              <span class="material-symbols-rounded" style="font-size:14px;">palette</span>
-              Brand Presets: Palette #FF6B00 · Aurora Glow · Logo Esperti
-            </div>
-          </div>
-          
-          <!-- Barra di Avanzamento a 4 Step del Workflow -->
-          <div class="studio-workflow-steps" style="display:flex; gap:8px; margin-bottom:20px; overflow-x:auto; padding-bottom:4px;">
-            <div class="workflow-step active" style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--accent); border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:8px;">
-              <span style="background:var(--accent); color:var(--bg); font-weight:800; font-family:var(--font-mono); font-size:11px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;">1</span>
-              <div>
-                <div style="font-size:11px; font-weight:700; color:var(--ink);">Ideazione &amp; Script</div>
-                <div style="font-size:9.5px; color:var(--ink-soft);">Argomento &amp; Scaletta</div>
-              </div>
-            </div>
-            
-            <div class="workflow-step" style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:8px; opacity:0.85;">
-              <span style="background:var(--bg-elev-3); color:var(--ink); font-weight:700; font-family:var(--font-mono); font-size:11px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;">2</span>
-              <div>
-                <div style="font-size:11px; font-weight:700; color:var(--ink);">Grafica ChatGPT</div>
-                <div style="font-size:9.5px; color:var(--ink-soft);">DALL-E 3 + Brand Canvas</div>
-              </div>
-            </div>
-
-            <div class="workflow-step" style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:8px; opacity:0.85;">
-              <span style="background:var(--bg-elev-3); color:var(--ink); font-weight:700; font-family:var(--font-mono); font-size:11px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;">3</span>
-              <div>
-                <div style="font-size:11px; font-weight:700; color:var(--ink);">Caption &amp; Hook</div>
-                <div style="font-size:9.5px; color:var(--ink-soft);">Didascalia &amp; Hashtag</div>
-              </div>
-            </div>
-
-            <div class="workflow-step" style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:8px; opacity:0.85;">
-              <span style="background:var(--bg-elev-3); color:var(--ink); font-weight:700; font-family:var(--font-mono); font-size:11px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;">4</span>
-              <div>
-                <div style="font-size:11px; font-weight:700; color:var(--ink);">Programmazione</div>
-                <div style="font-size:9.5px; color:var(--ink-soft);">Calendario &amp; Live</div>
-              </div>
-            </div>
-          </div>
-          
-          <div id="igHistoryBar" style="display:none;margin-bottom:14px;"></div>
-          
-          <div class="intel-config" id="igIntelConfig">
-            <div class="intel-field">
-              <label>Password pubblicazione <span style="color:var(--ink-mute);font-weight:400;">(PUBLISH_SECRET)</span></label>
-              <input type="password" id="igSecret" placeholder="Password di pubblicazione per la programmazione reale" oninput="intelSaveSecret('igSecret')">
-            </div>
-
-            <div class="intel-field">
-              <label style="font-weight:700; color:var(--ink); font-size:13.5px; display:flex; align-items:center; gap:6px;">
-                <span class="material-symbols-rounded" style="color:var(--accent); font-size:18px;">edit_note</span>
-                Inserisci il Tuo Prompt / Idea e Giocatori
-              </label>
-              <textarea id="igUserNotes" rows="4" placeholder="Inserisci il tuo prompt o l'idea del post con i nomi dei giocatori...&#10;Es: Top 5 scommesse in attacco asta fantacalcio: Fazzini, Belahyane, Mosquera, Vitinha, Davis." style="font-size:13px; font-weight:600; line-height:1.5;">Top 5 scommesse in attacco asta fantacalcio: Fazzini, Belahyane, Mosquera, Vitinha, Davis.
-Tutti sotto i 10 crediti all'asta, titolarità garantita o jolly di spinta dal 2° tempo.</textarea>
-              <input type="hidden" id="igFocus" value="Top 5 Scommesse in Attacco Asta Fantacalcio">
-            </div>
-
-            <!-- Pulsanti di Azione Diretta e Rapida -->
-            <div class="intel-actions" style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
-              <button class="cal-btn primary" onclick="startFastGraphicWorkflow()" style="font-weight:800; padding:12px 22px; font-size:13px; background:var(--accent); border-color:var(--accent); color:var(--bg);">
-                <span class="material-symbols-rounded" style="font-size:18px;">palette</span>🎨 1. Crea Grafica Brand Immediata
-              </button>
-              <button class="cal-btn" onclick="generateFastCaption()" style="font-weight:700; padding:12px 18px; font-size:12.5px; background:rgba(255,107,0,0.1); border-color:var(--accent); color:var(--accent);">
-                <span class="material-symbols-rounded" style="font-size:18px;">auto_awesome</span>📝 2. Genera Caption AI
-              </button>
-            </div>
-
-            <!-- Box di output immediato per la Caption -->
-            <div id="fastCaptionOutput" style="display:none; margin-top:16px; padding:14px; border-radius:8px; background:var(--bg-elev-2); border:1px solid var(--line);">
-              <label style="font-size:11px; font-family:var(--font-mono); color:var(--accent); font-weight:700;">Didascalia Finale per Instagram:</label>
-              <textarea id="fastCaptionText" rows="6" style="width:100%; margin-top:8px; font-size:12px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--ink); padding:8px;"></textarea>
-              <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
-                <button class="cal-btn" onclick="navigator.clipboard.writeText(document.getElementById('fastCaptionText').value); alert('Caption copiata!');" style="font-size:11px;">📋 Copia Caption</button>
-                <button class="cal-btn primary" onclick="calOpenModalFromIdea(document.getElementById('igFocus').value, 'CAROUSEL_ALBUM', 'Martedi 15:00', 'ig')" style="font-size:11px;">📅 Programma / Pubblica</button>
-              </div>
-            </div>
-          </div>
-          
-          <div id="igIntelOutput" style="display:none;margin-top:16px;">
-            <div class="intel-out-header" style="margin-top:0;">
-              <span id="igIntelOutTitle" style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mid);"></span>
-              <button class="cal-btn" onclick="igIntelNewSearch()" style="font-size:11px;padding:5px 10px;">
-                <span class="material-symbols-rounded" style="font-size:14px;">settings</span>Nuova ricerca
-              </button>
-            </div>
-            <div class="intel-ideas" id="igIdeas"></div>
-          </div>
-        </div>
-      </div>
-
   <!-- TAB: ACQUISIZIONI -->
-  <section class="section" data-tab="acquisizioni">
     <!-- KPI -->
     <div class="kpi-band" style="margin-bottom:24px;" id="subKpiBand">
       <div class="kpi">

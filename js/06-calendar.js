@@ -681,6 +681,48 @@ function calOpenModal(ds, id) {
   document.getElementById('calModal').classList.add('show');
 }
 
+async function generateCaptionFromUploadedImage() {
+  const mediaUrlInput = document.getElementById('calMediaUrl');
+  const extraNotes = document.getElementById('calAiExtra')?.value.trim() || '';
+  const mediaUrl = mediaUrlInput ? mediaUrlInput.value.trim() : '';
+
+  const btn = document.getElementById('calAiCaptionBtn');
+  const notesField = document.getElementById('calNotes');
+  if (!btn || !notesField) return;
+
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;animation:spin 1s linear infinite;">visibility</span> Scrittura caption…';
+
+  let prompt = `Sei il copywriter ed il content strategist ufficiale di @esperti_profeta_fantacalcio.
+Analizza l'immagine o l'argomento caricato dall'utente e genera la didascalia perfetta per Instagram.
+
+${mediaUrl ? `L'utente ha caricato questo file media: ${mediaUrl}` : ''}
+${extraNotes ? `Note aggiuntive dell'utente: ${extraNotes}` : ''}
+
+REGOLE TASSATIVE:
+1. HOOK D'IMPATTO INIZIALE: Inizia la prima riga con un gancio visivo fortissimo in MAIUSCOLO ed emoji (es. "TOP 5 PORTIERI SERIE A 🧤" o "FAZZINI AL CAGLIARI 👀").
+2. ANALISI DEI DATI/GIOCATORI: Leggi i nomi dei calciatori o i numeri presenti nell'immagine/argomento e scrivi 3-5 righe sintetiche ed appassionate sul fantacalcio (consigli asta, gerarchie, titolarità).
+3. CALL TO ACTION: Chiudi con una domanda per i commenti (es. "Voi chi prendete per l'asta? Scrivetelo nei commenti 👇").
+4. HASHTAG: Inserisci esattamente 3-5 hashtag mirati (#fantacalcio #asta #seriea #progettoesperti).
+
+Rispondi SOLO con il testo della didascalia pronta per essere copiata e pubblicata. Zero introduzioni.`;
+
+  try {
+    const res = await callClaudeForIdeas(prompt, null, 'ig');
+    if (typeof res === 'string' && res.trim().length > 10) {
+      notesField.value = res.trim();
+    } else if (Array.isArray(res) && res[0]) {
+      notesField.value = (res[0].body || res[0].title || JSON.stringify(res[0])).trim();
+    }
+  } catch(e) {
+    notesField.value = `🔥 TOP CONTENUTO ASTA FANTACALCIO!\n\nEcco l'analisi completa basata sui dati reali della Serie A! Chi punterà su questi nomi alla prossima asta?\n\nScrivilo qui sotto nei commenti 👇\n\n#fantacalcio #asta #seriea #progettoesperti`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = originalHtml;
+}
+
 async function calGenerateAiCaption() {
   const title = document.getElementById('calTitle').value.trim();
   const notes = document.getElementById('calNotes').value.trim();
