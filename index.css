@@ -1857,7 +1857,10 @@ body {
   .nav-inner { flex-direction: column; padding: 12px 16px; gap: 12px; }
   .nav-cluster { width: 100%; justify-content: space-between; }
   .container { padding: 20px 16px 40px; }
-  .cal-grid { min-width: 700px; } /* Mantiene il calendario leggibile a 7 colonne su mobile */
+  .cal-grid { min-width: 640px; } /* Mantiene il calendario leggibile a 7 colonne su mobile */
+  .cal-nav { flex-direction: column; align-items: stretch; gap: 10px; }
+  .cal-nav-btns { justify-content: space-between; width: 100%; }
+  .cal-filter-bar { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
   .top-cols { grid-template-columns: 1fr; }
   .panel-grid.two-col, .panel-grid.equal, .panel-grid.three-col { grid-template-columns: 1fr; }
   .layout-header-actions { flex-wrap: wrap; gap: 8px; }
@@ -1865,6 +1868,10 @@ body {
   .cal-filters { flex-wrap: wrap; }
   .cal-filter { flex: 1; justify-content: center; }
   .tabs { flex-wrap: wrap; overflow-x: auto; white-space: nowrap; justify-content: flex-start; }
+}
+@media (max-width: 600px) {
+  .queue-row { flex-wrap: wrap; gap: 8px; padding: 12px; }
+  .queue-main { width: 100%; }
 }
 
 /* ── INTELLIGENCE CHAT ASSISTANT STYLES (Bynor Style) ── */
