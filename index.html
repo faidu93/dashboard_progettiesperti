@@ -1239,6 +1239,41 @@
             </div>
           </div>
           
+          <!-- Barra di Avanzamento a 4 Step del Workflow -->
+          <div class="studio-workflow-steps" style="display:flex; gap:8px; margin-bottom:20px; overflow-x:auto; padding-bottom:4px;">
+            <div class="workflow-step active" style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--accent); border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:8px;">
+              <span style="background:var(--accent); color:var(--bg); font-weight:800; font-family:var(--font-mono); font-size:11px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;">1</span>
+              <div>
+                <div style="font-size:11px; font-weight:700; color:var(--ink);">Ideazione &amp; Script</div>
+                <div style="font-size:9.5px; color:var(--ink-soft);">Argomento &amp; Scaletta</div>
+              </div>
+            </div>
+            
+            <div class="workflow-step" style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:8px; opacity:0.85;">
+              <span style="background:var(--bg-elev-3); color:var(--ink); font-weight:700; font-family:var(--font-mono); font-size:11px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;">2</span>
+              <div>
+                <div style="font-size:11px; font-weight:700; color:var(--ink);">Grafica ChatGPT</div>
+                <div style="font-size:9.5px; color:var(--ink-soft);">DALL-E 3 + Brand Canvas</div>
+              </div>
+            </div>
+
+            <div class="workflow-step" style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:8px; opacity:0.85;">
+              <span style="background:var(--bg-elev-3); color:var(--ink); font-weight:700; font-family:var(--font-mono); font-size:11px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;">3</span>
+              <div>
+                <div style="font-size:11px; font-weight:700; color:var(--ink);">Caption &amp; Hook</div>
+                <div style="font-size:9.5px; color:var(--ink-soft);">Didascalia &amp; Hashtag</div>
+              </div>
+            </div>
+
+            <div class="workflow-step" style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:8px; opacity:0.85;">
+              <span style="background:var(--bg-elev-3); color:var(--ink); font-weight:700; font-family:var(--font-mono); font-size:11px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;">4</span>
+              <div>
+                <div style="font-size:11px; font-weight:700; color:var(--ink);">Programmazione</div>
+                <div style="font-size:9.5px; color:var(--ink-soft);">Calendario &amp; Live</div>
+              </div>
+            </div>
+          </div>
+          
           <div id="igHistoryBar" style="display:none;margin-bottom:14px;"></div>
           
           <div class="intel-config" id="igIntelConfig">
@@ -1646,6 +1681,22 @@
             <div class="cal-field">
               <label>Parole da evidenziare in Arancione (separate da virgola)</label>
               <input type="text" id="sgSlideHighlights" oninput="updateSlideDataFromForm()" placeholder="Es: low cost, dubbio, asta">
+            </div>
+
+            <!-- ChatGPT / DALL-E 3 Visual Image Tools -->
+            <div class="cal-field" style="margin-top:14px; padding-top:12px; border-top:1px dashed var(--line);">
+              <label style="color:var(--accent); display:flex; align-items:center; gap:6px; font-weight:700;">
+                <span class="material-symbols-rounded" style="font-size:16px;">photo_spark</span>Immagine Sfondo AI (ChatGPT / DALL-E 3)
+              </label>
+              <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+                <button type="button" class="cal-btn" onclick="copyDallePromptForCurrentSlide()" style="font-size:11px; padding:6px 10px; background:rgba(255,107,0,0.08); border-color:var(--accent); color:var(--accent); font-weight:600;">
+                  <span class="material-symbols-rounded" style="font-size:14px;">content_copy</span>📋 Copia Prompt per ChatGPT
+                </button>
+                <button type="button" class="cal-btn primary" onclick="generateDalleImageForCurrentSlide()" style="font-size:11px; padding:6px 10px; background:var(--accent); border-color:var(--accent); color:var(--bg); font-weight:700;">
+                  <span class="material-symbols-rounded" style="font-size:14px;">auto_awesome</span>✨ Genera DALL-E 3
+                </button>
+              </div>
+              <div id="sgDalleStatus" style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:4px;"></div>
             </div>
             
             <button class="cal-btn" onclick="deleteCurrentSlide()" style="color:var(--neg); border-color:rgba(255,80,80,0.2); background:rgba(255,80,80,0.03); margin-top:12px; font-size:11px; font-weight:600; padding:8px 12px; display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;">

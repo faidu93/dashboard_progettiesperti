@@ -1120,6 +1120,63 @@ function openSlideGeneratorWithIdea(title, scriptBody) {
   }
 }
 
+function getDallePromptForSlide(slide) {
+  const title = slide ? slide.title || '' : '';
+  const content = slide && slide.content ? slide.content.join(' ') : '';
+  const topic = title + ' ' + content;
+
+  return `Professional sports graphic background image for a Serie A football post about: "${topic}". Dark moody stadium/field atmosphere, cinematic lighting, glowing neon orange ambient highlights (#FF5000), 8k quality, ultra detailed, no text inside the image.`;
+}
+
+function copyDallePromptForCurrentSlide() {
+  const slide = slideBuilderList[slideBuilderIndex];
+  if (!slide) return;
+  const promptText = getDallePromptForSlide(slide);
+  navigator.clipboard.writeText(promptText).then(() => {
+    const status = document.getElementById('sgDalleStatus');
+    if (status) status.textContent = '✅ Prompt per ChatGPT copiato negli appunti!';
+    setTimeout(() => { if (status) status.textContent = ''; }, 3500);
+  }).catch(() => {
+    alert('Prompt ChatGPT:\n\n' + promptText);
+  });
+}
+
+async function generateDalleImageForCurrentSlide() {
+  const slide = slideBuilderList[slideBuilderIndex];
+  if (!slide) return;
+  const apiKey = prompt("Inserisci la tua OpenAI API Key (sk-...) per generare l'immagine con DALL-E 3:");
+  if (!apiKey) return;
+  const status = document.getElementById('sgDalleStatus');
+  if (status) status.textContent = '⏳ Generazione immagine DALL-E 3 in corso…';
+  try {
+    const promptText = getDallePromptForSlide(slide);
+    const resp = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey.trim()}`
+      },
+      body: JSON.stringify({
+        model: 'dall-e-3',
+        prompt: promptText,
+        n: 1,
+        size: '1024x1024',
+        quality: 'standard'
+      })
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.data || !data.data[0]) {
+      throw new Error(data.error ? data.error.message : 'Errore generazione DALL-E 3');
+    }
+    const imgUrl = data.data[0].url;
+    slide.bgImage = imgUrl;
+    if (status) status.textContent = '✅ Immagine DALL-E 3 applicata con successo!';
+    renderSlidePreview();
+  } catch(e) {
+    if (status) status.textContent = '❌ Errore: ' + e.message;
+  }
+}
+
 function openSlideGenerator() {
   preloadLogoAssets();
   const scriptText = document.getElementById('calScript').value.trim();
@@ -1466,9 +1523,20 @@ function drawSlideCanvas(canvas, data) {
   const W = canvas.width;
   const H = canvas.height;
   
-  // 1. Sfondo scuro e vibrante
+  // 1. Sfondo scuro e vibrante (o immagine AI da DALL-E / ChatGPT)
   ctx.fillStyle = '#131313';
   ctx.fillRect(0, 0, W, H);
+
+  if (data.bgImage) {
+    const bgImg = new Image();
+    bgImg.crossOrigin = 'anonymous';
+    bgImg.src = data.bgImage;
+    if (bgImg.complete && bgImg.naturalWidth !== 0) {
+      ctx.drawImage(bgImg, 0, 0, W, H);
+      ctx.fillStyle = 'rgba(19, 19, 19, 0.75)';
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
   
   // 2. Disegna Watermark di Sfondo (Ultra sfumato)
   if (data.watermark === 'logo' && data.logo && data.logo !== 'none') {
