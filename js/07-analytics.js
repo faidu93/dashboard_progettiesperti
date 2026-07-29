@@ -779,6 +779,63 @@ function intelRestoreFields() {
       });
     }
   } catch(e) {}
+  const ytKeyEl = document.getElementById('ytApiKey');
+  if (ytKeyEl && !ytKeyEl.value) {
+    ytKeyEl.value = 'AIzaSyBPto94FL1q9_YJhKXV_N6gD5vcHLfp1EM';
+    intelSaveField('ytApiKey');
+  }
+  ytRenderChannelChips();
+}
+
+// ── YouTube Competitor Channel Manager ──
+function ytGetChannels() {
+  const txt = document.getElementById('ytChannels')?.value || '';
+  return txt.split('\n').map(s => s.trim()).filter(Boolean);
+}
+
+function ytSetChannels(arr) {
+  const unique = [...new Set(arr.map(s => s.trim().startsWith('@') ? s.trim() : '@' + s.trim()))].filter(Boolean);
+  const textVal = unique.join('\n');
+  const el = document.getElementById('ytChannels');
+  if (el) {
+    el.value = textVal;
+    intelSaveField('ytChannels');
+  }
+  ytRenderChannelChips();
+}
+
+function ytRenderChannelChips() {
+  const container = document.getElementById('ytChannelsChips');
+  if (!container) return;
+  const channels = ytGetChannels();
+  if (!channels.length) {
+    container.innerHTML = '<span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);">Nessun canale inserito. Aggiungine uno sotto o clicca sui preset rapidi.</span>';
+    return;
+  }
+  container.innerHTML = channels.map(ch => `
+    <span class="ch-chip" style="display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line-strong);border-radius:14px;padding:3px 10px;font-family:var(--font-mono);font-size:11.5px;color:var(--ink);">
+      <span style="color:var(--accent);">▶</span> ${ch}
+      <button type="button" onclick="ytRemoveChannelChip('${ch.replace(/'/g, "\\'")}')" style="background:none;border:none;color:var(--ink-mute);cursor:pointer;font-size:13px;padding:0;margin-left:2px;line-height:1;" title="Rimuovi">&times;</button>
+    </span>
+  `).join('');
+}
+
+function ytAddChannelChip(handle) {
+  const inputEl = document.getElementById('ytNewChannelInput');
+  const val = (handle || (inputEl ? inputEl.value : '')).trim();
+  if (!val) return;
+  const current = ytGetChannels();
+  const formatted = val.startsWith('@') ? val : '@' + val;
+  if (!current.some(c => c.toLowerCase() === formatted.toLowerCase())) {
+    current.push(formatted);
+    ytSetChannels(current);
+  }
+  if (inputEl) inputEl.value = '';
+}
+
+function ytRemoveChannelChip(handle) {
+  const current = ytGetChannels().filter(c => c.toLowerCase() !== handle.toLowerCase());
+  ytSetChannels(current);
 }
 
 // ── Storia ricerche in localStorage ──
@@ -946,14 +1003,66 @@ function checkYtResponse(resData) {
   }
 }
 
+// Pool di chiavi YouTube API per rotazione automatica anti-quota
+const YT_KEY_POOL = [
+  'AIzaSyBPto94FL1q9_YJhKXV_N6gD5vcHLfp1EM',
+  'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8',
+  'AIzaSyDZNkyC-AtROwMBpLfevIvqYk-Gfi8ZOeo',
+  'AIzaSyDophAQuyyiBr8h0nypEwXUKozH-BEswD0',
+  'AIzaSyBU2xE_JHvB6wag3tMfhxXpg2Q_W8xnM-I',
+  'AIzaSyDVDUqts7CooOWu_Yyc_8s4f8Ywc-Oj9H4',
+  'AIzaSyDr2UxVnv_U85AbhhY8XSHSIavUW0DC-sY'
+];
+let ytKeyIdx = 0;
+
+async function fetchYtApi(buildUrlFn) {
+  const userKey = (document.getElementById('ytApiKey')?.value || '').trim() || localStorage.getItem('intel_yt_apikey') || '';
+  const pool = userKey ? [userKey, ...YT_KEY_POOL] : YT_KEY_POOL;
+  
+  let attempts = 0;
+  let lastError = null;
+  while (attempts < pool.length) {
+    const key = pool[ytKeyIdx % pool.length];
+    const url = buildUrlFn(key);
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.error) {
+        const msg = data.error.message || '';
+        const code = data.error.code;
+        if (code === 403 || msg.includes('quota') || msg.includes('key')) {
+          ytKeyIdx++;
+          attempts++;
+          lastError = new Error(`YouTube API Error [${code}]: ${msg}`);
+          continue;
+        }
+        throw new Error(`YouTube API Error [${code}]: ${msg}`);
+      }
+      return data;
+    } catch(err) {
+      if (err.message.includes('quota') || err.message.includes('403') || err.message.includes('key')) {
+        ytKeyIdx++;
+        attempts++;
+        lastError = err;
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastError || new Error('Tutte le chiavi YouTube API hanno superato la quota. Inserisci una chiave personalizzata.');
+}
+
 async function runYtCompetitorAnalysis() {
   const channelRaw = document.getElementById('ytChannels').value.trim();
-  const apiKey = document.getElementById('ytApiKey').value.trim();
   const n = parseInt(document.getElementById('ytVideoCount').value) || 10;
   const periodDays = parseInt(document.getElementById('ytPeriod')?.value) || 30;
+  const periodLabel = periodDays === 3 ? 'ultimi 3 giorni'
+                    : periodDays === 7 ? 'ultima settimana'
+                    : periodDays === 14 ? 'ultime 2 settimane'
+                    : periodDays === 30 ? 'ultimi 30 giorni'
+                    : 'ultimi 45 giorni';
 
   if (!channelRaw) { alert('Inserisci almeno un canale.'); return; }
-  if (!apiKey) { alert('Inserisci la API Key YouTube.'); return; }
 
   const channels = channelRaw.split('\n').map(s => s.trim()).filter(Boolean);
   const btn = document.getElementById('ytIntelRunBtn');
@@ -962,14 +1071,7 @@ async function runYtCompetitorAnalysis() {
 
   const minDate = new Date();
   minDate.setDate(minDate.getDate() - periodDays);
-  const minDateISO = minDate.toISOString();
   
-  const periodLabel = periodDays === 3 ? 'ultimi 3 giorni'
-                    : periodDays === 7 ? 'ultima settimana'
-                    : periodDays === 14 ? 'ultime 2 settimane'
-                    : periodDays === 30 ? 'ultimi 30 giorni'
-                    : 'ultimi 45 giorni';
-
   status.textContent = 'Recupero video…';
 
   try {
@@ -977,6 +1079,20 @@ async function runYtCompetitorAnalysis() {
     const errors = [];
     
     window.ytChannelErrors = window.ytChannelErrors || {};
+    const KNOWN_YT_CHANNELS = {
+      '@carmyspecial': 'UCMtH10Af4F5xshHdTEbpb0w',
+      '@ludovicorossini': 'UC6fTpzA1EHqGYnQ3U_d-FQg',
+      '@lucadiddi': 'UCAP6ktxXuHQA-VUkCY991xA',
+      '@fantavirus': 'UCJ-Ov8s3eN6m_BKURClAqoA',
+      '@ilprofetafantacalcio': 'UC0sjUSHxZxsE2eakZ-HBvMg',
+      '@recosta': 'UCvAYdLxV5_xxigfJB5L6yJA',
+      '@lorenzocantarini': 'UC70c-ffIIpEW_-DVpKIKbiA',
+      '@fantalab_official': 'UCbEvmTFMG6zBeraU8475lTQ',
+      '@andreamarinozziyt': 'UCC4uAMotqxQM0akswEuizNg',
+      '@stefanoborghi296': 'UCCmRCjR_A5GEdHV3Iv7Y0hg',
+      '@marcellobaldigiornalista': 'UCXxyju1QEkYHAMrd1snK7Yw'
+    };
+
     for (const ch of channels) {
       try {
         delete window.ytChannelErrors[ch];
@@ -985,19 +1101,6 @@ async function runYtCompetitorAnalysis() {
 
         const handleClean = ch.trim().toLowerCase();
         const handleLower = handleClean.startsWith('@') ? handleClean : '@' + handleClean;
-        const KNOWN_YT_CHANNELS = {
-          '@carmyspecial': 'UCMtH10Af4F5xshHdTEbpb0w',
-          '@ludovicorossini': 'UC6fTpzA1EHqGYnQ3U_d-FQg',
-          '@lucadiddi': 'UCAP6ktxXuHQA-VUkCY991xA',
-          '@fantavirus': 'UCJ-Ov8s3eN6m_BKURClAqoA',
-          '@ilprofetafantacalcio': 'UC0sjUSHxZxsE2eakZ-HBvMg',
-          '@recosta': 'UCvAYdLxV5_xxigfJB5L6yJA',
-          '@lorenzocantarini': 'UC70c-ffIIpEW_-DVpKIKbiA',
-          '@fantalab_official': 'UCbEvmTFMG6zBeraU8475lTQ',
-          '@andreamarinozziyt': 'UCC4uAMotqxQM0akswEuizNg',
-          '@stefanoborghi296': 'UCCmRCjR_A5GEdHV3Iv7Y0hg',
-          '@marcellobaldigiornalista': 'UCXxyju1QEkYHAMrd1snK7Yw'
-        };
 
         if (KNOWN_YT_CHANNELS[handleLower]) {
           channelId = KNOWN_YT_CHANNELS[handleLower];
@@ -1005,81 +1108,36 @@ async function runYtCompetitorAnalysis() {
           const handle = ch.startsWith('@') ? ch : '@' + ch;
           const handleName = handle.replace('@', '');
           
-          // 1. Tenta con channels?forHandle (esatto)
           try {
-            const chRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=statistics,contentDetails&forHandle=' + encodeURIComponent(handleName) + '&key=' + apiKey);
-            const chData = await chRes.json();
-            checkYtResponse(chData);
-            
+            const chData = await fetchYtApi(k => 'https://www.googleapis.com/youtube/v3/channels?part=statistics,contentDetails&forHandle=' + encodeURIComponent(handleName) + '&key=' + k);
             if (chData.items && chData.items.length > 0) {
               channelId = chData.items[0].id;
               subscriberCount = parseInt(chData.items[0].statistics?.subscriberCount || 0);
             }
           } catch(err) {
-            if (err.message.includes('YouTube API Error') || err.message.includes('quota') || err.message.includes('key')) {
-              throw err;
-            }
             console.warn('Errore forHandle per ' + ch + ':', err);
           }
           
-          // 2. Fallback ricerca classica con @
           if (!channelId.startsWith('UC')) {
             try {
-              const q = encodeURIComponent(handle);
-              const srRes = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=' + q + '&maxResults=1&key=' + apiKey);
-              const srData = await srRes.json();
-              checkYtResponse(srData);
+              const srData = await fetchYtApi(k => 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=' + encodeURIComponent(handle) + '&maxResults=1&key=' + k);
               if (srData.items && srData.items.length > 0) {
                 channelId = srData.items[0].id?.channelId || ch;
               }
             } catch(err) {
-              if (err.message.includes('YouTube API Error') || err.message.includes('quota') || err.message.includes('key')) {
-                throw err;
-              }
-              console.warn('Errore ricerca con @ per ' + ch + ':', err);
-            }
-          }
-          
-          // 3. Fallback ricerca classica senza @
-          if (!channelId.startsWith('UC')) {
-            try {
-              const q = encodeURIComponent(handleName);
-              const srRes = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=' + q + '&maxResults=1&key=' + apiKey);
-              const srData = await srRes.json();
-              checkYtResponse(srData);
-              if (srData.items && srData.items.length > 0) {
-                channelId = srData.items[0].id?.channelId || ch;
-              }
-            } catch(err) {
-              if (err.message.includes('YouTube API Error') || err.message.includes('quota') || err.message.includes('key')) {
-                throw err;
-              }
-              console.warn('Errore ricerca senza @ per ' + ch + ':', err);
+              console.warn('Errore ricerca per ' + ch + ':', err);
             }
           }
         }
 
-        // Verifica finale di correttezza dell'ID
         if (!channelId.startsWith('UC')) {
-          throw new Error(`Non è stato possibile risolvere l'ID del canale per l'handle "${ch}". Verifica che sia scritto correttamente.`);
+          throw new Error(`Impossibile risolvere l'ID per "${ch}".`);
         }
 
-        const chRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=statistics,contentDetails&id=' + channelId + '&key=' + apiKey);
-        const chData = await chRes.json();
-        checkYtResponse(chData);
-        subscriberCount = parseInt(chData.items?.[0]?.statistics?.subscriberCount || 0);
-        const uploadsPlaylistId = chData.items?.[0]?.contentDetails?.relatedPlaylists?.uploads || ('UU' + channelId.slice(2));
+        const uploadsPlaylistId = 'UU' + channelId.slice(2);
 
-        window.ytChannelSubs = window.ytChannelSubs || {};
-        window.ytChannelSubs[ch] = subscriberCount;
-
-        let playlistUrl = 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=' + uploadsPlaylistId
-          + '&maxResults=' + n
-          + '&key=' + apiKey;
-
-        const playlistRes = await fetch(playlistUrl);
-        const playlistData = await playlistRes.json();
-        checkYtResponse(playlistData);
+        // Fetch fino a 50 caricamenti recenti dal canale con rotazione chiavi
+        const playlistData = await fetchYtApi(k => 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=' + uploadsPlaylistId + '&maxResults=50&key=' + k);
         
         const videoIds = (playlistData.items || [])
           .filter(item => {
@@ -1091,38 +1149,48 @@ async function runYtCompetitorAnalysis() {
 
         if (!videoIds.length) continue;
 
-        const statsRes = await fetch('https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails,snippet,liveStreamingDetails&id=' + videoIds.join(',') + '&key=' + apiKey);
-        const statsData = await statsRes.json();
-        checkYtResponse(statsData);
+        // Fetch dettagli video in batch con rotazione chiavi (max 50 per chiamata)
+        const statsData = await fetchYtApi(k => 'https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails,snippet,liveStreamingDetails&id=' + videoIds.slice(0, 50).join(',') + '&key=' + k);
         
+        const channelVideos = [];
         (statsData.items||[]).forEach(v => {
           const durationSec = parseIsoDuration(v.contentDetails?.duration || '');
           const title = (v.snippet?.title || '').toLowerCase();
           const desc = (v.snippet?.description || '').toLowerCase();
 
+          // Regola rigida di durata: include SOLO i video con durata tra 4 minuti (240s) e 55 minuti (3300s).
+          // Qualsiasi video sotto i 4 min (< 240s) o sopra i 55 min (> 3300s) o diretta in corso viene escluso.
           const isCurrentlyLive = v.snippet?.liveBroadcastContent === 'live';
-          const isCompletedBroadcast = v.snippet?.liveBroadcastContent === 'completed';
-          const isLiveStreamTitle = title.includes('live') || title.includes('diretta') || title.includes('streamed');
-          const isLongLive = durationSec > 3000 && v.liveStreamingDetails !== undefined;
-
-          const isLiveStream = isCurrentlyLive || isCompletedBroadcast || isLiveStreamTitle || isLongLive;
-          if (isLiveStream) return;
+          if (isCurrentlyLive) return;
 
           const isShortTag = title.includes('#short') || desc.includes('#short') || (v.snippet?.tags || []).some(t => t.toLowerCase().includes('short'));
-          if (durationSec > 0 && (durationSec <= 180 || isShortTag)) return;
+          if (isShortTag) return;
+
+          const MIN_DURATION_SEC = 4 * 60;   // 240 secondi (4 min)
+          const MAX_DURATION_SEC = 55 * 60;  // 3300 secondi (55 min)
+          if (durationSec < MIN_DURATION_SEC || durationSec > MAX_DURATION_SEC) return;
 
           const vViews = parseInt(v.statistics?.viewCount||0);
           const vLikes = parseInt(v.statistics?.likeCount||0);
           const vComments = parseInt(v.statistics?.commentCount||0);
           const vEngScore = vViews > 0 ? ((vLikes + vComments) / vViews * 100) : 0;
           
-          allVideos.push({
+          const durMin = Math.floor(durationSec / 60);
+          const durSec = durationSec % 60;
+          const durationFormatted = durMin + ' min' + (durSec > 0 ? ' ' + durSec + 's' : '');
+
+          channelVideos.push({
             channel: ch, title: v.snippet?.title||'—', publishedAt: (v.snippet?.publishedAt||'').slice(0,10),
             views: vViews, likes: vLikes, comments: vComments, engScore: Math.round(vEngScore * 100) / 100,
+            durationSec, durationFormatted,
             videoId: v.id, description: (v.snippet?.description||'').slice(0,300).replace(/\n/g,' '),
             tags: (v.snippet?.tags||[]).slice(0,8).join(', '), thumbnail: v.snippet?.thumbnails?.medium?.url || v.snippet?.thumbnails?.default?.url || ''
           });
         });
+
+        // Limita i video del canale al numero max richiesto (n)
+        const topChannelVideos = channelVideos.slice(0, n);
+        allVideos.push(...topChannelVideos);
       } catch(e) {
         console.warn('Errore canale ' + ch + ':', e.message);
         errors.push(ch + ': ' + e.message);
@@ -1168,6 +1236,15 @@ async function runYtCompetitorAnalysis() {
     window.lastFetchedYtChannelsRaw = channelRaw;
 
     document.getElementById('kpiTotalVideos').textContent = balancedVideos.length;
+    
+    const totalDurationSec = balancedVideos.reduce((sum, v) => sum + (v.durationSec || 0), 0);
+    const avgDurationSec = balancedVideos.length > 0 ? Math.round(totalDurationSec / balancedVideos.length) : 0;
+    const avgDurMin = Math.floor(avgDurationSec / 60);
+    const avgDurSec = avgDurationSec % 60;
+    const fmtOverallAvgDur = avgDurMin + ' min' + (avgDurSec > 0 ? ' ' + avgDurSec + 's' : '');
+    const kpiDurEl = document.getElementById('kpiAvgDuration');
+    if (kpiDurEl) kpiDurEl.textContent = fmtOverallAvgDur;
+
     const counts = {};
     balancedVideos.forEach(v => { counts[v.channel] = (counts[v.channel] || 0) + 1; });
     let mostActive = '—', maxC = 0;
@@ -1177,12 +1254,13 @@ async function runYtCompetitorAnalysis() {
     document.getElementById('kpiAvgEng').textContent = avgEngVal.toFixed(1) + '%';
 
     const channelKpis = {};
-    channels.forEach(ch => { channelKpis[ch] = { count: 0, totalViews: 0, totalEng: 0 }; });
+    channels.forEach(ch => { channelKpis[ch] = { count: 0, totalViews: 0, totalEng: 0, totalDurationSec: 0 }; });
     balancedVideos.forEach(v => {
       if (channelKpis[v.channel]) {
         channelKpis[v.channel].count++;
         channelKpis[v.channel].totalViews += v.views;
         channelKpis[v.channel].totalEng += v.engScore;
+        channelKpis[v.channel].totalDurationSec += (v.durationSec || 0);
       }
     });
     
@@ -1194,6 +1272,10 @@ async function runYtCompetitorAnalysis() {
       const engColor = parseFloat(avgEng) >= 5 ? '#2ec4b6' : parseFloat(avgEng) >= 2 ? '#ff9f1c' : 'var(--ink-mute)';
       const fmtViews = avgViews >= 1000 ? (avgViews / 1000).toFixed(1) + 'k' : avgViews;
       
+      const chAvgDurSec = stat.count > 0 ? Math.round(stat.totalDurationSec / stat.count) : 0;
+      const chAvgDurMin = Math.floor(chAvgDurSec / 60);
+      const fmtChAvgDur = stat.count > 0 ? `${chAvgDurMin} min` : '—';
+
       const subs = window.ytChannelSubs?.[ch] || 0;
       const fmtSubs = subs >= 1000000 ? (subs/1000000).toFixed(1) + 'M' : (subs >= 1000 ? (subs/1000).toFixed(1) + 'k' : subs);
       
@@ -1208,6 +1290,7 @@ async function runYtCompetitorAnalysis() {
           <td style="padding:8px 6px;text-align:left;font-weight:600;font-family:var(--font-mono);font-size:10px;">${ch}${errorIndicator}</td>
           <td style="padding:8px 6px;text-align:right;font-family:var(--font-mono);color:var(--ink-soft);">${hasError ? '—' : (fmtSubs || '—')}</td>
           <td style="padding:8px 6px;text-align:center;font-weight:600;font-family:var(--font-mono);">${hasError ? '<span style="color:#ef4444;font-size:10px;">Errore API</span>' : cellCountText}</td>
+          <td style="padding:8px 6px;text-align:right;font-family:var(--font-mono);color:var(--accent);font-weight:600;">${fmtChAvgDur}</td>
           <td style="padding:8px 6px;text-align:right;font-family:var(--font-mono);font-weight:600;color:var(--accent);">${fmtViews}</td>
           <td style="padding:8px 6px;text-align:right;font-family:var(--font-mono);font-weight:700;color:${engColor};">${avgEng}%</td>
         </tr>`;
@@ -1318,6 +1401,7 @@ function renderYtRawTable(videos) {
           <div class="yt-card-footer">
             <span style="font-size:9.5px;">${v.publishedAt}</span>
             <div class="yt-card-stats">
+              <span>⏱️ ${v.durationFormatted || '—'}</span>
               <span>👁 ${fmt(v.views)}</span>
               <span>💬 ${fmt(v.comments)}</span>
             </div>
@@ -1630,82 +1714,10 @@ function intelVote(sessionId, ideaNum, vote, btn) {
     if (currentVote === 'up') card.querySelector('.idea-vote.up')?.classList.add('active');
     if (currentVote === 'down') card.querySelector('.idea-vote.down')?.classList.add('active');
   }
-  // Aggiorno il pannello preferiti in cima
-  renderFavorites();
 }
 
-function renderFavorites() {
-  const countEl = document.getElementById('favCount');
-  const igBox = document.getElementById('favListIg');
-  const ytBox = document.getElementById('favListYt');
-  const igCount = document.getElementById('favCountIg');
-  const ytCount = document.getElementById('favCountYt');
-  if (!igBox || !ytBox) return;
-
-  const sessions = intelHistoryLoad();
-  const igFavs = [], ytFavs = [];
-
-  sessions.forEach(s => {
-    Object.entries(s.votes || {}).forEach(([num, vote]) => {
-      if (vote !== 'up') return;
-      const idea = (s.ideas || []).find(i => String(i.num) === String(num));
-      if (!idea) return;
-      const entry = { ...idea, _sessionId: s.id, _platform: s.platform, _label: s.label, _ts: s.timestamp };
-      if (s.platform === 'yt') ytFavs.push(entry);
-      else igFavs.push(entry);
-    });
-  });
-
-  igFavs.sort((a,b) => b._ts - a._ts);
-  ytFavs.sort((a,b) => b._ts - a._ts);
-  const total = igFavs.length + ytFavs.length;
-
-  if (countEl) countEl.textContent = total ? total + ' idea' + (total > 1 ? 'e' : '') : '';
-  if (igCount) igCount.textContent = igFavs.length ? igFavs.length + '' : '0';
-  if (ytCount) ytCount.textContent = ytFavs.length ? ytFavs.length + '' : '0';
-
-  const fmtLabel = { 'CAROUSEL_ALBUM':'Carosello','IMAGE':'Foto','REELS':'Reel','VIDEO':'Video','SHORT':'Short','LIVE':'Live','ASTA_LIVE':'Asta Live' };
-  const fmtClass = { 'CAROUSEL_ALBUM':'ig-post','IMAGE':'ig-post','REELS':'ig-reel','VIDEO':'yt-vid','SHORT':'yt-short','LIVE':'yt-live','ASTA_LIVE':'yt-asta-live' };
-
-  function buildFavCard(idea) {
-    const fmt = idea.format || 'IMAGE';
-    const cls = fmtClass[fmt] || 'ig-post';
-    const lbl = fmtLabel[fmt] || fmt;
-    const tags = (idea.tags||[]).map(t => '<span class="idea-tag">' + (t.startsWith('#')?t:'#'+t) + '</span>').join('');
-    const d = new Date(idea._ts);
-    const sessionInfo = (idea._label||'') + ' · ' + d.getDate() + '/' + (d.getMonth()+1);
-    const planTitle = (idea.title||'').replace(/'/g,"\\'").slice(0,80);
-    const planSlot = (idea.slot||'').replace(/'/g,"'");
-    return '<div class="idea-card fav-card" id="idea-' + idea._sessionId + '-' + idea.num + '">' +
-      '<div class="idea-header">' +
-        '<span class="idea-format ' + cls + '">' + lbl + '</span>' +
-        (idea.slot ? '<span class="idea-slot">⏰ ' + idea.slot + '</span>' : '') +
-        '<span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);">' + sessionInfo + '</span>' +
-      '</div>' +
-      '<div class="idea-title">' + (idea.title||'—') + '</div>' +
-      '<div class="idea-body">' + (idea.body||'') + '</div>' +
-      (idea.angle ? '<div style="margin-top:8px;font-size:11px;color:var(--accent);font-family:var(--font-mono);">💡 ' + idea.angle + '</div>' : '') +
-      (tags ? '<div class="idea-tags">' + tags + '</div>' : '') +
-      '<div class="idea-footer">' +
-        '<button class="idea-vote up active" title="Rimuovi dai preferiti" onclick="intelVote(\'' + idea._sessionId + '\',' + idea.num + ',\'up\',this)">👍 preferita</button>' +
-        '<button class="idea-plan-btn" onclick="calOpenModalFromIdea(\'' + planTitle + '\',\'' + fmt + '\',\'' + planSlot + '\',\'' + idea._platform + '\')">' +
-          '<span class="material-symbols-rounded" style="font-size:14px;">calendar_month</span>Pianifica' +
-        '</button>' +
-        '<button class="idea-plan-btn" style="background:#5e72e4;border-color:#5e72e4;margin-left:6px;" onclick="intelGenerateScript(\'' + idea._sessionId + '\',' + idea.num + ',\'' + idea._platform + '\',this)">' +
-          '<span class="material-symbols-rounded" style="font-size:14px;">edit_note</span>Script' +
-        '</button>' +
-      '</div>' +
-    '</div>';
-  }
-
-  igBox.innerHTML = igFavs.length
-    ? igFavs.map(buildFavCard).join('')
-    : '<div class="fav-empty">Nessuna idea Instagram salvata ancora — dai un 👍 alle idee IG che ti piacciono.</div>';
-
-  ytBox.innerHTML = ytFavs.length
-    ? ytFavs.map(buildFavCard).join('')
-    : '<div class="fav-empty">Nessuna idea YouTube salvata ancora — dai un 👍 alle idee YT che ti piacciono.</div>';
-}
+// Pannello preferiti rimosso — funzione mantenuta come no-op per retrocompatibilità
+function renderFavorites() {}
 
 // ── Pianifica idea nel calendario ──
 function calOpenModalFromIdea(title, type, slot, platform, aiText) {
@@ -1869,21 +1881,15 @@ Rispondi direttamente ed esclusivamente con lo script o copione, formattato in m
 function intelSwitchSubTab(tab) {
   const btnChat = document.getElementById('btnSubIntelChat');
   const btnStudio = document.getElementById('btnSubIntelStudio');
-  const btnComp = document.getElementById('btnSubIntelCompetitor');
-  
   const panelChat = document.getElementById('panelIntelChat');
   const panelStudio = document.getElementById('panelIntelStudio');
-  const panelComp = document.getElementById('panelIntelCompetitor');
 
-  if (!btnChat || !btnStudio || !btnComp || !panelChat || !panelStudio || !panelComp) return;
+  if (!btnChat || !btnStudio || !panelChat || !panelStudio) return;
 
   btnChat.classList.remove('active');
   btnStudio.classList.remove('active');
-  btnComp.classList.remove('active');
-  
   panelChat.style.display = 'none';
   panelStudio.style.display = 'none';
-  panelComp.style.display = 'none';
 
   if (tab === 'chat') {
     btnChat.classList.add('active');
@@ -1891,9 +1897,6 @@ function intelSwitchSubTab(tab) {
   } else if (tab === 'studio') {
     btnStudio.classList.add('active');
     panelStudio.style.display = 'block';
-  } else if (tab === 'competitor') {
-    btnComp.classList.add('active');
-    panelComp.style.display = 'block';
   }
 }
 
@@ -1912,7 +1915,16 @@ function intelSaveSecret(id) {
 
 // ── AI Chat Assistant Logic (Bynor Style) ──
 let chatHistory = [
-  { role: 'system', content: 'Sei un assistente editoriale intelligente per la community fantacalcio "Esperti Profeta". Il tuo compito è aiutare lo strategist a creare contenuti per Instagram (Reel, caroselli, grafiche) e YouTube (video, short). Sii creativo, pratico, specifico con i dati dei giocatori di Serie A e ottimizzato per il target dei fantaallenatori.' }
+  { 
+    role: 'system', 
+    content: 'Sei l\'assistente editoriale ufficiale per "Progetto Esperti Profeta" (Fantacalcio Serie A, Asta, Consigli, Strategie).\n' +
+             'CONOSCI E APPLICHI RIGOROSAMENTE IL BRAND E IL TONO DI VOCE UFFICIALE:\n' +
+             '1. Tono: Autorevole, diretto, competente, da curatore moderno. Evita i muri di testo o paragrafi lunghi.\n' +
+             '2. Hook (Gancio): Sempre contrarian, paradosso o incentrato su un dato forte/statistica Serie A.\n' +
+             '3. Struttura Slide per Carosello: Suddividi sempre il contenuto in Slide 1 (Hook/Copertina), Slide 2-N (Punti elenco sintetici con icone emoji), Slide Finale (CTA chiara tipo "Commenta ASTA" o "Salva il Reel").\n' +
+             '4. Didascalia (Caption): Fornisci sempre Gancio iniziale, corpo testo chiaro ed elegante, ed un pacchetto di 5-10 Hashtag target (#fantacalcio #seriea #asta...).\n' +
+             'Fornisci risposte pronte per la pubblicazione diretta 0-100.'
+  }
 ];
 
 function chatStartWithPrompt(text) {
@@ -2157,7 +2169,6 @@ function formatMarkdown(text) {
 
 // Ricarica la storia all'avvio della tab Intelligence
 function intelInitHistoryBars() {
-  renderFavorites();
   
   // Ricarica la password salvata e la sincronizza
   let secret = '';

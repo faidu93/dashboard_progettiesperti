@@ -106,6 +106,10 @@
       <span class="material-symbols-rounded">calendar_month</span>
       <span class="tab-label">Calendario</span>
     </button>
+    <button class="tab-btn" data-tab="contentstudio" onclick="tabSwitch(this)" role="tab">
+      <span class="material-symbols-rounded">auto_awesome</span>
+      <span class="tab-label">Content Studio</span>
+    </button>
     <button class="tab-btn" data-tab="summary" onclick="tabSwitch(this)" role="tab">
       <span class="material-symbols-rounded">dashboard</span>
       <span class="tab-label">Summary</span>
@@ -123,8 +127,8 @@
       <span class="tab-label">Strategia</span>
     </button>
     <button class="tab-btn" data-tab="intelligence" onclick="tabSwitch(this)" role="tab">
-      <span class="material-symbols-rounded">travel_explore</span>
-      <span class="tab-label">Intelligence</span>
+      <span class="material-symbols-rounded">manage_search</span>
+      <span class="tab-label">Competitor</span>
     </button>
     <button class="tab-btn" data-tab="acquisizioni" onclick="tabSwitch(this)" role="tab">
       <span class="material-symbols-rounded">groups</span>
@@ -686,8 +690,14 @@
     <div class="cal-modal" style="max-width: 900px; width: 95%;">
       
       <!-- Testata Modal -->
-      <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:8px;">
-        <h3 id="calModalTitle" style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink); margin:0;">Pianifica un post</h3>
+      <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+        <div>
+          <h3 id="calModalTitle" style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink); margin:0;">Pianifica un post</h3>
+          <div style="font-size:11px; color:var(--accent); font-family:var(--font-mono); margin-top:2px; display:flex; align-items:center; gap:4px;">
+            <span class="material-symbols-rounded" style="font-size:13px;">workspace_premium</span>
+            <span>Brand Preset Attivo: Logo, Colori &amp; Font Progetto Esperti pre-applicati</span>
+          </div>
+        </div>
         <button class="cal-btn" onclick="document.getElementById('calModal').classList.remove('show')" style="border-radius:50%; width:32px; height:32px; padding:0; display:grid; place-items:center; background:var(--bg-elev-2); border-color:var(--line);">
           <span class="material-symbols-rounded" style="font-size:18px;">close</span>
         </button>
@@ -741,7 +751,6 @@
               <option value="IMAGE">📷 Foto</option>
               <option value="CAROUSEL_ALBUM">⊞ Carosello</option>
               <option value="REELS">▶ Reel</option>
-              <option value="STORY">◈ Story</option>
             </select>
           </div>
           
@@ -836,6 +845,9 @@
           <span class="material-symbols-rounded" style="font-size:14px;">delete</span>Elimina
         </button>
         <button class="cal-btn" id="calCancelBtn">Annulla</button>
+        <button class="cal-btn" id="calPublishNowBtn" onclick="calPublishNow()" style="background:#2ec4b6; border-color:#2ec4b6; color:#0d1b2a; font-weight:700;">
+          <span class="material-symbols-rounded" style="font-size:16px;">bolt</span>⚡ Pubblica Ora
+        </button>
         <button class="cal-btn primary" id="calSaveBtn">
           <span class="material-symbols-rounded">calendar_today</span>Programma contenuto
         </button>
@@ -963,73 +975,176 @@
     </div>
   </section>
 
-
-
-
-  <!-- TAB: INTELLIGENCE -->
+  <!-- TAB: COMPETITOR (ex Intelligence) -->
   <section class="section" data-tab="intelligence" style="margin-bottom:0;">
     <div class="section-head">
       <div>
-        <div class="section-eyebrow">🔍 Competitor</div>
-        <div class="section-title">Intelligence</div>
+        <div class="section-eyebrow">🔍 Analisi</div>
+        <div class="section-title">Competitor Tracker</div>
       </div>
       <span class="section-live">● LIVE · AI-POWERED</span>
     </div>
   </section>
 
-  <!-- PREFERITI -->
   <section class="section" data-tab="intelligence">
     <div class="panel">
-      <div class="panel-title" style="justify-content:space-between;">
-        <span style="display:flex;align-items:center;gap:8px;">
-          <span class="material-symbols-rounded" style="color:#ffc04d;">bookmark</span>
-          Idee preferite
-        </span>
-        <span id="favCount" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
+      <!-- Configurazione Competitor Tracker YouTube -->
+      <div class="intel-config" id="ytCompConfig">
+        <div class="intel-field">
+          <label>API Key YouTube Data v3 <span style="color:var(--ink-mute);font-weight:400;">(pre-impostata)</span></label>
+          <input type="password" id="ytApiKey" value="AIzaSyBPto94FL1q9_YJhKXV_N6gD5vcHLfp1EM" placeholder="AIza…" oninput="intelSaveField('ytApiKey')">
+        </div>
+
+        <div class="intel-field">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label>Canali Competitor da Monitorare</label>
+            <span style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute);">Clicca '×' per rimuovere o aggiungi un nuovo handle</span>
+          </div>
+
+          <!-- Chip list dei canali -->
+          <div id="ytChannelsChips" style="display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 10px; padding:10px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; min-height:42px; align-items:center;">
+            <!-- Generati via JS -->
+          </div>
+
+          <!-- Aggiunta nuovo canale -->
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <div style="display:flex; gap:4px; flex-grow:1; max-width:360px;">
+              <input type="text" id="ytNewChannelInput" placeholder="@nomecanale" style="font-size:12px; padding:6px 10px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink); width:100%;" onkeydown="if(event.key==='Enter') ytAddChannelChip()">
+              <button type="button" class="cal-btn" onclick="ytAddChannelChip()" style="font-size:11px; padding:6px 12px; flex-shrink:0;">+ Aggiungi Canale</button>
+            </div>
+          </div>
+
+          <!-- Textarea nascosta per retrocompatibilità backend -->
+          <textarea id="ytChannels" style="display:none;" oninput="intelSaveField('ytChannels')">@CarmySpecial
+@ludovicorossini
+@lucadiddi
+@fantavirus
+@ILPROFETAFANTACALCIO
+@recosta
+@lorenzocantarini
+@fantalab_official
+@andreamarinozziyt
+@stefanoborghi296
+@MarcelloBaldiGiornalista</textarea>
+        </div>
+
+        <div class="intel-row">
+          <div class="intel-field">
+            <label>Periodo temporale di analisi</label>
+            <select id="ytPeriod" onchange="intelSaveField('ytPeriod')">
+              <option value="3">⚡ Ultimi 3 giorni</option>
+              <option value="7">📅 Ultima settimana (7 gg)</option>
+              <option value="14">🗓️ Ultime 2 settimane (14 gg)</option>
+              <option value="30" selected>📊 Ultimi 30 giorni (1 mese)</option>
+              <option value="45">📈 Ultimi 45 giorni</option>
+            </select>
+          </div>
+          <div class="intel-field" style="max-width:160px;">
+            <label>Video per canale</label>
+            <select id="ytVideoCount" onchange="intelSaveField('ytVideoCount')">
+              <option value="3">Max 3 video</option>
+              <option value="5" selected>Max 5 video</option>
+              <option value="10">Max 10 video</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="intel-actions">
+          <button class="cal-btn primary" id="ytIntelRunBtn" onclick="runYtCompetitorAnalysis()" style="font-weight:700; padding:9px 18px;">
+            <span class="material-symbols-rounded">travel_explore</span>Carica e Analizza Competitor
+          </button>
+          <span id="ytIntelStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
+        </div>
       </div>
-      <div class="panel-sub">Le idee che hai valutato 👍 — salvate qui per averle sempre a portata di mano · clicca 👍 di nuovo per rimuovere</div>
 
-      <!-- Sezione Instagram -->
-      <div class="fav-section">
-        <div class="fav-section-head">
-          <span class="material-symbols-rounded" style="color:#7ec8f0;">photo_camera</span>
-          <span class="fav-section-title">Instagram</span>
-          <span class="fav-section-count" id="favCountIg"></span>
+      <!-- Output Competitor -->
+      <div id="ytCompOutput" style="display:none;margin-top:16px;">
+        <div class="intel-out-header" style="margin-top:0;">
+          <span id="ytCompOutTitle" style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mid);"></span>
+          <button class="cal-btn" onclick="ytCompNewSearch()" style="font-size:11px;padding:5px 10px;">
+            <span class="material-symbols-rounded" style="font-size:14px;">settings</span>Riconfigura
+          </button>
         </div>
-        <div id="favListIg" class="fav-section-body">
-          <div class="fav-empty">Nessuna idea Instagram salvata ancora.</div>
-        </div>
-      </div>
 
-      <div class="fav-divider"></div>
+        <!-- KPIs Dashboard -->
+        <div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:12px;margin-bottom:18px;">
+          <div class="kpi-card" style="background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;padding:12px;text-align:center;">
+            <div style="font-size:9.5px;text-transform:uppercase;color:var(--ink-mute);font-family:var(--font-mono);margin-bottom:4px;">Video Trovati</div>
+            <div id="kpiTotalVideos" style="font-size:22px;font-weight:700;color:var(--accent);">0</div>
+          </div>
+          <div class="kpi-card" style="background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;padding:12px;text-align:center;">
+            <div style="font-size:9.5px;text-transform:uppercase;color:var(--ink-mute);font-family:var(--font-mono);margin-bottom:4px;">Durata Media Video</div>
+            <div id="kpiAvgDuration" style="font-size:22px;font-weight:700;color:var(--accent);">0 min</div>
+          </div>
+          <div class="kpi-card" style="background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;padding:12px;text-align:center;">
+            <div style="font-size:9.5px;text-transform:uppercase;color:var(--ink-mute);font-family:var(--font-mono);margin-bottom:4px;">Canale Più Attivo</div>
+            <div id="kpiMostActive" style="font-size:13px;font-weight:700;color:var(--ink);text-overflow:ellipsis;overflow:hidden;white-space:nowrap;margin-top:4px;">—</div>
+          </div>
+          <div class="kpi-card" style="background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;padding:12px;text-align:center;">
+            <div style="font-size:9.5px;text-transform:uppercase;color:var(--ink-mute);font-family:var(--font-mono);margin-bottom:4px;">Engagement Medio</div>
+            <div id="kpiAvgEng" style="font-size:22px;font-weight:700;color:#2ec4b6;">0.0%</div>
+          </div>
+        </div>
 
-      <!-- Sezione YouTube -->
-      <div class="fav-section">
-        <div class="fav-section-head">
-          <span class="material-symbols-rounded" style="color:#f08080;">smart_display</span>
-          <span class="fav-section-title">YouTube</span>
-          <span class="fav-section-count" id="favCountYt"></span>
+        <!-- Attività per Canale (Tabella KPI) -->
+        <div style="background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:18px;">
+          <div style="font-size:11px;font-weight:600;color:var(--ink);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+            <span class="material-symbols-rounded" style="font-size:16px;color:var(--accent);">monitoring</span>
+            Analisi Attività Competitor
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;font-size:11.5px;border-collapse:collapse;" id="ytChannelKpiTable">
+              <thead>
+                <tr style="border-bottom:1px solid var(--line);color:var(--ink-mute);font-family:var(--font-mono);font-size:9px;text-transform:uppercase;">
+                  <th style="text-align:left;padding:6px;font-weight:600;">Canale</th>
+                  <th style="text-align:right;padding:6px;font-weight:600;">Iscritti</th>
+                  <th style="text-align:center;padding:6px;font-weight:600;">Video Pubblicati</th>
+                  <th style="text-align:right;padding:6px;font-weight:600;">Durata Media</th>
+                  <th style="text-align:right;padding:6px;font-weight:600;">Visualizzazioni Medie</th>
+                  <th style="text-align:right;padding:6px;font-weight:600;">Engagement Medio</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Generata Dinamicamente -->
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div id="favListYt" class="fav-section-body">
-          <div class="fav-empty">Nessuna idea YouTube salvata ancora.</div>
+
+        <!-- Feed Video Competitor -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;margin-top:24px;flex-wrap:wrap;gap:8px;">
+          <h4 style="font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px;margin:0;">
+            <span class="material-symbols-rounded" style="color:#ff5e5e;font-size:18px;">smart_display</span>
+            Feed Video Competitor
+          </h4>
         </div>
+
+        <!-- Feed delle Copertine -->
+        <div id="ytRawData" style="display:flex;flex-direction:column;gap:12px;"></div>
       </div>
     </div>
   </section>
 
-  <!-- TOOL: AI Content Studio & Competitor Intelligence -->
-  <section class="section" data-tab="intelligence">
+  <!-- TAB: CONTENT STUDIO (AI Chat + Generatori Idee) -->
+  <section class="section" data-tab="contentstudio" style="margin-bottom:0;">
+    <div class="section-head">
+      <div>
+        <div class="section-eyebrow">✨ AI Assistente</div>
+        <div class="section-title">Content Studio</div>
+      </div>
+      <span class="section-live">● LIVE · CLAUDE AI</span>
+    </div>
+  </section>
+
+  <section class="section" data-tab="contentstudio">
     <div class="panel">
-      <!-- Navigazione Sotto-Tab (Novità) -->
+      <!-- Navigazione Sotto-Tab -->
       <div class="intel-sub-tabs" style="display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:10px;flex-wrap:wrap;">
         <button class="cal-btn active" id="btnSubIntelChat" onclick="intelSwitchSubTab('chat')" style="font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:6px;">
           <span class="material-symbols-rounded" style="font-size:16px;">chat_bubble</span>1. Assistente AI Chat
         </button>
         <button class="cal-btn" id="btnSubIntelStudio" onclick="intelSwitchSubTab('studio')" style="font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:6px;">
-          <span class="material-symbols-rounded" style="font-size:16px;">auto_awesome</span>2. AI Content Studio
-        </button>
-        <button class="cal-btn" id="btnSubIntelCompetitor" onclick="intelSwitchSubTab('competitor')" style="font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:6px;">
-          <span class="material-symbols-rounded" style="font-size:16px;">explore</span>3. Competitor Tracker
+          <span class="material-symbols-rounded" style="font-size:16px;">auto_awesome</span>2. Generatore Idee
         </button>
       </div>
 
@@ -1222,121 +1337,6 @@
             </div>
             <div class="intel-ideas" id="ytIdeas"></div>
           </div>
-        </div>
-      </div>
-
-      <!-- ────── SUB-TAB 3: Competitor Tracker ────── -->
-      <div id="panelIntelCompetitor" style="display:none;">
-        <!-- Configurazione Competitor -->
-        <div class="intel-config" id="ytCompConfig">
-          <div class="intel-field">
-            <label>API Key YouTube Data v3</label>
-            <input type="password" id="ytApiKey" placeholder="AIza…" oninput="intelSaveField('ytApiKey')">
-          </div>
-          <div class="intel-field">
-            <label>Canali competitor <span style="color:var(--ink-mute);font-weight:400;">(un @handle per riga)</span></label>
-            <textarea id="ytChannels" rows="6" oninput="intelSaveField('ytChannels')">@CarmySpecial
-@ludovicorossini
-@lucadiddi
-@fantavirus
-@ILPROFETAFANTACALCIO
-@recosta
-@lorenzocantarini
-@fantalab_official
-@andreamarinozziyt
-@stefanoborghi296
-@MarcelloBaldiGiornalista</textarea>
-          </div>
-          <div class="intel-row">
-            <div class="intel-field">
-              <label>Periodo temporale di analisi</label>
-              <select id="ytPeriod" onchange="intelSaveField('ytPeriod')">
-                <option value="3">Ultimi 3 giorni</option>
-                <option value="7">Ultima settimana</option>
-                <option value="14">Ultime 2 settimane</option>
-                <option value="30" selected>Ultimi 30 giorni</option>
-                <option value="45">Ultimi 45 giorni</option>
-              </select>
-            </div>
-            <div class="intel-field" style="max-width:160px;">
-              <label>Video per canale</label>
-              <select id="ytVideoCount" onchange="intelSaveField('ytVideoCount')">
-                <option value="3">Max 3 video</option>
-                <option value="5" selected>Max 5 video</option>
-                <option value="10">Max 10 video</option>
-              </select>
-            </div>
-          </div>
-          <div class="intel-actions">
-            <button class="cal-btn primary" id="ytIntelRunBtn" onclick="runYtCompetitorAnalysis()">
-              <span class="material-symbols-rounded">travel_explore</span>Carica e Analizza Competitor
-            </button>
-            <span id="ytIntelStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
-          </div>
-        </div>
-
-        <!-- Output Competitor -->
-        <div id="ytCompOutput" style="display:none;margin-top:16px;">
-          <div class="intel-out-header" style="margin-top:0;">
-            <span id="ytCompOutTitle" style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mid);"></span>
-            <button class="cal-btn" onclick="ytCompNewSearch()" style="font-size:11px;padding:5px 10px;">
-              <span class="material-symbols-rounded" style="font-size:14px;">settings</span>Riconfigura
-            </button>
-          </div>
-
-          <!-- KPIs Dashboard -->
-          <div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:12px;margin-bottom:18px;">
-            <div class="kpi-card" style="background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;padding:12px;text-align:center;">
-              <div style="font-size:9.5px;text-transform:uppercase;color:var(--ink-mute);font-family:var(--font-mono);margin-bottom:4px;">Video Trovati</div>
-              <div id="kpiTotalVideos" style="font-size:22px;font-weight:700;color:var(--accent);">0</div>
-            </div>
-            <div class="kpi-card" style="background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;padding:12px;text-align:center;">
-              <div style="font-size:9.5px;text-transform:uppercase;color:var(--ink-mute);font-family:var(--font-mono);margin-bottom:4px;">Canale Più Attivo</div>
-              <div id="kpiMostActive" style="font-size:13px;font-weight:700;color:var(--ink);text-overflow:ellipsis;overflow:hidden;white-space:nowrap;margin-top:4px;">—</div>
-            </div>
-            <div class="kpi-card" style="background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;padding:12px;text-align:center;">
-              <div style="font-size:9.5px;text-transform:uppercase;color:var(--ink-mute);font-family:var(--font-mono);margin-bottom:4px;">Engagement Medio</div>
-              <div id="kpiAvgEng" style="font-size:22px;font-weight:700;color:#2ec4b6;">0.0%</div>
-            </div>
-          </div>
-
-          <!-- Attività per Canale (Tabella KPI) -->
-          <div style="background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:18px;">
-            <div style="font-size:11px;font-weight:600;color:var(--ink);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
-              <span class="material-symbols-rounded" style="font-size:16px;color:var(--accent);">monitoring</span>
-              Analisi Attività Competitor
-            </div>
-            <div style="overflow-x:auto;">
-              <table style="width:100%;font-size:11.5px;border-collapse:collapse;" id="ytChannelKpiTable">
-                <thead>
-                  <tr style="border-bottom:1px solid var(--line);color:var(--ink-mute);font-family:var(--font-mono);font-size:9px;text-transform:uppercase;">
-                    <th style="text-align:left;padding:6px;font-weight:600;">Canale</th>
-                    <th style="text-align:right;padding:6px;font-weight:600;">Iscritti</th>
-                    <th style="text-align:center;padding:6px;font-weight:600;">Video Pubblicati</th>
-                    <th style="text-align:right;padding:6px;font-weight:600;">Visualizzazioni Medie</th>
-                    <th style="text-align:right;padding:6px;font-weight:600;">Engagement Medio</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <!-- Generata Dinamicamente -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Titolo Feed e CTA Comunicante -->
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;margin-top:24px;flex-wrap:wrap;gap:8px;">
-            <h4 style="font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px;margin:0;">
-              <span class="material-symbols-rounded" style="color:#ff5e5e;font-size:18px;">smart_display</span>
-              Feed Video Competitor
-            </h4>
-            <button class="cal-btn primary" onclick="intelSwitchSubTab('studio')" style="font-size:11px;padding:6px 12px;background:var(--accent);border-color:var(--accent);">
-              <span class="material-symbols-rounded" style="font-size:14px;">lightbulb</span>Genera idee da questi video →
-            </button>
-          </div>
-
-          <!-- Feed delle Copertine -->
-          <div id="ytRawData" style="display:flex;flex-direction:column;gap:12px;"></div>
         </div>
       </div>
 
