@@ -15,7 +15,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="index.css?v=20260729_2323">
+  <link rel="stylesheet" href="index.css?v=20260729_2326">
 </head>
 <body>
 
@@ -755,10 +755,10 @@
           
           <!-- CARICAMENTO MEDIA PRIMARIO -->
           <div class="cal-field" id="calMediaField" style="display:block; margin-top:12px;">
-            <label style="font-weight:700; color:var(--ink);">1. Carica Immagine / Carosello / Video <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--pos);font-weight:400;">· per la pubblicazione su Instagram</span></label>
+            <label style="font-weight:700; color:#e2e8f0;"><span style="color:#ff6b00; font-weight:900; background:rgba(255,107,0,0.15); border:1px solid rgba(255,107,0,0.3); padding:1px 6px; border-radius:4px; margin-right:4px;">1</span> CARICA IMMAGINE / CAROSELLO / VIDEO</label>
             <div class="cal-upload" id="calUpload" style="margin-top:6px;">
               <input type="file" id="calUploadInput" accept="image/*,video/*" multiple style="display:none;">
-              <span class="material-symbols-rounded" style="color:var(--accent);">cloud_upload</span>
+              <span class="material-symbols-rounded" style="color:var(--accent); font-size:28px;">cloud_upload</span>
               <div class="cal-upload-text">Trascina qui o clicca per caricare le immagini / video</div>
               <div class="cal-upload-hint">Supportati: JPEG, PNG, Caroselli Multi-Immagine, MP4</div>
             </div>
@@ -779,19 +779,19 @@
           <input type="hidden" id="calTitle" value="Post Instagram">
 
           <div class="cal-field" id="calNotesField">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
-              <label style="font-weight:700; color:var(--ink);">2. Caption Finale &amp; Hashtag</label>
-              <button type="button" class="cal-btn" id="calAiCaptionBtn" onclick="generateCaptionFromUploadedImage()" style="font-size:11.5px; padding:6px 12px; height:auto; display:inline-flex; align-items:center; gap:4px; background:rgba(255,107,0,0.12); border-color:var(--accent); color:var(--accent); font-weight:700;">
-                <span class="material-symbols-rounded" style="font-size:15px;">visibility</span>✨ Genera Caption dall'Immagine
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+              <label style="font-weight:700; color:#e2e8f0;"><span style="color:#ff6b00; font-weight:900; background:rgba(255,107,0,0.15); border:1px solid rgba(255,107,0,0.3); padding:1px 6px; border-radius:4px; margin-right:4px;">2</span> CAPTION FINALE &amp; HASHTAG</label>
+              <button type="button" class="cal-btn" id="calAiCaptionBtn" onclick="generateCaptionFromUploadedImage()" style="font-size:12px; padding:7px 14px; height:auto; display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, #ff6b00, #ff8c00); border:none; color:#ffffff; font-weight:800; border-radius:7px; box-shadow:0 4px 14px rgba(255,107,0,0.35); cursor:pointer;">
+                <span class="material-symbols-rounded" style="font-size:16px;">visibility</span>✨ Genera Caption dall'Immagine
               </button>
             </div>
             
             <div id="calAiOptions" style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;">
-              <input type="text" id="calAiExtra" placeholder="Note aggiuntive facoltative (es. 'cita Fazzini ed invita a commentare')" style="font-size:12px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink); width:100%; box-sizing:border-box; outline:none;">
+              <input type="text" id="calAiExtra" placeholder="Note aggiuntive per l'AI (opzionale)..." style="font-size:12px; padding:9px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.15); background:#1c1c24; color:#ffffff; width:100%; box-sizing:border-box; outline:none;">
               <input type="hidden" id="calAiTone" value="coinvolgente">
             </div>
 
-            <textarea id="calNotes" style="min-height:160px;" placeholder="Testo, emoji ed hashtag della didascalia... (clicca 'Genera dall'Immagine' per scriverla in automatico leggendo la foto caricata)"></textarea>
+            <textarea id="calNotes" style="min-height:160px; font-size:13px; line-height:1.5; background:#1c1c24; color:#ffffff; border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:12px; box-sizing:border-box;" placeholder="Testo, emoji ed hashtag della didascalia... (clicca 'Genera dall'Immagine' per scriverla in automatico leggendo la foto caricata)"></textarea>
           </div>
 
           <div class="cal-field" id="calHostField" style="display:none;">
@@ -813,8 +813,8 @@
           </div>
           
           <div class="cal-field" id="calCollabField" style="display:block; margin-top:14px;">
-            <label style="font-weight:700; color:var(--ink);">3. Collaboratori (Co-author) <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· username IG co-autori (separati da virgola)</span></label>
-            <input type="text" id="calCollaborators" placeholder="Es: carmyminardi, profeta_del_fanta" style="font-size:12px; padding:9px 12px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink); width:100%; box-sizing:border-box; outline:none; margin-top:4px;">
+            <label style="font-weight:700; color:#e2e8f0;"><span style="color:#ff6b00; font-weight:900; background:rgba(255,107,0,0.15); border:1px solid rgba(255,107,0,0.3); padding:1px 6px; border-radius:4px; margin-right:4px;">3</span> COLLABORATORI (CO-AUTHOR) <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· USERNAME IG (SEPARATI DA VIRGOLA)</span></label>
+            <input type="text" id="calCollaborators" placeholder="Es: carmyminardi, profeta_del_fanta" style="font-size:12px; padding:9px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.15); background:#1c1c24; color:#ffffff; width:100%; box-sizing:border-box; outline:none; margin-top:4px;">
           </div>
         </div>
 
@@ -1304,14 +1304,14 @@
   </div>
 </div>
 
-  <script src="js/01-api.js?v=20260729_2323"></script>
-  <script src="js/02-instagram-publish.js?v=20260729_2323"></script>
-  <script src="js/03-kpi.js?v=20260729_2323"></script>
-  <script src="js/04-subscribers.js?v=20260729_2323"></script>
-  <script src="js/05-insights.js?v=20260729_2323"></script>
-  <script src="js/06-calendar.js?v=20260729_2323"></script>
-  <script src="js/07-analytics.js?v=20260729_2323"></script>
-  <script src="js/08-main.js?v=20260729_2323"></script>
+  <script src="js/01-api.js?v=20260729_2326"></script>
+  <script src="js/02-instagram-publish.js?v=20260729_2326"></script>
+  <script src="js/03-kpi.js?v=20260729_2326"></script>
+  <script src="js/04-subscribers.js?v=20260729_2326"></script>
+  <script src="js/05-insights.js?v=20260729_2326"></script>
+  <script src="js/06-calendar.js?v=20260729_2326"></script>
+  <script src="js/07-analytics.js?v=20260729_2326"></script>
+  <script src="js/08-main.js?v=20260729_2326"></script>
   <!-- MODAL: Modifica Post Programmato in Coda -->
   <div class="cal-modal-bg" id="editQueueModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
     <div class="cal-modal" style="background:#15151b; width:100%; max-width:560px; padding:24px; border-radius:12px; border:1px solid rgba(255,255,255,0.05); color:#fff; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
