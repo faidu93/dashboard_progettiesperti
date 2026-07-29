@@ -804,8 +804,12 @@ function calSetupEvents() {
     let mediaKind = document.getElementById('calMediaKind') ? document.getElementById('calMediaKind').value : '';
     const coverUrl = document.getElementById('calCoverUrl') ? document.getElementById('calCoverUrl').value : '';
 
-    if (type === 'CAROUSEL_ALBUM') {
+    if (type === 'REELS') {
+      mediaKind = 'video';
+    } else if (type === 'CAROUSEL_ALBUM') {
       mediaKind = 'carousel';
+    } else if (!mediaKind) {
+      mediaKind = 'image';
     }
     
     // Comma-separate coverUrl for Reels if it exists

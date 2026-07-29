@@ -60,11 +60,19 @@ async function uploadMediaToSupabase(file) {
 async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso }) {
   const secret = getPublishSecret();
   if (!secret) throw new Error('Password di pubblicazione mancante.');
+
+  let mediaType = 'IMAGE';
+  if (mediaKind === 'video' || (mediaKind && mediaKind.includes('video'))) {
+    mediaType = 'REELS';
+  } else if (mediaKind === 'carousel' || (mediaUrl && mediaUrl.includes(','))) {
+    mediaType = 'CAROUSEL_ALBUM';
+  }
+
   const res = await fetch(`${BACKEND_BASE}/api/schedule?action=add`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret },
     body: JSON.stringify({
-      mediaType: mediaKind === 'video' ? 'REELS' : (mediaKind === 'carousel' ? 'CAROUSEL_ALBUM' : 'IMAGE'),
+      mediaType,
       mediaUrl,
       caption: caption || '',
       scheduledAt: scheduledAtIso
