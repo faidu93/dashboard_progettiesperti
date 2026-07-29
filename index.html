@@ -1219,51 +1219,49 @@
         </div>
       </div>
 
-      <!-- ────── SUB-TAB 2: AI Content Studio ────── -->
+      <!-- ────── SUB-TAB 2: Instagram Post & Carousel Studio (0-100) ────── -->
       <div id="panelIntelStudio" style="display:none;">
-        <!-- Instagram Studio -->
-        <div style="margin-bottom:32px;">
-          <h4 style="font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px;margin:0 0 12px;">
-            <span class="material-symbols-rounded" style="color:#7ec8f0;font-size:18px;">photo_camera</span>
-            Instagram Ideas Studio
-          </h4>
+        <div style="margin-bottom:24px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+            <div>
+              <h4 style="font-size:16px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px;margin:0 0 4px;">
+                <span class="material-symbols-rounded" style="color:var(--accent);font-size:22px;">view_carousel</span>
+                Instagram Post &amp; Carousel Studio (0-100)
+              </h4>
+              <div style="font-size:11.5px;color:var(--ink-soft);">
+                Crea post e caroselli completi dall'argomento alla grafica brandizzata, fino alla pubblicazione o programmazione mensile.
+              </div>
+            </div>
+            
+            <div style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:20px; background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.2); font-family:var(--font-mono); font-size:10.5px; color:var(--accent); font-weight:600;">
+              <span class="material-symbols-rounded" style="font-size:14px;">palette</span>
+              Brand Presets: Palette #FF6B00 · Aurora Glow · Logo Esperti
+            </div>
+          </div>
           
           <div id="igHistoryBar" style="display:none;margin-bottom:14px;"></div>
           
           <div class="intel-config" id="igIntelConfig">
             <div class="intel-field">
               <label>Password pubblicazione <span style="color:var(--ink-mute);font-weight:400;">(PUBLISH_SECRET)</span></label>
-              <input type="password" id="igSecret" placeholder="La stessa password usata per pubblicare i post" oninput="intelSaveSecret('igSecret')">
+              <input type="password" id="igSecret" placeholder="Password di pubblicazione per la programmazione reale" oninput="intelSaveSecret('igSecret')">
             </div>
-            <div class="intel-field">
-              <label>Profili competitor <span style="color:var(--ink-mute);font-weight:400;">(uno per riga)</span></label>
-              <textarea id="igProfiles" rows="5" placeholder="@sosfantacalcio&#10;@fantarete" oninput="intelSaveField('igProfiles')">@fantamantra_
-@fantaverso_official
-@fantacalciotattico
-@euroleghefc
-@fantacalcioaddicted
-@laboratoriocalcistico
-@fantagoal_fantacalcio
-@ilcalcioverticale
-@fantarete
-@nic.cariglia_</textarea>
-            </div>
+
             <div class="intel-row">
               <div class="intel-field">
-                <label>Focus tematico</label>
-                <input type="text" id="igFocus" value="fantacalcio Serie A consigli asta modificatore" oninput="intelSaveField('igFocus')">
+                <label>Focus Tematico / Argomento del Mese</label>
+                <input type="text" id="igFocus" value="fantacalcio Serie A consigli asta scommesse modificatore" placeholder="es. Top 5 scommesse asta fantacalcio" oninput="intelSaveField('igFocus')">
               </div>
-              <div class="intel-field" style="max-width:170px;">
-                <label>Tipo contenuto</label>
+              <div class="intel-field" style="max-width:180px;">
+                <label>Formato Contenuto</label>
                 <select id="igFormatFilter" onchange="intelSaveField('igFormatFilter')">
+                  <option value="CAROUSEL_ALBUM" selected>⊞ Caroselli Multi-Slide</option>
+                  <option value="IMAGE">📷 Post Singoli / Grafiche</option>
                   <option value="ALL">Tutti i formati</option>
-                  <option value="CAROUSEL_ALBUM">Solo caroselli</option>
-                  <option value="REELS">Solo reel</option>
-                  <option value="IMAGE">Solo foto</option>
                 </select>
               </div>
               <div class="intel-field" style="max-width:120px;">
-                <label>N° idee</label>
+                <label>N° Idee AI</label>
                 <select id="igIdeaCount" onchange="intelSaveField('igIdeaCount')">
                   <option value="3">3 idee</option>
                   <option value="6" selected>6 idee</option>
@@ -1271,9 +1269,18 @@
                 </select>
               </div>
             </div>
+            
+            <div class="intel-field">
+              <label>Pagine Competitor da cui trarre ispirazione <span style="color:var(--ink-mute);font-weight:400;">(opzionale)</span></label>
+              <textarea id="igProfiles" rows="3" placeholder="@sosfantacalcio&#10;@fantarete" oninput="intelSaveField('igProfiles')">@fantamantra_
+@fantaverso_official
+@fantacalciotattico
+@fantarete</textarea>
+            </div>
+
             <div class="intel-actions">
-              <button class="cal-btn primary" id="igIntelRunBtn" onclick="runIgIntelligence()">
-                <span class="material-symbols-rounded">travel_explore</span>Genera idee Instagram
+              <button class="cal-btn primary" id="igIntelRunBtn" onclick="runIgIntelligence()" style="font-weight:700; padding:10px 20px;">
+                <span class="material-symbols-rounded">auto_awesome</span>Genera Idee &amp; Script Brand
               </button>
               <span id="igIntelStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
             </div>
@@ -1283,59 +1290,10 @@
             <div class="intel-out-header" style="margin-top:0;">
               <span id="igIntelOutTitle" style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mid);"></span>
               <button class="cal-btn" onclick="igIntelNewSearch()" style="font-size:11px;padding:5px 10px;">
-                <span class="material-symbols-rounded" style="font-size:14px;">add</span>Nuova ricerca
+                <span class="material-symbols-rounded" style="font-size:14px;">settings</span>Nuova ricerca
               </button>
             </div>
             <div class="intel-ideas" id="igIdeas"></div>
-          </div>
-        </div>
-
-        <div style="border-top:1px dashed var(--line);margin-bottom:32px;"></div>
-
-        <!-- YouTube Studio -->
-        <div>
-          <h4 style="font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px;margin:0 0 12px;">
-            <span class="material-symbols-rounded" style="color:#f08080;font-size:18px;">smart_display</span>
-            YouTube Ideas Studio
-          </h4>
-          
-          <div id="ytHistoryBar" style="display:none;margin-bottom:14px;"></div>
-          
-          <div class="intel-config" id="ytIdeasConfig">
-            <div class="intel-field">
-              <label>Password pubblicazione <span style="color:var(--ink-mute);font-weight:400;">(PUBLISH_SECRET)</span></label>
-              <input type="password" id="ytSecret" placeholder="La stessa password usata per pubblicare i post" oninput="intelSaveSecret('ytSecret')">
-            </div>
-            <div class="intel-row">
-              <div class="intel-field">
-                <label>Topic di ricerca / Parola chiave <span style="color:var(--ink-mute);font-weight:400;">(opzionale)</span></label>
-                <input type="text" id="ytTopic" placeholder="es. mondiale 2026, asta, scambi..." oninput="intelSaveField('ytTopic')">
-              </div>
-              <div class="intel-field" style="max-width:130px;">
-                <label>Numero di idee</label>
-                <select id="ytIdeaCount" onchange="intelSaveField('ytIdeaCount')">
-                  <option value="3">3 idee</option>
-                  <option value="6" selected>6 idee</option>
-                  <option value="10">10 idee</option>
-                </select>
-              </div>
-            </div>
-            <div class="intel-actions">
-              <button class="cal-btn primary" id="ytIntelGenBtn" onclick="runYtIdeaGeneration()" style="background:var(--accent);border-color:var(--accent);">
-                <span class="material-symbols-rounded">lightbulb</span>Genera idee YouTube
-              </button>
-              <span id="ytIntelGenStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
-            </div>
-          </div>
-          
-          <div id="ytIdeasOutput" style="display:none;margin-top:16px;">
-            <div class="intel-out-header" style="margin-top:0;">
-              <span id="ytIdeasOutTitle" style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mid);">Idee AI Generate</span>
-              <button class="cal-btn" onclick="ytIdeasNewSearch()" style="font-size:11px;padding:5px 10px;">
-                <span class="material-symbols-rounded" style="font-size:14px;">settings</span>Configura idee
-              </button>
-            </div>
-            <div class="intel-ideas" id="ytIdeas"></div>
           </div>
         </div>
       </div>

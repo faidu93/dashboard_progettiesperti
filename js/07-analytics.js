@@ -1677,6 +1677,13 @@ function renderIdeas(ideas, targetId, platform, sessionId, votes) {
     const planType = fmt === 'REELS' ? 'REELS' : fmt === 'CAROUSEL_ALBUM' ? 'CAROUSEL_ALBUM' : fmt === 'VIDEO' ? 'VIDEO' : fmt === 'SHORT' ? 'SHORT' : fmt === 'LIVE' ? 'LIVE' : fmt === 'ASTA_LIVE' ? 'ASTA_LIVE' : 'IMAGE';
     const planTitle = (idea.title||'').replace(/'/g, "\\'").slice(0,80);
     const planSlot = (idea.slot||'').replace(/'/g,"'");
+    const bodyText = (idea.body || '').replace(/'/g, "\\'").replace(/\n/g, ' ');
+    const isIgCarouselOrPost = platform === 'ig' && (fmt === 'CAROUSEL_ALBUM' || fmt === 'IMAGE');
+    const slideBtnHtml = isIgCarouselOrPost ? 
+      '<button class="idea-plan-btn" style="background:rgba(255,107,0,0.15);color:var(--accent);border-color:var(--accent);margin-left:6px;" onclick="openSlideGeneratorWithIdea(\'' + planTitle + '\',\'' + bodyText + '\')">' +
+        '<span class="material-symbols-rounded" style="font-size:14px;">palette</span>🎨 Slide Brand' +
+      '</button>' : '';
+
     return '<div class="idea-card" id="idea-' + sid + '-' + idea.num + '">' +
       '<div class="idea-header">' +
         '<span class="idea-num">' + String(idea.num||'').padStart(2,'0') + '</span>' +
@@ -1696,6 +1703,7 @@ function renderIdeas(ideas, targetId, platform, sessionId, votes) {
         '<button class="idea-plan-btn" style="background:#5e72e4;border-color:#5e72e4;margin-left:6px;" onclick="intelGenerateScript(\'' + sid + '\',' + idea.num + ',\'' + platform + '\',this)">' +
           '<span class="material-symbols-rounded" style="font-size:14px;">edit_note</span>Script' +
         '</button>' +
+        slideBtnHtml +
       '</div>' +
     '</div>';
   }).join('');

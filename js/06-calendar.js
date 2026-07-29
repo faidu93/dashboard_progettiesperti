@@ -163,8 +163,7 @@ function calUpdateUploadInputMultiple() {
 const CAL_IG_TYPES = [
   {value:'IMAGE',      label:'📷 Foto'},
   {value:'CAROUSEL_ALBUM', label:'⊞ Carosello'},
-  {value:'REELS',     label:'▶ Reel'},
-  {value:'STORY',     label:'◈ Story'}
+  {value:'REELS',     label:'▶ Reel'}
 ];
 const CAL_YT_TYPES = [
   {value:'VIDEO',     label:'▶ Video'},
@@ -484,12 +483,14 @@ async function repurposeYoutubeToInstagram(url) {
     if(!videoId) { alert("Impossibile estrarre l\"ID del video."); return; }
 
     document.getElementById("calDetail").classList.remove("show");
-    const intTabBtn = document.querySelector('button[data-tab="intelligence"]');
+    const intTabBtn = document.querySelector('button[data-tab="contentstudio"]');
     if (intTabBtn) tabSwitch(intTabBtn);
     setTimeout(() => {
+      // Switcha al sotto-tab Generatore Idee e scrolla al form IG
+      intelSwitchSubTab('studio');
       const igSection = document.getElementById('igIntelConfig');
       if(igSection) igSection.scrollIntoView({behavior: 'smooth', block: 'start'});
-    }, 100);
+    }, 150);
     
     loadingStart();
     document.getElementById('loadingTitle').textContent = 'Riciclo Contenuti AI';
@@ -967,6 +968,53 @@ function calSetupEvents() {
     document.getElementById('calModal').classList.remove('show');
     renderFn();
   };
+
+  // Pubblicazione immediata 0-to-100 (1-Click Publish Now)
+  window.calPublishNow = async function() {
+    const platform = document.getElementById('calPlatform').value || 'ig';
+    const type = document.getElementById('calType').value;
+    const title = document.getElementById('calTitle').value.trim();
+    
+    if (!title) { alert('Inserisci un titolo prima di pubblicare.'); return; }
+
+    // Imposta data e ora ad adesso per pubblicazione istantanea
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10);
+    const hours = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('calDate').value = dateStr;
+    document.getElementById('calTime').value = `${hours}:${mins}`;
+
+    const pubBtn = document.getElementById('calPublishNowBtn');
+    const prevHtml = pubBtn ? pubBtn.innerHTML : '';
+    if (pubBtn) {
+      pubBtn.disabled = true;
+      pubBtn.innerHTML = '<span class="material-symbols-rounded">progress_activity</span>Pubblicazione immediata in corso…';
+    }
+
+    try {
+      // Esegue la programmazione normale (data ad adesso)
+      await document.getElementById('calSaveBtn').click();
+
+      // Triggera immediatamente la coda backend per non attendere la cron-job
+      let secret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || '';
+      if (secret && typeof BACKEND_BASE !== 'undefined') {
+        try {
+          await fetch(BACKEND_BASE + '/api/cron-publish', {
+            method: 'GET',
+            headers: { 'X-Publish-Secret': secret }
+          });
+        } catch(e) {}
+      }
+    } catch(e) {
+      alert('Errore durante la pubblicazione: ' + (e.message || e));
+    } finally {
+      if (pubBtn) {
+        pubBtn.disabled = false;
+        pubBtn.innerHTML = prevHtml;
+      }
+    }
+  };
   document.getElementById('calDeleteBtn').onclick = async () => {
     const platform = document.getElementById('calPlatform').value || 'ig';
     const id = document.getElementById('calEditId').value;
@@ -1033,6 +1081,45 @@ function preloadLogoAssets() {
   });
 }
 
+function openSlideGeneratorWithIdea(title, scriptBody) {
+  preloadLogoAssets();
+  const fullText = (title ? 'Slide 1 (Copertina):\n' + title + '\n\n' : '') + (scriptBody || '');
+  if (fullText) {
+    slideBuilderList = parseScriptToSlides(fullText);
+  } else {
+    slideBuilderList = [];
+  }
+  if (!slideBuilderList || !slideBuilderList.length) {
+    slideBuilderList = [
+      {
+        title: (title || 'TITOLO COPERTINA').toUpperCase(),
+        content: ['Sottotitolo o gancio forte della copertina'],
+        layout: 'cover',
+        logo: 'logo.png',
+        pattern: 'grid_aurora',
+        accent: 'border_orange',
+        watermark: 'logo_faded',
+        player: '',
+        highlights: ''
+      }
+    ];
+  }
+  slideBuilderList.forEach(s => {
+    s.logo = s.logo || 'logo.png';
+    s.pattern = s.pattern || 'grid_aurora';
+    s.accent = s.accent || 'border_orange';
+    s.watermark = s.watermark || 'logo_faded';
+  });
+
+  currentSlideIndex = 0;
+  const modal = document.getElementById('slideGeneratorModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    updateSlideFormControls();
+    renderSlideCanvas();
+  }
+}
+
 function openSlideGenerator() {
   preloadLogoAssets();
   const scriptText = document.getElementById('calScript').value.trim();
@@ -1047,9 +1134,9 @@ function openSlideGenerator() {
         content: ['Sottotitolo o gancio forte della tua copertina'],
         layout: 'cover',
         logo: 'logo.png',
-        pattern: 'glow',
-        accent: 'none',
-        watermark: 'none',
+        pattern: 'grid_aurora',
+        accent: 'border_orange',
+        watermark: 'logo_faded',
         player: '',
         highlights: ''
       },
@@ -1058,9 +1145,9 @@ function openSlideGenerator() {
         content: ['- 3 Gol e 2 Assist in stagione', '- Ruolo: trequartista di spinta', '- Prezzo all\'asta: scommessa low-cost'],
         layout: 'points',
         logo: 'logo.png',
-        pattern: 'glow',
-        accent: 'none',
-        watermark: 'none',
+        pattern: 'grid_aurora',
+        accent: 'border_orange',
+        watermark: 'logo_faded',
         player: '',
         highlights: 'low-cost, scommessa'
       },
@@ -1069,9 +1156,9 @@ function openSlideGenerator() {
         content: ['PRENDERE\nScommessa da 5° slot', 'LASCIARE\nSe pagato oltre 15 crediti'],
         layout: 'compare',
         logo: 'logo.png',
-        pattern: 'glow',
-        accent: 'none',
-        watermark: 'none',
+        pattern: 'grid_aurora',
+        accent: 'border_orange',
+        watermark: 'logo_faded',
         player: '',
         highlights: 'PRENDERE, LASCIARE'
       },
@@ -1080,9 +1167,9 @@ function openSlideGenerator() {
         content: ['Commenta "ASTA" per ricevere la guida completa', 'Salva il Reel per non perderlo'],
         layout: 'cta',
         logo: 'logo.png',
-        pattern: 'glow',
-        accent: 'none',
-        watermark: 'none',
+        pattern: 'grid_aurora',
+        accent: 'border_orange',
+        watermark: 'logo_faded',
         player: '',
         highlights: 'guida, Salva'
       }
@@ -1290,9 +1377,9 @@ function parseScriptToSlides(text) {
       content: lines,
       layout: layout,
       logo: 'logo.png',
-      pattern: 'glow',
-      accent: 'none',
-      watermark: 'none',
+      pattern: 'grid_aurora',
+      accent: 'border_orange',
+      watermark: 'logo_faded',
       player: '',
       highlights: ''
     });
