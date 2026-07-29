@@ -608,6 +608,7 @@ function tabSwitch(btn) {
     }
   }
   if (tabId === 'intelligence') { intelInitHistoryBars(); }
+  if (tabId === 'contentstudio') { intelInitHistoryBars(); intelSwitchSubTab('chat'); }
   if (tabId === 'acquisizioni') { renderSubscribersChart(); }
 }
 
