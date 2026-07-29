@@ -1082,34 +1082,94 @@ function preloadLogoAssets() {
 }
 
 function openSlideGeneratorWithIdea(title, scriptBody) {
-  preloadLogoAssets();
-  const fullText = (title ? 'Slide 1 (Copertina):\n' + title + '\n\n' : '') + (scriptBody || '');
-  if (fullText) {
-    slideBuilderList = parseScriptToSlides(fullText);
-  } else {
-    slideBuilderList = [];
-  }
-  if (!slideBuilderList || !slideBuilderList.length) {
-    slideBuilderList = [
-      {
-        title: (title || 'TITOLO COPERTINA').toUpperCase(),
-        content: ['Sottotitolo o gancio forte della copertina'],
+  try {
+    preloadLogoAssets();
+    const rawText = ((title || '') + ' ' + (scriptBody || '')).trim();
+    
+    // Proviamo a parsare i nomi dei giocatori o punti
+    let slides = [];
+    
+    // Se il testo contiene 2 o più righe/giocatori separati da due punti, virgola o a capo
+    if (rawText.length > 0) {
+      let mainTitle = title || 'TOP CONTENUTO';
+      let itemsText = scriptBody || '';
+      
+      if (rawText.includes(':')) {
+        const parts = rawText.split(':');
+        mainTitle = parts[0].trim();
+        itemsText = parts.slice(1).join(':').trim();
+      }
+      
+      // Estraiamo la lista di giocatori/elementi
+      let items = itemsText.split(/,|\n| e | - /).map(x => x.trim()).filter(x => x.length > 1);
+      
+      // Slide 1: Copertina
+      slides.push({
+        title: mainTitle.toUpperCase(),
+        content: items.length > 0 ? ['Analisi completa ed approfondita'] : ['Consigli trasversali per l\'asta'],
         layout: 'cover',
         logo: 'logo.png',
         pattern: 'grid_aurora',
         accent: 'border_orange',
         watermark: 'logo_faded',
         player: '',
-        highlights: ''
+        highlights: mainTitle.slice(0, 15)
+      });
+      
+      // Slide 2..N: Scheda per ogni giocatore / punto
+      if (items.length > 0) {
+        items.forEach((item, idx) => {
+          slides.push({
+            title: item.toUpperCase(),
+            content: ['- Titolare / Slot strategico', '- Ottimo rendimento atteso per il fanta'],
+            layout: 'points',
+            logo: 'logo.png',
+            pattern: 'grid_aurora',
+            accent: 'border_orange',
+            watermark: 'logo_faded',
+            player: item,
+            highlights: item
+          });
+        });
+      }
+      
+      // Slide finale: CTA
+      slides.push({
+        title: 'SEGUI PROGETTO ESPERTI',
+        content: ['Salva il post per la tua asta', 'Commenta per ricevere la guida completa'],
+        layout: 'cta',
+        logo: 'logo.png',
+        pattern: 'grid_aurora',
+        accent: 'border_orange',
+        watermark: 'logo_faded',
+        player: '',
+        highlights: 'Salva, guida'
+      });
+    }
+
+    if (slides.length > 0) {
+      slideBuilderList = slides;
+    }
+  } catch(e) {
+    console.error('Slide parsing fallback:', e);
+  }
+
+  // Fallback di sicurezza: se la lista è vuota la popoliamo col mazzo base
+  if (!slideBuilderList || !slideBuilderList.length) {
+    slideBuilderList = [
+      {
+        title: 'TOP 5 ACQUISTI SERIE A',
+        content: ['Guida completa per l\'asta del fantacalcio'],
+        layout: 'cover',
+        logo: 'logo.png',
+        pattern: 'grid_aurora',
+        accent: 'border_orange',
+        watermark: 'logo_faded',
+        player: '',
+        highlights: 'TOP 5'
       }
     ];
   }
-  slideBuilderList.forEach(s => {
-    s.logo = s.logo || 'logo.png';
-    s.pattern = s.pattern || 'grid_aurora';
-    s.accent = s.accent || 'border_orange';
-    s.watermark = s.watermark || 'logo_faded';
-  });
 
   slideBuilderIndex = 0;
   const overlay = document.getElementById('slideGeneratorOverlay');
