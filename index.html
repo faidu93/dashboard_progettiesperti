@@ -1282,40 +1282,45 @@
               <input type="password" id="igSecret" placeholder="Password di pubblicazione per la programmazione reale" oninput="intelSaveSecret('igSecret')">
             </div>
 
+            <div class="intel-field">
+              <label style="font-weight:700; color:var(--ink); font-size:13px; display:flex; align-items:center; gap:6px;">
+                <span class="material-symbols-rounded" style="color:var(--accent); font-size:18px;">lightbulb</span>
+                1. La Tua Idea per il Contenuto (Titolo / Argomento)
+              </label>
+              <input type="text" id="igFocus" value="Top 5 Scommesse in Attacco Asta Fantacalcio" placeholder="es. Top 5 scommesse in attacco asta fantacalcio" oninput="intelSaveField('igFocus')" style="font-weight:600;">
+            </div>
+
+            <div class="intel-field">
+              <label style="font-weight:700; color:var(--ink); font-size:13px; display:flex; align-items:center; gap:6px;">
+                <span class="material-symbols-rounded" style="color:var(--accent); font-size:18px;">groups</span>
+                Giocatori Scelti &amp; Note Dettagliate dell'Utente <span style="color:var(--pos); font-weight:600; font-size:11px;">(L'AI rispetterà esattamente i tuoi dati)</span>
+              </label>
+              <textarea id="igUserNotes" rows="3" placeholder="Inserisci qui i nomi dei giocatori e le tue note esatte...&#10;Es: Fazzini, Belahyane, Mosquera, Vitinha, Davis. Tutti sotto i 10 crediti all'asta." oninput="intelSaveField('igUserNotes')">Giocatori: Fazzini, Belahyane, Mosquera, Vitinha, Davis.
+Dettagli: Tutti sotto i 10 crediti all'asta, titolarità garantita o jolly di spinta dal 2° tempo.</textarea>
+            </div>
+
             <div class="intel-row">
               <div class="intel-field">
-                <label>Focus Tematico / Argomento del Mese</label>
-                <input type="text" id="igFocus" value="fantacalcio Serie A consigli asta scommesse modificatore" placeholder="es. Top 5 scommesse asta fantacalcio" oninput="intelSaveField('igFocus')">
-              </div>
-              <div class="intel-field" style="max-width:180px;">
                 <label>Formato Contenuto</label>
                 <select id="igFormatFilter" onchange="intelSaveField('igFormatFilter')">
-                  <option value="CAROUSEL_ALBUM" selected>⊞ Caroselli Multi-Slide</option>
-                  <option value="IMAGE">📷 Post Singoli / Grafiche</option>
+                  <option value="CAROUSEL_ALBUM" selected>⊞ Carosello Multi-Slide</option>
+                  <option value="IMAGE">📷 Post Singolo / Grafica</option>
                   <option value="ALL">Tutti i formati</option>
                 </select>
               </div>
-              <div class="intel-field" style="max-width:120px;">
-                <label>N° Idee AI</label>
+              <div class="intel-field" style="max-width:160px;">
+                <label>N° Variante AI</label>
                 <select id="igIdeaCount" onchange="intelSaveField('igIdeaCount')">
-                  <option value="3">3 idee</option>
-                  <option value="6" selected>6 idee</option>
-                  <option value="10">10 idee</option>
+                  <option value="1" selected>1 Script Completo</option>
+                  <option value="3">3 Varianti</option>
+                  <option value="5">5 Varianti</option>
                 </select>
               </div>
             </div>
-            
-            <div class="intel-field">
-              <label>Pagine Competitor da cui trarre ispirazione <span style="color:var(--ink-mute);font-weight:400;">(opzionale)</span></label>
-              <textarea id="igProfiles" rows="3" placeholder="@sosfantacalcio&#10;@fantarete" oninput="intelSaveField('igProfiles')">@fantamantra_
-@fantaverso_official
-@fantacalciotattico
-@fantarete</textarea>
-            </div>
 
-            <div class="intel-actions">
+            <div class="intel-actions" style="margin-top:12px;">
               <button class="cal-btn primary" id="igIntelRunBtn" onclick="runIgIntelligence()" style="font-weight:700; padding:10px 20px;">
-                <span class="material-symbols-rounded">auto_awesome</span>Genera Idee &amp; Script Brand
+                <span class="material-symbols-rounded">auto_awesome</span>✨ Sviluppa Script &amp; Grafica Brand dall'Idea
               </button>
               <span id="igIntelStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
             </div>

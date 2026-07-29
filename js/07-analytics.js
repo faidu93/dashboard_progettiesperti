@@ -1455,88 +1455,56 @@ Genera esattamente ${ideaCount} oggetti.`;
 
 // ── Instagram Intelligence ──
 async function runIgIntelligence() {
-  const profiles = document.getElementById('igProfiles').value.trim();
-  const focus = document.getElementById('igFocus').value.trim() || 'fantacalcio Serie A';
-  const formatFilter = document.getElementById('igFormatFilter')?.value || 'ALL';
-  const ideaCount = parseInt(document.getElementById('igIdeaCount')?.value) || 6;
+  const profiles = document.getElementById('igProfiles')?.value.trim() || '';
+  const focus = document.getElementById('igFocus')?.value.trim() || 'Top 5 scommesse in attacco asta fantacalcio';
+  const userNotes = document.getElementById('igUserNotes')?.value.trim() || '';
+  const formatFilter = document.getElementById('igFormatFilter')?.value || 'CAROUSEL_ALBUM';
+  const ideaCount = parseInt(document.getElementById('igIdeaCount')?.value) || 1;
   const btn = document.getElementById('igIntelRunBtn');
   const status = document.getElementById('igIntelStatus');
   btn.disabled = true;
-  status.textContent = 'Generazione idee…';
+  status.textContent = 'Generazione script & grafica brand…';
   try {
-    const prompt = buildIgPrompt(profiles, focus, formatFilter, ideaCount);
+    const prompt = buildIgPrompt(profiles, focus, userNotes, formatFilter, ideaCount);
     const ideas = await callClaudeForIdeas(prompt, 'igIdeas', 'ig');
     const label = focus.slice(0,20) + (focus.length>20?'…':'');
-    const sessionId = intelHistoryAdd('ig', label, ideas, { profiles, focus, formatFilter, ideaCount });
+    const sessionId = intelHistoryAdd('ig', label, ideas, { profiles, focus, userNotes, formatFilter, ideaCount });
     renderIdeas(ideas, 'igIdeas', 'ig', sessionId, {});
     document.getElementById('igIntelConfig').style.display = 'none';
     document.getElementById('igIntelOutput').style.display = 'block';
-    document.getElementById('igIntelOutTitle').textContent = ideaCount + ' idee · ' + formatFilter + ' · ' + focus.slice(0,30);
+    document.getElementById('igIntelOutTitle').textContent = ideaCount + ' script dall\'idea dell\'utente · ' + focus.slice(0,35);
     intelRenderHistoryBar('ig', sessionId);
     status.textContent = '';
   } catch(e) { status.textContent = '❌ ' + e.message; }
   btn.disabled = false;
 }
 
-function buildIgPrompt(profiles, focus, formatFilter, ideaCount) {
-  const p = profiles || '@fantamantra_, @fantaverso_official, @fantacalciotattico, @euroleghefc, @fantacalcioaddicted, @laboratoriocalcistico, @fantagoal_fantacalcio, @ilcalcioverticale, @fantarete, @nic.cariglia_';
+function buildIgPrompt(profiles, focus, userNotes, formatFilter, ideaCount) {
+  const userContext = userNotes ? `\nNOTE ED ELEMENTI ESATTI DELL'UTENTE:\n${userNotes}\n` : '';
 
-  const fmtHint = formatFilter === 'CAROUSEL_ALBUM'
-    ? `Genera SOLO caroselli (CAROUSEL_ALBUM).
-COSA SONO: contenuto prodotto internamente dal team con grafiche e dati. L'esperto NON compare.
-STRUTTURA TIPO: slide 1 = titolo con il dato/hook principale | slide 2-7 = un elemento per slide (giocatore, squadra, statistica) con il numero chiave in evidenza | slide finale = CTA "salva e condividi".
-ANGOLO IDEALE: statistiche di giocatori Serie A che stanno emergendo al Mondiale → cosa significano per il fanta della prossima stagione. Oppure: classifiche modificatori/bonus della stagione passata per club.`
-    : formatFilter === 'REELS'
-    ? `Genera SOLO reel (REELS).
-COSA SONO: brief operativi da dare all'esperto del cast. Il "body" deve essere scritto come istruzione per l'esperto, non come descrizione del video finito.
-STRUTTURA BRIEF: indica quale esperto coinvolgere (es. "esperto Juventus"), l'hook di apertura che deve dire nei primi 3 secondi, il consiglio/rivelazione insider che deve dare (specifico, non generico), e come chiudere con CTA.
-TONO: personale e diretto, l'esperto parla in prima persona dalla sua esperienza di chi segue quella squadra ogni giorno.`
-    : formatFilter === 'IMAGE'
-    ? `Genera SOLO post immagine singola (IMAGE).
-COSA SONO: grafiche prodotte internamente con TOP-LIST e statistiche. L'esperto NON compare.
-STRUTTURA: titolo forte con numero + lista ordinata con dati specifici per ogni elemento. Questo è il format con più reach (8-15x la media del profilo).`
-    : `Mix bilanciato tra i tre format:
-- Immagini (IMAGE): TOP-LIST grafiche con statistiche → massima reach
-- Caroselli (CAROUSEL_ALBUM): dati slide per slide → engagement e salvataggi → prodotti internamente
-- Reel (REELS): brief per l'esperto del cast → acquisizione nuovi follower`;
+  return `Sei il copywriter ed il content designer ufficiale di @esperti_profeta_fantacalcio.
+L'utente ha inserito questa sua idea esatta per un contenuto Instagram:
 
-  const seasonCtx = (focus.toLowerCase().includes('mondial') || focus.toLowerCase().includes('world'))
-    ? `STAGIONALITÀ: Mondiale 2026 in corso (giugno-luglio 2026).
-ANGOLO OBBLIGATORIO: collegare sempre il Mondiale al fantacalcio Serie A della prossima stagione.
-Per post/caroselli: statistiche dei giocatori Serie A al Mondiale (gol, assist, minuti, rendimento) → "ecco chi sale di valore per l'asta di agosto".
-Per reel: l'esperto del club commenta le prestazioni mondiali dei giocatori della sua squadra → "il nostro esperto Napoli su Kvaratskhelia al Mondiale".
-MAI analisi tattica pura o risultati calcistici senza il filtro fanta.`
-    : `STAGIONALITÀ: Pre-stagione Serie A (luglio-agosto 2026).
-Per post/caroselli: statistiche amichevoli, probabili formazioni, rendimenti fanta attesi per club.
-Per reel: l'esperto del club dà i suoi 3 consigli di acquisto per l'asta, svela un nome poco noto, commenta le mosse di mercato in chiave fanta.`;
+TITOLO / IDEA DELL'UTENTE: ${focus}
+${userContext}
+REGOLE TASSATIVE:
+1. RISPETTA ESATTAMENTE i dati, i giocatori ed il titolo fornito dall'utente. NON inventare altri giocatori diversi o idee prive di aderenza alle sue note!
+2. Sviluppa per l'utente lo SCRIPT COMPLETO SLIDE PER SLIDE (Slide 1 Copertina, Slide 2-N schede giocatori/dati con i nomi indicati dall'utente, Slide finale CTA).
+3. Includi per ogni slide il PROMPT VISIVO PER DALL-E 3 / CHATGPT specifico per quella foto/sfondo.
+4. Genera una didascalia (caption) persuasiva ed un set di hashtag (#fantacalcio #asta #seriea...).
 
-  return `Sei un content strategist specializzato in fantacalcio italiano. Genera ${ideaCount} idee Instagram SPECIFICHE e PRONTE DA USARE per @esperti_profeta_fantacalcio.
+Rispondi SOLO con JSON array puro (zero markdown):
+[{"num":1,"format":"${formatFilter}","title":"${focus.replace(/"/g,'')}","angle":"Gancio d'impatto e motivazione per l'asta","body":"Slide 1 (Copertina): ${focus}\\n\\nSlide 2: Scheda primo giocatore con dati...\\n\\nSlide finale: CTA Salva il post","slot":"Martedi 15:00","tags":["fantacalcio","asta","seriea"]}]
+Genera esattamente ${ideaCount} oggetti JSON.`;
+}
 
-PROFILO:
-- Community fantacalcio Serie A, ~2.200 follower, tono tecnico e analitico
-- Pubblico: fantaallenatori che cercano vantaggio informativo reale (nomi poco noti, cambi tattici, insider da chi segue la squadra ogni giorno)
-- Cast di 25-30 esperti (uno per ogni club Serie A) disponibili a fare reel su brief
-
-DUE TIPI DI CONTENUTO — rispetta sempre questa distinzione:
-1. POST e CAROSELLI = prodotti internamente dal team. Grafiche con dati, statistiche, classifiche numeriche. L'esperto NON compare. Il team raccoglie i dati e costruisce la grafica.
-2. REEL = brief da dare all'esperto del cast. Il campo "body" deve essere scritto come istruzione operativa per l'esperto ("Chiedi all'esperto [squadra] di aprire con questa domanda, poi di dare questo consiglio specifico..."), non come descrizione del video finito.
-
-COSA FUNZIONA (dati reali del profilo):
-- TOP-LIST numeriche (TOP 10 MARCATORI, TOP 10 MODIFICATORI) → 8-15x la reach media
-- Titoli con numeri specifici battono sempre quelli generici
-- Reel con hook forte nel primo secondo (rivelazione o domanda provocatoria)
-- Collab con altri profili → +20-30% reach
-
-NON FARE: meme, contenuti comici, clickbait vuoto, analisi generica senza dati, titoli placeholder.
-
-${seasonCtx}
-
-COMPETITOR di riferimento: ${p}. Focus richiesto: ${focus}.
-${fmtHint}
-
-Rispondi SOLO con JSON array puro, zero testo prima o dopo, zero markdown, sii sintetico e conciso nei testi delle idee per velocizzare la generazione:
-[{"num":1,"format":"IMAGE","title":"titolo con dato specifico e numero, max 80 char, PRONTO DA USARE","angle":"l'insight specifico che rende questo contenuto unico rispetto ai competitor","body":"POST/CAROSELLO: descrivi slide per slide in modo super sintetico. REEL: brief brevissimo per l'esperto (hook, consiglio rapido, chiusura)","slot":"Martedi 10:30","tags":["fantacalcio","seriea","fanta"]}]
-Genera esattamente ${ideaCount} oggetti.`;
+function openSlideGeneratorFromIdeaSession(sessionId, ideaNum) {
+  const sessions = intelHistoryLoad();
+  const s = sessions.find(x => x.id === sessionId);
+  if (!s || !s.ideas) return;
+  const idea = s.ideas.find(i => i.num === ideaNum) || s.ideas[ideaNum - 1] || s.ideas[0];
+  if (!idea) return;
+  openSlideGeneratorWithIdea(idea.title || '', idea.body || '');
 }
 
 // ── Core: chiama Claude via proxy Vercel ──
@@ -1677,11 +1645,10 @@ function renderIdeas(ideas, targetId, platform, sessionId, votes) {
     const planType = fmt === 'REELS' ? 'REELS' : fmt === 'CAROUSEL_ALBUM' ? 'CAROUSEL_ALBUM' : fmt === 'VIDEO' ? 'VIDEO' : fmt === 'SHORT' ? 'SHORT' : fmt === 'LIVE' ? 'LIVE' : fmt === 'ASTA_LIVE' ? 'ASTA_LIVE' : 'IMAGE';
     const planTitle = (idea.title||'').replace(/'/g, "\\'").slice(0,80);
     const planSlot = (idea.slot||'').replace(/'/g,"'");
-    const bodyText = (idea.body || '').replace(/'/g, "\\'").replace(/\n/g, ' ');
     const isIgCarouselOrPost = platform === 'ig' && (fmt === 'CAROUSEL_ALBUM' || fmt === 'IMAGE');
     const slideBtnHtml = isIgCarouselOrPost ? 
-      '<button class="idea-plan-btn" style="background:rgba(255,107,0,0.15);color:var(--accent);border-color:var(--accent);margin-left:6px;" onclick="openSlideGeneratorWithIdea(\'' + planTitle + '\',\'' + bodyText + '\')">' +
-        '<span class="material-symbols-rounded" style="font-size:14px;">palette</span>🎨 Slide Brand' +
+      '<button class="idea-plan-btn" style="background:rgba(255,107,0,0.2);color:var(--accent);border-color:var(--accent);margin-left:6px;font-weight:700;" onclick="openSlideGeneratorFromIdeaSession(\'' + sid + '\',' + idea.num + ')">' +
+        '<span class="material-symbols-rounded" style="font-size:14px;">palette</span>🎨 Apri Editor Grafico Brand' +
       '</button>' : '';
 
     return '<div class="idea-card" id="idea-' + sid + '-' + idea.num + '">' +
