@@ -772,37 +772,46 @@ function calSetupEvents() {
   document.getElementById('calDetail').onclick = e => {
     if (e.target.id === 'calDetail') document.getElementById('calDetail').classList.remove('show');
   };
-  document.getElementById('calSaveBtn').onclick = async () => {
-    const platform = document.getElementById('calPlatform').value || 'ig';
-    const id = document.getElementById('calEditId').value;
-    const date = document.getElementById('calDate').value;
-    const time = document.getElementById('calTime').value;
-    const type = document.getElementById('calType').value;
-    const title = document.getElementById('calTitle').value.trim();
-    
-    // Recupero e serializzazione dei campi del Bynor Editor
-    const strategy = document.getElementById('calStrategy').value.trim();
-    const visual = document.getElementById('calVisual').value.trim();
-    const script = document.getElementById('calScript').value.trim();
-    const caption = document.getElementById('calNotes').value.trim();
-    
+  async function executeSaveAndPublish({ isImmediate = false } = {}) {
+    const platform = document.getElementById('calPlatform')?.value || 'ig';
+    const id = document.getElementById('calEditId')?.value || '';
+    const date = document.getElementById('calDate')?.value || '';
+    const time = document.getElementById('calTime')?.value || '10:00';
+    const type = document.getElementById('calType')?.value || 'IMAGE';
+    const title = document.getElementById('calTitle')?.value.trim() || '';
+    const caption = document.getElementById('calNotes')?.value.trim() || '';
+    const extraNotes = document.getElementById('calAiExtra')?.value.trim() || '';
+
+    const autoTitle = caption ? caption.slice(0, 40).split('\n')[0].replace(/[#*]/g, '').trim() : (extraNotes || 'Post Instagram');
+    const finalTitle = title || autoTitle || 'Post Instagram';
+
+    let finalDate = date;
+    let finalTime = time;
+    if (isImmediate) {
+      const now = new Date();
+      finalDate = now.toISOString().slice(0, 10);
+      const hours = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      finalTime = `${hours}:${mins}`;
+    } else if (!finalDate) {
+      finalDate = calDateStr(new Date());
+    }
+
+    const strategy = document.getElementById('calStrategy')?.value.trim() || '';
+    const visual = document.getElementById('calVisual')?.value.trim() || '';
+    const script = document.getElementById('calScript')?.value.trim() || '';
     const serialized = serializeStructuredNotes(strategy, visual, script, caption);
-    const collaboratorsRaw = (document.getElementById('calCollaborators') ? document.getElementById('calCollaborators').value.trim() : '');
-    
+    const collaboratorsRaw = (document.getElementById('calCollaborators')?.value.trim() || '');
+
     const finalNotes = (collaboratorsRaw && platform === 'ig')
       ? (serialized + (serialized ? '\n\n' : '') + '[COLLAB:' + collaboratorsRaw + ']')
       : serialized;
-    const host = (platform === 'yt' && (type === 'LIVE' || type === 'ASTA_LIVE')) ? document.getElementById('calHost').value.trim() : '';
-    
-    // Se il titolo o la data non sono valorizzati, li generiamo automaticamente dalla didascalia o dalle note
-    const autoTitle = caption ? caption.slice(0, 40).split('\n')[0].replace(/[#*]/g, '').trim() : (document.getElementById('calAiExtra')?.value.trim() || 'Post Instagram');
-    const finalTitle = title || autoTitle || 'Post Instagram';
-    const finalDate = date || calDateStr(new Date());
 
-    // --- PUBBLICAZIONE REALE: solo IG + media caricato ---
-    let mediaUrl = document.getElementById('calMediaUrl') ? document.getElementById('calMediaUrl').value : '';
-    let mediaKind = document.getElementById('calMediaKind') ? document.getElementById('calMediaKind').value : '';
-    const coverUrl = document.getElementById('calCoverUrl') ? document.getElementById('calCoverUrl').value : '';
+    const host = (platform === 'yt' && (type === 'LIVE' || type === 'ASTA_LIVE')) ? document.getElementById('calHost')?.value.trim() : '';
+
+    let mediaUrl = document.getElementById('calMediaUrl')?.value.trim() || '';
+    let mediaKind = document.getElementById('calMediaKind')?.value.trim() || '';
+    const coverUrl = document.getElementById('calCoverUrl')?.value.trim() || '';
 
     if (type === 'REELS') {
       mediaKind = 'video';
@@ -811,46 +820,83 @@ function calSetupEvents() {
     } else if (!mediaKind) {
       mediaKind = 'image';
     }
-    
-    // Comma-separate coverUrl for Reels if it exists
+
     if (platform === 'ig' && type === 'REELS' && coverUrl && mediaUrl) {
       mediaUrl = mediaUrl + ',' + coverUrl;
     }
 
-    let willAutoPublish = false;
-    if (platform === 'ig' && mediaUrl) {
-      const localDateTime = new Date(`${finalDate}T${(time || '10:00')}:00`);
-      if (isNaN(localDateTime.getTime())) { alert('Data/ora non valide.'); return; }
-      if (localDateTime.getTime() < Date.now() - 60000) {
-        if (!confirm('L\'orario scelto è nel passato: il post verrà pubblicato al prossimo giro del cron. Continuare?')) return;
-      }
-      const saveBtn = document.getElementById('calSaveBtn');
-      const prevLabel = saveBtn.innerHTML;
-      saveBtn.disabled = true;
-      saveBtn.innerHTML = '<span class="material-symbols-rounded">progress_activity</span>Accodo pubblicazione…';
-      try {
-        await schedulePublish({ mediaUrl, mediaKind, caption: finalNotes, scheduledAtIso: localDateTime.toISOString() });
-        willAutoPublish = true;
-      } catch (e) {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = prevLabel;
-        alert('Errore nella programmazione della pubblicazione: ' + (e.message || 'sconosciuto'));
-        return;
-      }
-      saveBtn.disabled = false;
-      saveBtn.innerHTML = prevLabel;
-    }
-    // Marco titolo/note per distinguere i post auto-pubblicati in calendario
-    const titleForCal = willAutoPublish ? ('✅ ' + finalTitle) : finalTitle;
-    const notesForCal = willAutoPublish
-      ? (finalNotes + '\n\n[Pubblicazione automatica programmata · media già caricato]')
-      : finalNotes;
+    const saveBtn = document.getElementById('calSaveBtn');
+    const pubBtn = document.getElementById('calPublishNowBtn');
+    const activeBtn = isImmediate ? pubBtn : saveBtn;
+    const prevHtml = activeBtn ? activeBtn.innerHTML : '';
 
-    // Se Google connesso, scrive direttamente su Google Calendar
-    if (gcalSignedIn) {
-      if (id) { await gcalUpdateEvent(id, platform, finalDate, time, type, titleForCal, notesForCal, host); }
-      else { await gcalCreateEvent(platform, finalDate, time, type, titleForCal, notesForCal, host); }
-      // Hook bacheca idee
+    if (activeBtn) {
+      activeBtn.disabled = true;
+      activeBtn.innerHTML = isImmediate 
+        ? '<span class="material-symbols-rounded" style="font-size:14px;animation:spin 1s linear infinite;">progress_activity</span> Pubblicazione immediata in corso…'
+        : '<span class="material-symbols-rounded" style="font-size:14px;animation:spin 1s linear infinite;">progress_activity</span> Programmazione in corso…';
+    }
+
+    let willAutoPublish = false;
+
+    try {
+      if (platform === 'ig' && mediaUrl) {
+        let scheduledAtIso;
+        if (isImmediate) {
+          scheduledAtIso = new Date().toISOString();
+        } else {
+          const localDateTime = new Date(`${finalDate}T${(finalTime || '10:00')}:00`);
+          if (isNaN(localDateTime.getTime())) { 
+            alert('Data o orario di pubblicazione non validi.'); 
+            return; 
+          }
+          scheduledAtIso = localDateTime.toISOString();
+        }
+
+        // STEP 1: Salva nella coda di pubblicazione del backend (/api/schedule)
+        await schedulePublish({ mediaUrl, mediaKind, caption: finalNotes, scheduledAtIso });
+        willAutoPublish = true;
+
+        // STEP 2: Se PUBBLICAZIONE IMMEDIATA, triggera il cron di pubblicazione al backend immediatamente
+        if (isImmediate) {
+          const secret = getPublishSecret();
+          if (secret && typeof BACKEND_BASE !== 'undefined') {
+            const cronRes = await fetch(`${BACKEND_BASE}/api/cron-publish?immediate=1`, {
+              method: 'GET',
+              headers: { 'X-Publish-Secret': secret }
+            });
+            const cronData = await cronRes.json().catch(() => ({}));
+            if (!cronRes.ok || cronData.error) {
+              console.warn('Cron publish warning:', cronData.error);
+            }
+          }
+        }
+      }
+
+      // Aggiorna bacheca e calendario visivo
+      const titleForCal = willAutoPublish ? ('✅ ' + finalTitle) : finalTitle;
+      const notesForCal = willAutoPublish
+        ? (finalNotes + '\n\n[Pubblicazione automatica programmata · media caricato]')
+        : finalNotes;
+
+      if (gcalSignedIn) {
+        if (id) { await gcalUpdateEvent(id, platform, finalDate, finalTime, type, titleForCal, notesForCal, host); }
+        else { await gcalCreateEvent(platform, finalDate, finalTime, type, titleForCal, notesForCal, host); }
+      } else {
+        const loadFn = platform === 'yt' ? ytCalLoad : calLoad;
+        const saveFn = platform === 'yt' ? ytCalSave : calSave;
+        const renderFn = platform === 'yt' ? ytRender : calRender;
+        const items = loadFn();
+        if (id) {
+          const idx = items.findIndex(i => i.id === id);
+          if (idx >= 0) items[idx] = {id, date: finalDate, time: finalTime, type, title: titleForCal, notes: notesForCal, host};
+        } else {
+          items.push({id: Date.now().toString(), date: finalDate, time: finalTime, type, title: titleForCal, notes: notesForCal, host});
+        }
+        saveFn(items);
+        renderFn();
+      }
+
       const fromIdea = document.getElementById('calModal').dataset.fromIdea;
       if (fromIdea) {
         if (typeof boardLoadIdeas === 'function' && typeof boardSaveIdeas === 'function') {
@@ -860,79 +906,26 @@ function calSetupEvents() {
         }
         delete document.getElementById('calModal').dataset.fromIdea;
       }
+
       document.getElementById('calModal').classList.remove('show');
-      return;
-    }
-    // Fallback localStorage (Google non connesso)
-    const loadFn = platform === 'yt' ? ytCalLoad : calLoad;
-    const saveFn = platform === 'yt' ? ytCalSave : calSave;
-    const renderFn = platform === 'yt' ? ytRender : calRender;
-    const items = loadFn();
-    if (id) {
-      const idx = items.findIndex(i => i.id === id);
-      if (idx >= 0) items[idx] = {id, date, time, type, title: titleForCal, notes: notesForCal, host};
-    } else {
-      items.push({id: Date.now().toString(), date, time, type, title: titleForCal, notes: notesForCal, host});
-    }
-    saveFn(items);
-    // Se viene da un'idea, rimuovo l'idea dalla bacheca (è stata "spostata" nel calendario)
-    const fromIdea = document.getElementById('calModal').dataset.fromIdea;
-    if (fromIdea) {
-      if (typeof boardLoadIdeas === 'function' && typeof boardSaveIdeas === 'function') {
-        const ideas = boardLoadIdeas().filter(i => i.id !== fromIdea);
-        boardSaveIdeas(ideas);
-        if (typeof boardRenderIdeas === 'function') boardRenderIdeas();
+
+      if (isImmediate) {
+        alert('⚡ Pubblicazione immediata completata con successo!');
       }
-      delete document.getElementById('calModal').dataset.fromIdea;
-    }
-    document.getElementById('calModal').classList.remove('show');
-    renderFn();
-  };
 
-  // Pubblicazione immediata 0-to-100 (1-Click Publish Now)
-  window.calPublishNow = async function() {
-    const platform = document.getElementById('calPlatform').value || 'ig';
-    const type = document.getElementById('calType').value;
-    const title = document.getElementById('calTitle').value.trim();
-    
-    // Imposta data e ora ad adesso per pubblicazione istantanea
-    const now = new Date();
-    const dateStr = now.toISOString().slice(0, 10);
-    const hours = String(now.getHours()).padStart(2, '0');
-    const mins = String(now.getMinutes()).padStart(2, '0');
-    document.getElementById('calDate').value = dateStr;
-    document.getElementById('calTime').value = `${hours}:${mins}`;
-
-    const pubBtn = document.getElementById('calPublishNowBtn');
-    const prevHtml = pubBtn ? pubBtn.innerHTML : '';
-    if (pubBtn) {
-      pubBtn.disabled = true;
-      pubBtn.innerHTML = '<span class="material-symbols-rounded">progress_activity</span>Pubblicazione immediata in corso…';
-    }
-
-    try {
-      // Esegue la programmazione normale (data ad adesso)
-      await document.getElementById('calSaveBtn').click();
-
-      // Triggera immediatamente la coda backend per non attendere la cron-job
-      let secret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || '';
-      if (secret && typeof BACKEND_BASE !== 'undefined') {
-        try {
-          await fetch(BACKEND_BASE + '/api/cron-publish', {
-            method: 'GET',
-            headers: { 'X-Publish-Secret': secret }
-          });
-        } catch(e) {}
-      }
     } catch(e) {
-      alert('Errore durante la pubblicazione: ' + (e.message || e));
+      console.error('Save & Publish Error:', e);
+      alert('Errore durante la pubblicazione/programmazione: ' + (e.message || e));
     } finally {
-      if (pubBtn) {
-        pubBtn.disabled = false;
-        pubBtn.innerHTML = prevHtml;
+      if (activeBtn) {
+        activeBtn.disabled = false;
+        activeBtn.innerHTML = prevHtml;
       }
     }
-  };
+  }
+
+  document.getElementById('calSaveBtn').onclick = () => executeSaveAndPublish({ isImmediate: false });
+  window.calPublishNow = () => executeSaveAndPublish({ isImmediate: true });
   document.getElementById('calDeleteBtn').onclick = async () => {
     const platform = document.getElementById('calPlatform').value || 'ig';
     const id = document.getElementById('calEditId').value;
