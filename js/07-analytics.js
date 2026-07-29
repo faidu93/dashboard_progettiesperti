@@ -1398,14 +1398,14 @@ function renderYtRawTable(videos) {
             </div>
             ${descText ? `<div style="font-size:10.5px;color:var(--ink-soft);margin-bottom:6px;line-height:1.35;">${descText}</div>` : ''}
           </div>
-          <div class="yt-card-footer">
-            <span style="font-size:9.5px;">${v.publishedAt}</span>
-            <div class="yt-card-stats">
-              <span>⏱️ ${v.durationFormatted || '—'}</span>
-              <span>👁 ${fmt(v.views)}</span>
-              <span>💬 ${fmt(v.comments)}</span>
+          <div class="yt-card-footer" style="color:#e2e8f0;">
+            <span style="font-size:10px;color:#cbd5e1;font-weight:500;">${v.publishedAt}</span>
+            <div class="yt-card-stats" style="color:#f8fafc;font-weight:600;">
+              <span style="color:#f8fafc;">⏱️ ${v.durationFormatted || '—'}</span>
+              <span style="color:#f8fafc;">👁 ${fmt(v.views)}</span>
+              <span style="color:#f8fafc;">💬 ${fmt(v.comments)}</span>
             </div>
-            <span class="yt-card-eng" style="color:${engColor};" title="Engagement: (like + commenti) / views">${v.engScore.toFixed(1)}%</span>
+            <span class="yt-card-eng" style="color:${engColor};font-weight:700;" title="Engagement: (like + commenti) / views">${v.engScore.toFixed(1)}%</span>
           </div>
         </div>
       </div>

@@ -860,7 +860,6 @@ body {
   .cal-post.planned.IMAGE { background: rgba(255,140,30,0.08); }
   .cal-post.planned.CAROUSEL_ALBUM { background: rgba(90,174,240,0.08); }
   .cal-post.planned.REELS { background: rgba(54,201,118,0.08); }
-  .cal-post.planned.STORY { background: rgba(160,90,240,0.08); color: #a05af0; border-color: #a05af0; }
   .cal-add-btn {
     font-size: 14px; color: var(--ink-mute); line-height: 1;
     text-align: center; margin-top: auto; opacity: 0;
@@ -1058,7 +1057,6 @@ body {
   .cal-post.plan.SHORT         { outline: 2px dashed #8b3232; color: #f08080; }
   .cal-post.plan.LIVE          { outline: 2px dashed #8b5500; color: #ffc04d; }
   .cal-post.plan.ASTA_LIVE     { outline: 2px dashed #5a258c; color: #b380f0; }
-  .cal-post.plan.STORY         { outline: 2px dashed #6a3aaa; color: #b39ddb; }
   /* + aggiungi (appare al hover) */
   .cal-plus {
     font-size: 18px; color: var(--ink-mute); text-align: center;
@@ -1572,19 +1570,6 @@ body {
   color:var(--accent); border-radius:6px; padding:5px 10px; cursor:pointer;
   font-family:var(--font-mono); font-size:11px; font-weight:600; transition:all .15s; }
 .idea-plan-btn:hover { background:rgba(255,140,30,.22); }
-.fav-card { border-color: rgba(255,192,77,.25); background: rgba(255,192,77,.04); }
-.fav-section { margin-top: 18px; }
-.fav-section-head { display:flex; align-items:center; gap:8px; margin-bottom:12px;
-  padding-bottom:10px; border-bottom:1px solid var(--line); }
-.fav-section-title { font-family:var(--font-mono); font-size:12px; font-weight:700;
-  text-transform:uppercase; letter-spacing:.07em; color:var(--ink); }
-.fav-section-count { font-family:var(--font-mono); font-size:11px; color:var(--ink-mute);
-  background:var(--bg-elev-2); padding:2px 8px; border-radius:4px; margin-left:4px; }
-.fav-section-body { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:12px; }
-.fav-empty { font-family:var(--font-mono); font-size:12px; color:var(--ink-mute);
-  padding:14px 0; grid-column:1/-1; }
-.fav-divider { height:1px; background:var(--line); margin:24px 0 6px; }
-@media (max-width:768px) { .fav-section-body { grid-template-columns:1fr; } }
 
 /* ── INTELLIGENCE TAB ── */
 .intel-config { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; }
@@ -1674,13 +1659,14 @@ body {
   align-items: center;
   gap: 8px;
   font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--ink-mute);
+  font-size: 10.5px;
+  color: #e2e8f0;
 }
 .yt-card-stats {
   display: flex;
   gap: 8px;
-  color: var(--ink-mute);
+  color: #f8fafc;
+  font-weight: 600;
 }
 .yt-card-eng {
   margin-left: auto;
@@ -2534,7 +2520,18 @@ body {
   .sg-canvas-wrap {
     max-width: 320px;
   }
+/* Channel Chips Competitor Tracker */
+.ch-chip {
+  transition: all 0.15s ease;
 }
+.ch-chip:hover {
+  border-color: var(--accent) !important;
+  background: var(--bg-elev-2) !important;
+}
+.ch-chip button:hover {
+  color: var(--neg) !important;
+}
+
 
 
 
