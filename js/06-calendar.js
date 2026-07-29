@@ -857,17 +857,31 @@ function calSetupEvents() {
         await schedulePublish({ mediaUrl, mediaKind, caption: finalNotes, scheduledAtIso });
         willAutoPublish = true;
 
-        // STEP 2: Se PUBBLICAZIONE IMMEDIATA, triggera il cron di pubblicazione al backend immediatamente
+        // STEP 2: Se PUBBLICAZIONE IMMEDIATA, forza la pubblicazione istantanea inviando direttamente la richiesta
         if (isImmediate) {
           const secret = getPublishSecret();
           if (secret && typeof BACKEND_BASE !== 'undefined') {
-            const cronRes = await fetch(`${BACKEND_BASE}/api/cron-publish?immediate=1`, {
+            let pubRes = await fetch(`${BACKEND_BASE}/api/cron-publish?immediate=1`, {
               method: 'GET',
               headers: { 'X-Publish-Secret': secret }
             });
-            const cronData = await cronRes.json().catch(() => ({}));
-            if (!cronRes.ok || cronData.error) {
-              console.warn('Cron publish warning:', cronData.error);
+            let pubData = await pubRes.json().catch(() => ({}));
+            
+            // Se GET non attiva la risposta, eseguiamo la chiamata POST diretta di pubblicazione immediata
+            if (!pubRes.ok || pubData.error || pubData.publishedCount === 0) {
+              pubRes = await fetch(`${BACKEND_BASE}/api/publish`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret },
+                body: JSON.stringify({
+                  mediaType: mediaKind === 'video' ? 'REELS' : (mediaKind === 'carousel' ? 'CAROUSEL_ALBUM' : 'IMAGE'),
+                  mediaUrl,
+                  caption: finalNotes
+                })
+              });
+              pubData = await pubRes.json().catch(() => ({}));
+              if (!pubRes.ok || pubData.error) {
+                throw new Error(pubData.error || pubData.details || `Pubblicazione immediata fallita (HTTP ${pubRes.status})`);
+              }
             }
           }
         }
