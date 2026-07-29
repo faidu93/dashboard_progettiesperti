@@ -880,34 +880,71 @@ body {
   .cl-story { background: rgba(160,90,240,0.5); }
   .cl-plan { border: 1.5px dashed var(--ink-mute); background: transparent; }
 
-  /* Modal calendario */
+  /* Modal calendario Glassmorphism Premium */
   .cal-modal-bg {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-    display: none; align-items: flex-start; justify-content: center;
-    z-index: 200; padding: 16px; overflow-y: auto;
+    position: fixed; inset: 0;
+    background: rgba(8, 8, 12, 0.84);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    display: none; align-items: center; justify-content: center;
+    z-index: 9999; padding: 20px; overflow-y: auto;
   }
   .cal-modal-bg.show { display: flex; }
   .cal-modal {
-    background: var(--bg-elev); border: 1px solid var(--line-strong);
-    border-radius: 14px; padding: 24px; width: 100%; max-width: 460px;
+    background: #131318;
+    border: 1px solid rgba(255, 107, 0, 0.28);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(255, 107, 0, 0.1);
+    border-radius: 16px; padding: 26px; width: 100%; max-width: 900px;
     display: flex; flex-direction: column; gap: 16px;
     max-height: 92vh; overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
   }
-  .cal-modal h3 { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--ink); margin: 0; }
+  .cal-modal h3 { font-family: var(--font-display); font-size: 19px; font-weight: 800; color: #ffffff; margin: 0; }
   .cal-field { display: flex; flex-direction: column; gap: 6px; }
-  .cal-field label { font-family: var(--font-mono); font-size: 11px; color: var(--ink-mute); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .cal-field label { font-family: var(--font-mono); font-size: 11px; color: #cbd5e1; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
   .cal-field input, .cal-field select, .cal-field textarea {
-    background: var(--bg-elev-2); border: 1px solid var(--line);
-    border-radius: 7px; padding: 10px 12px; color: var(--ink);
-    font-family: var(--font-body); font-size: 14px; outline: none;
-    transition: border-color 0.15s; width: 100%; box-sizing: border-box;
+    background: #1c1c24; border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px; padding: 11px 14px; color: #ffffff;
+    font-family: var(--font-body); font-size: 13.5px; outline: none;
+    transition: all 0.2s ease; width: 100%; box-sizing: border-box;
   }
-  .cal-field input:focus, .cal-field select:focus, .cal-field textarea:focus { border-color: var(--accent); }
-  .cal-field textarea { resize: vertical; min-height: 72px; }
-  .cal-field select option { background: #1c212b; }
-  .cal-modal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .cal-modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+  .cal-field input:focus, .cal-field select:focus, .cal-field textarea:focus {
+    border-color: #ff6b00;
+    box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.18);
+  }
+  .cal-field textarea { resize: vertical; min-height: 80px; }
+  .cal-field select option { background: #1c1c24; color: #ffffff; }
+  .cal-modal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .cal-modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 16px; }
+
+  /* Pulsanti Opzione Formato & Social */
+  .cal-btn-group { display: flex; gap: 8px; width: 100%; }
+  .cal-btn-option {
+    flex: 1; padding: 10px 14px; background: #1c1c24;
+    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;
+    color: #a0aec0; font-family: var(--font-body); font-size: 12.5px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .cal-btn-option:hover { background: #242430; color: #fff; border-color: rgba(255, 255, 255, 0.25); }
+  .cal-btn-option.active {
+    background: rgba(255, 107, 0, 0.14); border-color: #ff6b00;
+    color: #ff6b00; font-weight: 800; box-shadow: 0 0 12px rgba(255, 107, 0, 0.2);
+  }
+
+  /* Area Upload Drag & Drop */
+  .cal-upload {
+    background: #181820; border: 2px dashed rgba(255, 107, 0, 0.35);
+    border-radius: 10px; padding: 24px 16px; text-align: center; cursor: pointer;
+    transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  }
+  .cal-upload:hover, .cal-upload.dragover {
+    background: rgba(255, 107, 0, 0.08); border-color: #ff6b00;
+    box-shadow: 0 0 16px rgba(255, 107, 0, 0.15);
+  }
+  .cal-upload-text { font-size: 12.5px; font-weight: 700; color: #ffffff; }
+  .cal-upload-hint { font-size: 10.5px; color: #94a3b8; font-family: var(--font-mono); }
 
   /* Detail panel post */
   .cal-detail-bg {
