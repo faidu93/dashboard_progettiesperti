@@ -151,12 +151,28 @@ function calToggleMediaField() {
   const mediaField = document.getElementById('calMediaField');
   const collabField = document.getElementById('calCollabField');
   const coverField = document.getElementById('calCoverField');
+  const notesField = document.getElementById('calNotesField');
+  const ytTitleField = document.getElementById('calYtTitleField');
+  const pubBtn = document.getElementById('calPublishNowBtn');
+
   const platform = document.getElementById('calPlatform')?.value || 'ig';
   const type = document.getElementById('calType')?.value || 'IMAGE';
 
-  if (mediaField) mediaField.style.display = 'block';
-  if (collabField) collabField.style.display = (platform === 'ig') ? 'block' : 'none';
-  if (coverField) coverField.style.display = (platform === 'ig' && type === 'REELS') ? 'block' : 'none';
+  if (platform === 'yt') {
+    if (mediaField) mediaField.style.display = 'none';
+    if (collabField) collabField.style.display = 'none';
+    if (coverField) coverField.style.display = 'none';
+    if (notesField) notesField.style.display = 'none';
+    if (ytTitleField) ytTitleField.style.display = 'block';
+    if (pubBtn) pubBtn.style.display = 'none';
+  } else {
+    if (mediaField) mediaField.style.display = 'block';
+    if (collabField) collabField.style.display = 'block';
+    if (coverField) coverField.style.display = (type === 'REELS') ? 'block' : 'none';
+    if (notesField) notesField.style.display = 'block';
+    if (ytTitleField) ytTitleField.style.display = 'none';
+    if (pubBtn) pubBtn.style.display = 'inline-flex';
+  }
 }
 
 function calUpdateUploadInputMultiple() {
@@ -672,6 +688,8 @@ function calOpenModal(ds, id) {
   document.getElementById('calNotes').value = '';
   document.getElementById('calHost').value = '';
   document.getElementById('calCollaborators').value = '';
+  const ytTitleInput = document.getElementById('calYtTitle');
+  if (ytTitleInput) ytTitleInput.value = '';
   document.getElementById('calDeleteBtn').style.display = 'none';
   document.getElementById('calModalTitle').textContent = 'Pianifica post';
   
@@ -782,8 +800,9 @@ function calSetupEvents() {
     const caption = document.getElementById('calNotes')?.value.trim() || '';
     const extraNotes = document.getElementById('calAiExtra')?.value.trim() || '';
 
+    const ytTitle = document.getElementById('calYtTitle')?.value.trim() || '';
     const autoTitle = caption ? caption.slice(0, 40).split('\n')[0].replace(/[#*]/g, '').trim() : (extraNotes || 'Post Instagram');
-    const finalTitle = title || autoTitle || 'Post Instagram';
+    const finalTitle = platform === 'yt' ? (ytTitle || 'Contenuto YouTube') : (title || autoTitle || 'Post Instagram');
 
     let finalDate = date;
     let finalTime = time;
