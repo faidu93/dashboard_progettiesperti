@@ -1519,12 +1519,23 @@ function repairTruncatedJson(str) {
 }
 
 async function callClaudeForIdeas(prompt, targetId, platform) {
-  const box = document.getElementById(targetId);
-  box.innerHTML = '<div class="idea-card loading"><span class="material-symbols-rounded" style="animation:spin 1s linear infinite;font-size:20px;margin-right:8px;">progress_activity</span>Claude sta generando le idee…</div>';
-  const secret = intelGetSecret(platform);
+  const box = targetId ? document.getElementById(targetId) : null;
+  if (box) {
+    box.innerHTML = '<div class="idea-card loading"><span class="material-symbols-rounded" style="animation:spin 1s linear infinite;font-size:20px;margin-right:8px;">progress_activity</span>Claude sta generando il contenuto…</div>';
+  }
+  let secret = intelGetSecret(platform);
   if (!secret) {
-    box.innerHTML = '<div class="idea-card loading" style="color:var(--neg);">⚠ Inserisci la password di pubblicazione nel campo qui sopra.</div>';
-    throw new Error('Password mancante');
+    secret = window.prompt('Inserisci la password di pubblicazione (PUBLISH_SECRET) per attivare la generazione AI:');
+    if (secret) {
+      try {
+        localStorage.setItem('publish_secret', secret);
+        sessionStorage.setItem('publish_secret', secret);
+      } catch(e) {}
+    }
+  }
+  if (!secret) {
+    if (box) box.innerHTML = '<div class="idea-card loading" style="color:var(--neg);">⚠ Password di pubblicazione mancante.</div>';
+    throw new Error('Password di pubblicazione (PUBLISH_SECRET) mancante.');
   }
   
   let selectedModel = 'claude-sonnet-5';
@@ -1542,6 +1553,11 @@ async function callClaudeForIdeas(prompt, targetId, platform) {
   }
   const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
   const clean = text.replace(/```json|```/g, '').trim();
+
+  if (!targetId) {
+    return clean;
+  }
+
   let ideas;
   try {
     ideas = JSON.parse(clean);
@@ -1555,19 +1571,14 @@ async function callClaudeForIdeas(prompt, targetId, platform) {
           const repaired = repairTruncatedJson(m[0]);
           ideas = JSON.parse(repaired);
         } catch(repErr) {
-          throw new Error('Risposta AI incompleta o non valida. Riprova.');
+          return clean;
         }
       }
     } else {
-      try {
-        const repaired = repairTruncatedJson(clean);
-        ideas = JSON.parse(repaired);
-      } catch(repErr) {
-        throw new Error('Risposta AI non parsabile. Riprova.');
-      }
+      return clean;
     }
   }
-  return Array.isArray(ideas) ? ideas : [];
+  return Array.isArray(ideas) ? ideas : clean;
 }
 
 // ── Render idee con valutazione e pianifica ──
