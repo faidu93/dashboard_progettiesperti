@@ -495,7 +495,7 @@ async function repurposeYoutubeToInstagram(url) {
     if(!videoId) { alert("Impossibile estrarre l\"ID del video."); return; }
 
     document.getElementById("calDetail").classList.remove("show");
-    const intTabBtn = document.querySelector('button[data-tab="contentstudio"]');
+    const intTabBtn = document.querySelector('button[data-tab="intelligence"]');
     if (intTabBtn) tabSwitch(intTabBtn);
     setTimeout(() => {
       // Switcha al sotto-tab Generatore Idee e scrolla al form IG
