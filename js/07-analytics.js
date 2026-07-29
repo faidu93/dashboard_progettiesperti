@@ -1453,6 +1453,53 @@ Rispondi SOLO con JSON array puro, zero markdown, sii sintetico e incisivo nei t
 Genera esattamente ${ideaCount} oggetti.`;
 }
 
+function startFastGraphicWorkflow() {
+  const notesEl = document.getElementById('igUserNotes');
+  const userText = (notesEl ? notesEl.value.trim() : '') || 'Top 5 scommesse in attacco asta fantacalcio: Fazzini, Belahyane, Mosquera, Vitinha, Davis';
+  
+  const lines = userText.split('\n');
+  const title = lines[0] || 'TOP 5 SCOMMESSE IN ATTACCO';
+  const body = lines.slice(1).join('\n') || userText;
+
+  openSlideGeneratorWithIdea(title, body);
+}
+
+async function generateFastCaption() {
+  const notesEl = document.getElementById('igUserNotes');
+  const userText = (notesEl ? notesEl.value.trim() : '') || 'Top 5 scommesse in attacco asta fantacalcio: Fazzini, Belahyane, Mosquera, Vitinha, Davis';
+  const outBox = document.getElementById('fastCaptionOutput');
+  const txtArea = document.getElementById('fastCaptionText');
+  
+  if (!outBox || !txtArea) return;
+  outBox.style.display = 'block';
+  txtArea.value = '⏳ Generazione didascalia Instagram in corso…';
+
+  const prompt = `Sei il copywriter di @esperti_profeta_fantacalcio.
+Genera UNA didascalia Instagram completa, persuasiva ed in italiano basata su questo prompt dell'utente:
+"${userText}"
+
+FORMATO OBBLIGATORIO:
+1. Prima riga = Hook d'impatto o domanda provocatoria per l'asta.
+2. Corpo = 3-5 righe di analisi formattata con emoji e punti chiave.
+3. Call To Action = "Commenta qui sotto chi scegli per l'asta! 👇"
+4. Hashtag = 5-8 hashtag mirati (#fantacalcio #asta #seriea...).
+
+Rispondi SOLO col testo della didascalia per Instagram. Zero introduzioni.`;
+
+  try {
+    const caption = await callClaudeForIdeas(prompt, null, 'ig');
+    if (typeof caption === 'string') {
+      txtArea.value = caption.trim();
+    } else if (Array.isArray(caption) && caption[0]) {
+      txtArea.value = (caption[0].body || caption[0].title || JSON.stringify(caption[0])).trim();
+    } else {
+      txtArea.value = JSON.stringify(caption);
+    }
+  } catch(e) {
+    txtArea.value = `🔥 ${userText}\n\nAnalisi completa per l'asta del fantacalcio! Chi prendi tra questi nomi? Scrivilo nei commenti! 👇\n\n#fantacalcio #asta #seriea #progettoesperti`;
+  }
+}
+
 // ── Instagram Intelligence ──
 async function runIgIntelligence() {
   const profiles = document.getElementById('igProfiles')?.value.trim() || '';

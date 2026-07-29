@@ -1283,46 +1283,33 @@
             </div>
 
             <div class="intel-field">
-              <label style="font-weight:700; color:var(--ink); font-size:13px; display:flex; align-items:center; gap:6px;">
-                <span class="material-symbols-rounded" style="color:var(--accent); font-size:18px;">lightbulb</span>
-                1. La Tua Idea per il Contenuto (Titolo / Argomento)
+              <label style="font-weight:700; color:var(--ink); font-size:13.5px; display:flex; align-items:center; gap:6px;">
+                <span class="material-symbols-rounded" style="color:var(--accent); font-size:18px;">edit_note</span>
+                Inserisci il Tuo Prompt / Idea e Giocatori
               </label>
-              <input type="text" id="igFocus" value="Top 5 Scommesse in Attacco Asta Fantacalcio" placeholder="es. Top 5 scommesse in attacco asta fantacalcio" oninput="intelSaveField('igFocus')" style="font-weight:600;">
+              <textarea id="igUserNotes" rows="4" placeholder="Inserisci il tuo prompt o l'idea del post con i nomi dei giocatori...&#10;Es: Top 5 scommesse in attacco asta fantacalcio: Fazzini, Belahyane, Mosquera, Vitinha, Davis." style="font-size:13px; font-weight:600; line-height:1.5;">Top 5 scommesse in attacco asta fantacalcio: Fazzini, Belahyane, Mosquera, Vitinha, Davis.
+Tutti sotto i 10 crediti all'asta, titolarità garantita o jolly di spinta dal 2° tempo.</textarea>
+              <input type="hidden" id="igFocus" value="Top 5 Scommesse in Attacco Asta Fantacalcio">
             </div>
 
-            <div class="intel-field">
-              <label style="font-weight:700; color:var(--ink); font-size:13px; display:flex; align-items:center; gap:6px;">
-                <span class="material-symbols-rounded" style="color:var(--accent); font-size:18px;">groups</span>
-                Giocatori Scelti &amp; Note Dettagliate dell'Utente <span style="color:var(--pos); font-weight:600; font-size:11px;">(L'AI rispetterà esattamente i tuoi dati)</span>
-              </label>
-              <textarea id="igUserNotes" rows="3" placeholder="Inserisci qui i nomi dei giocatori e le tue note esatte...&#10;Es: Fazzini, Belahyane, Mosquera, Vitinha, Davis. Tutti sotto i 10 crediti all'asta." oninput="intelSaveField('igUserNotes')">Giocatori: Fazzini, Belahyane, Mosquera, Vitinha, Davis.
-Dettagli: Tutti sotto i 10 crediti all'asta, titolarità garantita o jolly di spinta dal 2° tempo.</textarea>
-            </div>
-
-            <div class="intel-row">
-              <div class="intel-field">
-                <label>Formato Contenuto</label>
-                <select id="igFormatFilter" onchange="intelSaveField('igFormatFilter')">
-                  <option value="CAROUSEL_ALBUM" selected>⊞ Carosello Multi-Slide</option>
-                  <option value="IMAGE">📷 Post Singolo / Grafica</option>
-                  <option value="ALL">Tutti i formati</option>
-                </select>
-              </div>
-              <div class="intel-field" style="max-width:160px;">
-                <label>N° Variante AI</label>
-                <select id="igIdeaCount" onchange="intelSaveField('igIdeaCount')">
-                  <option value="1" selected>1 Script Completo</option>
-                  <option value="3">3 Varianti</option>
-                  <option value="5">5 Varianti</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="intel-actions" style="margin-top:12px;">
-              <button class="cal-btn primary" id="igIntelRunBtn" onclick="runIgIntelligence()" style="font-weight:700; padding:10px 20px;">
-                <span class="material-symbols-rounded">auto_awesome</span>✨ Sviluppa Script &amp; Grafica Brand dall'Idea
+            <!-- Pulsanti di Azione Diretta e Rapida -->
+            <div class="intel-actions" style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="cal-btn primary" onclick="startFastGraphicWorkflow()" style="font-weight:800; padding:12px 22px; font-size:13px; background:var(--accent); border-color:var(--accent); color:var(--bg);">
+                <span class="material-symbols-rounded" style="font-size:18px;">palette</span>🎨 1. Crea Grafica Brand Immediata
               </button>
-              <span id="igIntelStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
+              <button class="cal-btn" onclick="generateFastCaption()" style="font-weight:700; padding:12px 18px; font-size:12.5px; background:rgba(255,107,0,0.1); border-color:var(--accent); color:var(--accent);">
+                <span class="material-symbols-rounded" style="font-size:18px;">auto_awesome</span>📝 2. Genera Caption AI
+              </button>
+            </div>
+
+            <!-- Box di output immediato per la Caption -->
+            <div id="fastCaptionOutput" style="display:none; margin-top:16px; padding:14px; border-radius:8px; background:var(--bg-elev-2); border:1px solid var(--line);">
+              <label style="font-size:11px; font-family:var(--font-mono); color:var(--accent); font-weight:700;">Didascalia Finale per Instagram:</label>
+              <textarea id="fastCaptionText" rows="6" style="width:100%; margin-top:8px; font-size:12px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--ink); padding:8px;"></textarea>
+              <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+                <button class="cal-btn" onclick="navigator.clipboard.writeText(document.getElementById('fastCaptionText').value); alert('Caption copiata!');" style="font-size:11px;">📋 Copia Caption</button>
+                <button class="cal-btn primary" onclick="calOpenModalFromIdea(document.getElementById('igFocus').value, 'CAROUSEL_ALBUM', 'Martedi 15:00', 'ig')" style="font-size:11px;">📅 Programma / Pubblica</button>
+              </div>
             </div>
           </div>
           
