@@ -796,26 +796,6 @@
             <input type="text" id="calHost" placeholder="Es: Profeta, Carmy, Borghi...">
           </div>
           
-          <div class="cal-field" id="calMediaField" style="display:none;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <label>Caricamento Media <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· per pubblicazione reale</span></label>
-              <button type="button" class="cal-btn" id="calGenerateSlidesBtn" onclick="openSlideGenerator()" style="font-size:10px; padding:3px 8px; height:auto; display:inline-flex; align-items:center; gap:4px; background:rgba(255,107,0,0.08); border-color:var(--accent); color:var(--accent);">
-                <span class="material-symbols-rounded" style="font-size:12px;">layers</span>✨ Genera Slide AI
-              </button>
-            </div>
-            <div class="cal-upload" id="calUpload">
-              <input type="file" id="calUploadInput" accept="image/*,video/*" style="display:none;">
-              <span class="material-symbols-rounded">cloud_upload</span>
-              <div class="cal-upload-text">Trascina qui o clicca per caricare</div>
-              <div class="cal-upload-hint">Supportati: JPEG, PNG, MP4</div>
-            </div>
-            <div class="cal-upload-preview" id="calUploadPreview"></div>
-            <div class="cal-upload-status" id="calUploadStatus"></div>
-            <button type="button" class="cal-upload-remove" id="calUploadRemove" style="display:none;">Rimuovi media</button>
-            <input type="hidden" id="calMediaUrl">
-            <input type="hidden" id="calMediaKind">
-          </div>
-          
           <div class="cal-field" id="calCoverField" style="display:none;">
             <label>Copertina Reel <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· copertina personalizzata (opzionale)</span></label>
             <div class="cal-upload" id="calCoverUpload">
@@ -829,9 +809,9 @@
             <input type="hidden" id="calCoverUrl">
           </div>
           
-          <div class="cal-field" id="calCollabField" style="display:none;">
-            <label>Collaboratori (Co-author) <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· username IG co-autori (separati da virgola)</span></label>
-            <input type="text" id="calCollaborators" placeholder="Es: carmyminardi, profeta_del_fanta" style="font-size:12px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink); width:100%; box-sizing:border-box; outline:none;">
+          <div class="cal-field" id="calCollabField" style="display:block; margin-top:14px;">
+            <label style="font-weight:700; color:var(--ink);">3. Collaboratori (Co-author) <span style="font-family:var(--font-mono);font-size:10px;color:var(--pos);font-weight:400;">· username IG co-autori (separati da virgola)</span></label>
+            <input type="text" id="calCollaborators" placeholder="Es: carmyminardi, profeta_del_fanta" style="font-size:12px; padding:9px 12px; border-radius:6px; border:1px solid var(--line); background:var(--bg-elev-2); color:var(--ink); width:100%; box-sizing:border-box; outline:none; margin-top:4px;">
           </div>
         </div>
 
@@ -844,7 +824,7 @@
         </button>
         <button class="cal-btn" id="calCancelBtn">Annulla</button>
         <button class="cal-btn" id="calPublishNowBtn" onclick="calPublishNow()" style="background:#2ec4b6; border-color:#2ec4b6; color:#0d1b2a; font-weight:700;">
-          <span class="material-symbols-rounded" style="font-size:16px;">bolt</span>⚡ Pubblica Ora
+          <span class="material-symbols-rounded" style="font-size:16px;">bolt</span> Pubblica Ora
         </button>
         <button class="cal-btn primary" id="calSaveBtn">
           <span class="material-symbols-rounded">calendar_today</span>Programma contenuto

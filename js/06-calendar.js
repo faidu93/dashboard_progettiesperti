@@ -147,6 +147,18 @@ function calToggleHostField() {
   }
 }
 
+function calToggleMediaField() {
+  const mediaField = document.getElementById('calMediaField');
+  const collabField = document.getElementById('calCollabField');
+  const coverField = document.getElementById('calCoverField');
+  const platform = document.getElementById('calPlatform')?.value || 'ig';
+  const type = document.getElementById('calType')?.value || 'IMAGE';
+
+  if (mediaField) mediaField.style.display = 'block';
+  if (collabField) collabField.style.display = (platform === 'ig') ? 'block' : 'none';
+  if (coverField) coverField.style.display = (platform === 'ig' && type === 'REELS') ? 'block' : 'none';
+}
+
 function calUpdateUploadInputMultiple() {
   const type = document.getElementById('calType').value;
   const input = document.getElementById('calUploadInput');
