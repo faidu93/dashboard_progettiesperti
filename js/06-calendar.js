@@ -789,12 +789,15 @@ function calSetupEvents() {
     const serialized = serializeStructuredNotes(strategy, visual, script, caption);
     const collaboratorsRaw = (document.getElementById('calCollaborators') ? document.getElementById('calCollaborators').value.trim() : '');
     
-    // Appende il tag [COLLAB:...] in fondo alle note se ci sono collaboratori e siamo su IG
     const finalNotes = (collaboratorsRaw && platform === 'ig')
       ? (serialized + (serialized ? '\n\n' : '') + '[COLLAB:' + collaboratorsRaw + ']')
       : serialized;
     const host = (platform === 'yt' && (type === 'LIVE' || type === 'ASTA_LIVE')) ? document.getElementById('calHost').value.trim() : '';
-    if (!date || !title) { alert('Inserisci almeno data e titolo.'); return; }
+    
+    // Se il titolo o la data non sono valorizzati, li generiamo automaticamente dalla didascalia o dalle note
+    const autoTitle = caption ? caption.slice(0, 40).split('\n')[0].replace(/[#*]/g, '').trim() : (document.getElementById('calAiExtra')?.value.trim() || 'Post Instagram');
+    const finalTitle = title || autoTitle || 'Post Instagram';
+    const finalDate = date || calDateStr(new Date());
 
     // --- PUBBLICAZIONE REALE: solo IG + media caricato ---
     let mediaUrl = document.getElementById('calMediaUrl') ? document.getElementById('calMediaUrl').value : '';
@@ -812,7 +815,7 @@ function calSetupEvents() {
 
     let willAutoPublish = false;
     if (platform === 'ig' && mediaUrl) {
-      const localDateTime = new Date(`${date}T${(time || '10:00')}:00`);
+      const localDateTime = new Date(`${finalDate}T${(time || '10:00')}:00`);
       if (isNaN(localDateTime.getTime())) { alert('Data/ora non valide.'); return; }
       if (localDateTime.getTime() < Date.now() - 60000) {
         if (!confirm('L\'orario scelto è nel passato: il post verrà pubblicato al prossimo giro del cron. Continuare?')) return;
@@ -834,15 +837,15 @@ function calSetupEvents() {
       saveBtn.innerHTML = prevLabel;
     }
     // Marco titolo/note per distinguere i post auto-pubblicati in calendario
-    const titleForCal = willAutoPublish ? ('✅ ' + title) : title;
+    const titleForCal = willAutoPublish ? ('✅ ' + finalTitle) : finalTitle;
     const notesForCal = willAutoPublish
       ? (finalNotes + '\n\n[Pubblicazione automatica programmata · media già caricato]')
       : finalNotes;
 
     // Se Google connesso, scrive direttamente su Google Calendar
     if (gcalSignedIn) {
-      if (id) { await gcalUpdateEvent(id, platform, date, time, type, titleForCal, notesForCal, host); }
-      else { await gcalCreateEvent(platform, date, time, type, titleForCal, notesForCal, host); }
+      if (id) { await gcalUpdateEvent(id, platform, finalDate, time, type, titleForCal, notesForCal, host); }
+      else { await gcalCreateEvent(platform, finalDate, time, type, titleForCal, notesForCal, host); }
       // Hook bacheca idee
       const fromIdea = document.getElementById('calModal').dataset.fromIdea;
       if (fromIdea) {
@@ -888,8 +891,6 @@ function calSetupEvents() {
     const type = document.getElementById('calType').value;
     const title = document.getElementById('calTitle').value.trim();
     
-    if (!title) { alert('Inserisci un titolo prima di pubblicare.'); return; }
-
     // Imposta data e ora ad adesso per pubblicazione istantanea
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10);
