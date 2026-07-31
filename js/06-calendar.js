@@ -259,10 +259,14 @@ function calOnPlatformChange() {
   calUpdateSlotHint();
 }
 
-// ===== SUGGERITORE DI SLOT ORARIO (#2) =====
-// Valuta data+ora scelte nel modal contro le fasce prime-time validate dal
-// benchmark di settore (mar/gio 10-13 e 15-18 i picchi; mer mattina buono;
-// domenica e tarda sera deboli). Mostra un hint colorato, non blocca nulla.
+function calApplyOptimalTime(timeStr) {
+  const timeInput = document.getElementById('calTime');
+  if (timeInput) {
+    timeInput.value = timeStr;
+    calUpdateSlotHint();
+  }
+}
+
 function calUpdateSlotHint() {
   const hint = document.getElementById('calSlotHint');
   if (!hint) return;
@@ -285,15 +289,15 @@ function calUpdateSlotHint() {
   const inLunch = h >= 12 && h < 14;       // pausa pranzo
   const inEvening = h >= 18 && h < 20;     // dopo-lavoro
 
-  if ((dow === 2 || dow === 4) && (inMorning || inAfternoon)) {
+  if ((dow === 2 || dow === 4) && (inMorning || inAfternoon || inEvening)) {
     level = 'best';
-    msg = `${DOW[dow]} ${String(h).padStart(2,'0')}:00 · slot prime-time (picco +16% engagement)`;
+    msg = `${DOW[dow]} ${String(h).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} · slot prime-time (picco +16% engagement)`;
   } else if (dow === 3 && inMorning) {
     level = 'best';
     msg = `Mercoledì mattina · fascia forte per la tua audience`;
   } else if ((inMorning || inAfternoon || inLunch || inEvening) && dow !== 0) {
     level = 'good';
-    msg = `${DOW[dow]} ${String(h).padStart(2,'0')}:00 · fascia discreta`;
+    msg = `${DOW[dow]} ${String(h).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} · fascia discreta`;
   } else if (dow === 0) {
     level = 'weak';
     msg = `Domenica · giorno meno prevedibile, engagement variabile`;
@@ -302,20 +306,29 @@ function calUpdateSlotHint() {
     msg = `Tarda sera/notte · fascia debole, poca attività`;
   } else {
     level = 'good';
-    msg = `${DOW[dow]} ${String(h).padStart(2,'0')}:00 · fascia neutra`;
+    msg = `${DOW[dow]} ${String(h).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} · fascia neutra`;
   }
 
   const styles = {
-    best: { bg: 'rgba(46,204,113,0.12)', bd: 'var(--pos)', col: 'var(--pos)', ico: '✅' },
+    best: { bg: 'rgba(46,204,113,0.12)', bd: 'var(--pos)', col: 'var(--pos)', ico: '🔥' },
     good: { bg: 'rgba(255,140,30,0.10)', bd: 'rgba(255,140,30,0.4)', col: 'var(--accent)', ico: '○' },
-    weak: { bg: 'rgba(231,76,60,0.10)', bd: 'rgba(231,76,60,0.4)', col: 'var(--neg)', ico: '⚠' }
+    weak: { bg: 'rgba(255,255,255,0.03)', bd: 'var(--line)', col: 'var(--ink-mute)', ico: '⚠️' }
   };
-  const s = styles[level];
-  hint.style.display = 'block';
-  hint.style.background = s.bg;
-  hint.style.border = '1px solid ' + s.bd;
-  hint.style.color = s.col;
-  hint.innerHTML = `${s.ico} ${msg}`;
+  const st = styles[level] || styles.good;
+  const optTime = (dow === 2 || dow === 4) ? '18:30' : ((dow === 3) ? '12:00' : '18:30');
+
+  hint.style.display = 'flex';
+  hint.style.alignItems = 'center';
+  hint.style.justifyContent = 'space-between';
+  hint.style.background = st.bg;
+  hint.style.border = '1px solid ' + st.bd;
+  hint.style.color = st.col;
+  hint.innerHTML = `
+    <span style="display:flex; align-items:center; gap:6px;">${st.ico} ${msg}</span>
+    <button type="button" onclick="calApplyOptimalTime('${optTime}')" style="font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:5px; border:1px solid ${st.bd}; background:rgba(255,255,255,0.1); color:inherit; cursor:pointer; font-family:var(--font-mono); display:inline-flex; align-items:center; gap:4px; flex-shrink:0;">
+      ⚡ Usa slot consigliato (${optTime})
+    </button>
+  `;
 }
 
 // ytRender è alias di calRender (rendering unificato)

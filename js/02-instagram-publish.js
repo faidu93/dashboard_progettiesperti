@@ -584,6 +584,7 @@ async function calHandleFiles(files) {
       });
       urls.push(url);
       kinds.push(isVideo ? 'video' : 'image');
+      enablePreviewItemDrag(previewItem, url, isVideo ? 'video' : 'image');
     } catch (e) {
       status.className = 'cal-upload-status err';
       status.style.color = 'var(--neg)';
@@ -592,11 +593,69 @@ async function calHandleFiles(files) {
     }
   }
 
-  if (mediaUrl) mediaUrl.value = urls.join(',');
-  if (mediaKind) mediaKind.value = kinds.includes('video') ? 'video' : (kinds.length > 1 ? 'carousel' : 'image');
+  const mediaUrlInput = document.getElementById('calMediaUrl');
+  const mediaKindInput = document.getElementById('calMediaKind');
+  if (mediaUrlInput) mediaUrlInput.value = urls.join(',');
+  if (mediaKindInput) mediaKindInput.value = kinds.includes('video') ? 'video' : (kinds.length > 1 ? 'carousel' : 'image');
 
-  renderProgressBar('calUploadStatus', 100, `Caricamento completato (${urls.length} file) ✓`, 'var(--pos)');
+  const reorderHint = kinds.length > 1 ? ' · trascina le diapositive per riordinarle' : '';
+  renderProgressBar('calUploadStatus', 100, `Caricamento completato (${urls.length} file)${reorderHint} ✓`, 'var(--pos)');
   if (removeBtn) removeBtn.style.display = 'inline-block';
+}
+
+// Supporto Drag & Drop per riordinare le immagini/video del Carosello
+let draggedItem = null;
+
+function updateMediaUrlFromPreviewOrder() {
+  const prev = document.getElementById('calUploadPreview');
+  const mediaUrl = document.getElementById('calMediaUrl');
+  if (!prev || !mediaUrl) return;
+
+  const items = Array.from(prev.children);
+  const urls = items.map(el => el.dataset.url).filter(Boolean);
+  if (urls.length) {
+    mediaUrl.value = urls.join(',');
+    const firstItem = items[0];
+    if (firstItem && firstItem.dataset.url) {
+      const isVid = firstItem.dataset.kind === 'video';
+      updateCalPreviewMedia(firstItem.dataset.url, isVid);
+    }
+  }
+}
+
+function enablePreviewItemDrag(item, url, kind) {
+  item.draggable = true;
+  item.dataset.url = url;
+  item.dataset.kind = kind;
+  item.style.cursor = 'grab';
+  item.title = 'Trascina per riordinare la sequenza del Carosello';
+
+  item.addEventListener('dragstart', e => {
+    draggedItem = item;
+    item.style.opacity = '0.5';
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  item.addEventListener('dragend', () => {
+    draggedItem = null;
+    item.style.opacity = '1';
+    updateMediaUrlFromPreviewOrder();
+  });
+
+  item.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (draggedItem && draggedItem !== item) {
+      const prev = item.parentNode;
+      const children = Array.from(prev.children);
+      const draggedPos = children.indexOf(draggedItem);
+      const targetPos = children.indexOf(item);
+      if (draggedPos < targetPos) {
+        prev.insertBefore(draggedItem, item.nextSibling);
+      } else {
+        prev.insertBefore(draggedItem, item);
+      }
+    }
+  });
 }
 
 function calSetupUpload() {
