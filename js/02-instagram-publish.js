@@ -494,10 +494,50 @@ function setCalPreviewAspect(aspect) {
   });
 }
 
+let currentPreviewSlideIndex = 0;
+
+// Sincronizza la didascalia digitata in tempo reale con il mockup Instagram
+function calSyncLiveCaption() {
+  const notes = document.getElementById('calNotes')?.value || '';
+  const capTarget = document.getElementById('calPreviewCaptionText');
+  if (!capTarget) return;
+
+  if (!notes.trim()) {
+    capTarget.innerHTML = '<span style="color:#8e8e93;">La tua didascalia apparirà qui in tempo reale…</span>';
+    return;
+  }
+
+  let formatted = notes.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+  formatted = formatted.replace(/(#[a-zA-Z0-9_àèéìòù]+)/g, '<span style="color:#ff6b00;font-weight:600;">$1</span>');
+  formatted = formatted.replace(/(@[a-zA-Z0-9_.]+)/g, '<span style="color:#3897f0;font-weight:600;">$1</span>');
+
+  capTarget.innerHTML = formatted;
+}
+
+// Naviga tra le diapositive del Carosello nell'anteprima Instagram
+function calNavPreviewCarousel(delta) {
+  const prev = document.getElementById('calUploadPreview');
+  if (!prev) return;
+  const items = Array.from(prev.children);
+  if (!items.length) return;
+
+  currentPreviewSlideIndex = (currentPreviewSlideIndex + delta + items.length) % items.length;
+  const targetItem = items[currentPreviewSlideIndex];
+  if (targetItem && targetItem.dataset.url) {
+    const isVid = targetItem.dataset.kind === 'video';
+    updateCalPreviewMedia(targetItem.dataset.url, isVid, false);
+  }
+}
+
 // Aggiorna il media mostrato nell'anteprima resa Instagram
-function updateCalPreviewMedia(url, isVideo) {
+function updateCalPreviewMedia(url, isVideo, resetIndex = true) {
   const box = document.getElementById('calAspectPreviewBox');
   const holder = document.getElementById('calPreviewMediaHolder');
+  const badge = document.getElementById('calPreviewCarouselBadge');
+  const prevBtn = document.getElementById('calPreviewPrevBtn');
+  const nextBtn = document.getElementById('calPreviewNextBtn');
+  const dotsBox = document.getElementById('calPreviewDots');
+
   if (!box || !holder) return;
 
   if (!url) {
@@ -510,6 +550,41 @@ function updateCalPreviewMedia(url, isVideo) {
   holder.innerHTML = isVideo
     ? `<video src="${url}#t=0.5" style="width:100%;height:100%;object-fit:cover;display:block;" preload="metadata" muted playsinline autoplay loop></video>`
     : `<img src="${url}" style="width:100%;height:100%;object-fit:cover;display:block;">`;
+
+  // Sincronizza didascalia live
+  calSyncLiveCaption();
+  const notesEl = document.getElementById('calNotes');
+  if (notesEl && !notesEl.dataset.synced) {
+    notesEl.dataset.synced = 'true';
+    notesEl.addEventListener('input', calSyncLiveCaption);
+  }
+
+  // Controlla elementi Carosello per aggiornare contatore (1/N) e pallini
+  const prev = document.getElementById('calUploadPreview');
+  const items = prev ? Array.from(prev.children) : [];
+  if (items.length > 1) {
+    if (resetIndex && currentPreviewSlideIndex >= items.length) currentPreviewSlideIndex = 0;
+    if (badge) {
+      badge.style.display = 'block';
+      badge.textContent = `${currentPreviewSlideIndex + 1}/${items.length}`;
+    }
+    if (prevBtn) prevBtn.style.display = 'flex';
+    if (nextBtn) nextBtn.style.display = 'flex';
+    if (dotsBox) {
+      let dotsHtml = '';
+      for (let i = 0; i < items.length; i++) {
+        const isAct = i === currentPreviewSlideIndex;
+        dotsHtml += `<span style="width:${isAct?'6px':'4px'};height:${isAct?'6px':'4px'};border-radius:50%;background:${isAct?'var(--accent)':'rgba(255,255,255,0.4)'};transition:all 0.2s;"></span>`;
+      }
+      dotsBox.innerHTML = dotsHtml;
+    }
+  } else {
+    if (badge) badge.style.display = 'none';
+    if (prevBtn) prevBtn.style.display = 'none';
+    if (nextBtn) nextBtn.style.display = 'none';
+    if (dotsBox) dotsBox.innerHTML = '';
+    currentPreviewSlideIndex = 0;
+  }
 }
 
 // Gestione UI dell'area upload nel modal
