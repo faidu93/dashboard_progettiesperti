@@ -161,11 +161,14 @@ async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso })
   const secret = getPublishSecret();
   if (!secret) throw new Error('Password di pubblicazione mancante.');
 
+  const kindStr = String(mediaKind || '').toLowerCase();
+  const urlStr = String(mediaUrl || '');
+
   let mediaType = 'IMAGE';
   // Controlla video PRIMA di carosello: un Reel+copertina ha mediaUrl con virgola ma deve essere REELS
-  if (mediaKind === 'video' || (mediaKind && mediaKind.includes('video'))) {
+  if (kindStr === 'video' || kindStr.includes('video')) {
     mediaType = 'REELS';
-  } else if (mediaKind === 'carousel' || (!mediaKind.includes('video') && mediaUrl && mediaUrl.includes(','))) {
+  } else if (kindStr === 'carousel' || (urlStr.includes(',') && !kindStr.includes('video'))) {
     mediaType = 'CAROUSEL_ALBUM';
   }
 

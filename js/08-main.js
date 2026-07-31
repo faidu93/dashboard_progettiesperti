@@ -249,7 +249,10 @@ document.addEventListener('DOMContentLoaded', () => { init(); });
       
       if (isoDate && isoDate !== 'null') {
         const dt = new Date(isoDate);
-        document.getElementById('editQueueDate').value = dt.toISOString().split('T')[0];
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth() + 1).padStart(2, '0');
+        const d = String(dt.getDate()).padStart(2, '0');
+        document.getElementById('editQueueDate').value = `${y}-${m}-${d}`;
         document.getElementById('editQueueTime').value = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
       } else {
         document.getElementById('editQueueDate').value = '';
