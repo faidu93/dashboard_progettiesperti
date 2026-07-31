@@ -873,17 +873,19 @@ function calSetupEvents() {
         }
 
         // STEP 1: Salva nella coda di pubblicazione del backend (/api/schedule)
-        await schedulePublish({ mediaUrl, mediaKind, caption: finalNotes, scheduledAtIso });
+        const scheduledPost = await schedulePublish({ mediaUrl, mediaKind, caption: finalNotes, scheduledAtIso });
+        const scheduledPostId = scheduledPost?.id || null;
         willAutoPublish = true;
 
         // Piccola pausa per garantire che il record sia persisted su Supabase prima del cron
         if (isImmediate) await new Promise(r => setTimeout(r, 800));
 
-        // STEP 2: Se PUBBLICAZIONE IMMEDIATA, forza subito l'esecuzione del cron
+        // STEP 2: Se PUBBLICAZIONE IMMEDIATA, forza subito l'esecuzione del cron SOLO per questo post
         if (isImmediate) {
           const secret = getPublishSecret();
           if (secret && typeof BACKEND_BASE !== 'undefined') {
-            const pubRes = await fetch(`${BACKEND_BASE}/api/cron-publish?immediate=1`, {
+            const qp = scheduledPostId ? `&postId=${encodeURIComponent(scheduledPostId)}` : '';
+            const pubRes = await fetch(`${BACKEND_BASE}/api/cron-publish?immediate=1${qp}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret }
             });
