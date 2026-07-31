@@ -24,82 +24,99 @@ function clearPublishSecret() {
   try { localStorage.removeItem('publish_secret'); } catch(e) {}
 }
 
-// Compressione video automatica lato browser se il file supera i 45 MB (limite Supabase Free 50MB)
+// Compressione/Ottimizzazione video rapida lato browser con fallback se supera i 45 MB
 async function compressVideoIfOverLimit(file, onProgress) {
   const maxBytes = 45 * 1024 * 1024; // 45 MB
   if (file.size <= maxBytes) return file;
 
-  if (onProgress) onProgress('Ottimizzo la dimensione del video per Supabase (< 45MB)…');
+  if (onProgress) onProgress('Analisi e ottimizzazione dimensione video…');
 
   return new Promise((resolve) => {
+    let resolved = false;
+    const finish = (resultFile) => {
+      if (resolved) return;
+      resolved = true;
+      resolve(resultFile);
+    };
+
+    // Timeout di sicurezza (12 secondi max per evitare che il browser rimanga bloccato)
+    const timeout = setTimeout(() => {
+      console.warn('Timeout compressione video client, prosguo senza compressione o via Drive');
+      finish(file);
+    }, 12000);
+
     const video = document.createElement('video');
     video.src = URL.createObjectURL(file);
     video.muted = true;
     video.playsInline = true;
 
     video.onloadedmetadata = () => {
-      const canvas = document.createElement('canvas');
-      // Mantiene 1080p verticali/orizzontali ottimizzati per Instagram Reel
-      let w = video.videoWidth || 1080;
-      let h = video.videoHeight || 1920;
-      if (w > 1080) {
-        h = Math.round((h * 1080) / w);
-        w = 1080;
-      }
-      canvas.width = w;
-      canvas.height = h;
-
-      const ctx = canvas.getContext('2d');
-      const stream = canvas.captureStream(30);
-
-      // Aggiunge la traccia audio originale se presente
       try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioCtx.createMediaElementSource(video);
-        const dest = audioCtx.createMediaStreamDestination();
-        source.connect(dest);
-        source.connect(audioCtx.destination);
-        dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
-      } catch(e) {}
+        const canvas = document.createElement('canvas');
+        let w = video.videoWidth || 1080;
+        let h = video.videoHeight || 1920;
+        if (w > 1080) {
+          h = Math.round((h * 1080) / w);
+          w = 1080;
+        }
+        canvas.width = w;
+        canvas.height = h;
 
-      const recorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported('video/mp4;codecs=h264') ? 'video/mp4;codecs=h264' :
-                  MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm',
-        videoBitsPerSecond: 2500000 // 2.5 Mbps -> per 60 secondi fa ~18MB!
-      });
-
-      const chunks = [];
-      recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: recorder.mimeType || 'video/mp4' });
-        const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + "_opt.mp4", { type: 'video/mp4' });
-        URL.revokeObjectURL(video.src);
-        resolve(compressedFile);
-      };
-
-      video.play();
-      recorder.start(100);
-
-      let animId;
-      function drawFrame() {
-        if (video.paused || video.ended) {
-          if (recorder.state === 'recording') recorder.stop();
+        const ctx = canvas.getContext('2d');
+        const stream = canvas.captureStream ? canvas.captureStream(30) : null;
+        if (!stream || typeof MediaRecorder === 'undefined') {
+          clearTimeout(timeout);
+          finish(file);
           return;
         }
-        ctx.drawImage(video, 0, 0, w, h);
-        animId = requestAnimationFrame(drawFrame);
-      }
-      drawFrame();
 
-      video.onended = () => {
-        cancelAnimationFrame(animId);
-        if (recorder.state === 'recording') recorder.stop();
-      };
+        const recorder = new MediaRecorder(stream, {
+          mimeType: MediaRecorder.isTypeSupported('video/mp4;codecs=h264') ? 'video/mp4;codecs=h264' :
+                    MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : '',
+          videoBitsPerSecond: 2500000
+        });
+
+        const chunks = [];
+        recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+        recorder.onstop = () => {
+          clearTimeout(timeout);
+          const blob = new Blob(chunks, { type: recorder.mimeType || 'video/mp4' });
+          if (blob.size > 0 && blob.size < file.size) {
+            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + "_opt.mp4", { type: 'video/mp4' });
+            URL.revokeObjectURL(video.src);
+            finish(compressedFile);
+          } else {
+            finish(file);
+          }
+        };
+
+        video.play().catch(() => { clearTimeout(timeout); finish(file); });
+        recorder.start(100);
+
+        let animId;
+        function drawFrame() {
+          if (video.paused || video.ended) {
+            if (recorder.state === 'recording') recorder.stop();
+            return;
+          }
+          ctx.drawImage(video, 0, 0, w, h);
+          animId = requestAnimationFrame(drawFrame);
+        }
+        drawFrame();
+
+        video.onended = () => {
+          cancelAnimationFrame(animId);
+          if (recorder.state === 'recording') recorder.stop();
+        };
+      } catch(err) {
+        clearTimeout(timeout);
+        finish(file);
+      }
     };
 
     video.onerror = () => {
-      // In caso di problemi nel player HTML5, ritorna il file originale
-      resolve(file);
+      clearTimeout(timeout);
+      finish(file);
     };
   });
 }
@@ -293,12 +310,40 @@ async function clearPublishedQueue() {
   }
 }
 
+function calOnDirectUrlInput(val) {
+  val = (val || '').trim();
+  const mediaUrl = document.getElementById('calMediaUrl');
+  const mediaKind = document.getElementById('calMediaKind');
+  const status = document.getElementById('calUploadStatus');
+  const removeBtn = document.getElementById('calUploadRemove');
+  const type = document.getElementById('calType')?.value || 'IMAGE';
+
+  if (!val) {
+    if (mediaUrl) mediaUrl.value = '';
+    if (mediaKind) mediaKind.value = '';
+    if (status) { status.innerHTML = ''; status.className = 'cal-upload-status'; }
+    if (removeBtn) removeBtn.style.display = 'none';
+    return;
+  }
+
+  const isVideo = type === 'REELS' || /\.(mp4|mov|m4v|webm|mkv)$/i.test(val) || val.includes('drive.google.com') || val.includes('dropbox.com');
+  if (mediaUrl) mediaUrl.value = val;
+  if (mediaKind) mediaKind.value = isVideo ? 'video' : 'image';
+
+  if (status) {
+    status.className = 'cal-upload-status ok';
+    status.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> Link Cloud collegato con successo (${isVideo ? 'Video/Reel' : 'Immagine'})!`;
+  }
+}
+
 // Gestione UI dell'area upload nel modal
 function calResetUpload() {
   const u = document.getElementById('calMediaUrl');
   const k = document.getElementById('calMediaKind');
+  const directInput = document.getElementById('calMediaDirectUrl');
   if (u) u.value = '';
   if (k) k.value = '';
+  if (directInput) directInput.value = '';
   const prev = document.getElementById('calUploadPreview');
   if (prev) { prev.innerHTML = ''; prev.classList.remove('show'); }
   const st = document.getElementById('calUploadStatus');
