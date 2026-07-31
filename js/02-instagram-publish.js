@@ -24,113 +24,22 @@ function clearPublishSecret() {
   try { localStorage.removeItem('publish_secret'); } catch(e) {}
 }
 
-// Compressione/Ottimizzazione video rapida lato browser con fallback se supera i 45 MB
-async function compressVideoIfOverLimit(file, onProgress) {
-  const maxBytes = 45 * 1024 * 1024; // 45 MB
-  if (file.size <= maxBytes) return file;
-
-  if (onProgress) onProgress('Analisi e ottimizzazione dimensione video…');
-
-  return new Promise((resolve) => {
-    let resolved = false;
-    const finish = (resultFile) => {
-      if (resolved) return;
-      resolved = true;
-      resolve(resultFile);
-    };
-
-    // Timeout di sicurezza (12 secondi max per evitare che il browser rimanga bloccato)
-    const timeout = setTimeout(() => {
-      console.warn('Timeout compressione video client, prosguo senza compressione o via Drive');
-      finish(file);
-    }, 12000);
-
-    const video = document.createElement('video');
-    video.src = URL.createObjectURL(file);
-    video.muted = true;
-    video.playsInline = true;
-
-    video.onloadedmetadata = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        let w = video.videoWidth || 1080;
-        let h = video.videoHeight || 1920;
-        if (w > 1080) {
-          h = Math.round((h * 1080) / w);
-          w = 1080;
-        }
-        canvas.width = w;
-        canvas.height = h;
-
-        const ctx = canvas.getContext('2d');
-        const stream = canvas.captureStream ? canvas.captureStream(30) : null;
-        if (!stream || typeof MediaRecorder === 'undefined') {
-          clearTimeout(timeout);
-          finish(file);
-          return;
-        }
-
-        const recorder = new MediaRecorder(stream, {
-          mimeType: MediaRecorder.isTypeSupported('video/mp4;codecs=h264') ? 'video/mp4;codecs=h264' :
-                    MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : '',
-          videoBitsPerSecond: 2500000
-        });
-
-        const chunks = [];
-        recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
-        recorder.onstop = () => {
-          clearTimeout(timeout);
-          const blob = new Blob(chunks, { type: recorder.mimeType || 'video/mp4' });
-          if (blob.size > 0 && blob.size < file.size) {
-            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + "_opt.mp4", { type: 'video/mp4' });
-            URL.revokeObjectURL(video.src);
-            finish(compressedFile);
-          } else {
-            finish(file);
-          }
-        };
-
-        video.play().catch(() => { clearTimeout(timeout); finish(file); });
-        recorder.start(100);
-
-        let animId;
-        function drawFrame() {
-          if (video.paused || video.ended) {
-            if (recorder.state === 'recording') recorder.stop();
-            return;
-          }
-          ctx.drawImage(video, 0, 0, w, h);
-          animId = requestAnimationFrame(drawFrame);
-        }
-        drawFrame();
-
-        video.onended = () => {
-          cancelAnimationFrame(animId);
-          if (recorder.state === 'recording') recorder.stop();
-        };
-      } catch(err) {
-        clearTimeout(timeout);
-        finish(file);
-      }
-    };
-
-    video.onerror = () => {
-      clearTimeout(timeout);
-      finish(file);
-    };
-  });
-}
-
 // Upload di un file su Supabase Storage tramite signed URL (bypass limite Vercel)
 // Flusso: 1) backend genera URL firmato → 2) PUT diretto al bucket Supabase
 async function uploadMediaToSupabase(file, onProgress) {
   const secret = getPublishSecret();
   if (!secret) throw new Error('Password di pubblicazione mancante.');
 
-  // Se è un video pesante (> 45MB), lo ottimizziamo automaticamente
+  // Limite gratuito Supabase = 50MB. Se il file supera 45MB, blocchiamo con messaggio chiaro.
   const isVideo = (file.type || '').startsWith('video') || /\.(mp4|mov|m4v|webm|mkv)$/i.test(file.name || '');
-  if (isVideo && file.size > 45 * 1024 * 1024) {
-    file = await compressVideoIfOverLimit(file, onProgress);
+  if (file.size > 45 * 1024 * 1024) {
+    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+    throw new Error(
+      `File troppo grande (${sizeMB} MB). ` +
+      (isVideo
+        ? 'Per Reel >45MB usa il campo "Link Google Drive" qui sotto: carica il video su Drive, rendilo pubblico e incolla il link.'
+        : 'Il piano gratuito Supabase accetta massimo 45MB per immagine.')
+    );
   }
 
   if (onProgress) onProgress('Caricamento su Supabase Storage in corso…');
