@@ -24,22 +24,108 @@ function clearPublishSecret() {
   try { localStorage.removeItem('publish_secret'); } catch(e) {}
 }
 
+// ── CLOUDINARY CONFIG (per video >45MB gratis fino a 100MB) ───────────────────
+function getCloudinaryConfig() {
+  try {
+    const cn = localStorage.getItem('cloudinary_cloud_name') || '';
+    const up = localStorage.getItem('cloudinary_upload_preset') || '';
+    return { cloudName: cn, uploadPreset: up };
+  } catch(e) { return { cloudName: '', uploadPreset: '' }; }
+}
+function setCloudinaryConfig(cloudName, uploadPreset) {
+  try {
+    localStorage.setItem('cloudinary_cloud_name', cloudName.trim());
+    localStorage.setItem('cloudinary_upload_preset', uploadPreset.trim());
+  } catch(e) {}
+}
+function isCloudinaryConfigured() {
+  const { cloudName, uploadPreset } = getCloudinaryConfig();
+  return !!(cloudName && uploadPreset);
+}
+
+// Upload diretto su Cloudinary (unsigned) — restituisce URL pubblico permanente
+async function uploadVideoToCloudinary(file, onProgress) {
+  let { cloudName, uploadPreset } = getCloudinaryConfig();
+
+  // Se non configurato, chiediamo i dati all'utente
+  if (!cloudName || !uploadPreset) {
+    const info = cloudinarySetupPrompt();
+    if (!info) throw new Error('Configurazione Cloudinary annullata. Inserisci i dati per caricare video grandi.');
+    cloudName = info.cloudName;
+    uploadPreset = info.uploadPreset;
+  }
+
+  if (onProgress) onProgress('Caricamento video su Cloudinary…');
+
+  return new Promise((resolve, reject) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
+    formData.append('resource_type', 'video');
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        onProgress(`Caricamento video ${pct}%…`);
+      }
+    };
+
+    xhr.onload = () => {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (xhr.status === 200 && data.secure_url) {
+          resolve(data.secure_url);
+        } else {
+          reject(new Error(data.error?.message || `Cloudinary errore HTTP ${xhr.status}`));
+        }
+      } catch(e) {
+        reject(new Error('Risposta Cloudinary non valida'));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Errore di rete durante upload Cloudinary'));
+    xhr.send(formData);
+  });
+}
+
+// Mostra un dialog per configurare Cloudinary la prima volta
+function cloudinarySetupPrompt() {
+  const cn = (prompt(
+    '📹 VIDEO GRANDE RILEVATO\n\nPer caricare video oltre 45MB usiamo Cloudinary (gratis).\n\n' +
+    'Passo 1: Crea account su cloudinary.com (gratuito)\n' +
+    'Passo 2: Vai su Settings → Upload → Add upload preset → Unsigned\n' +
+    'Passo 3: Copia il tuo Cloud Name (es: mycloud123)\n\n' +
+    'Inserisci il tuo CLOUD NAME:'
+  ) || '').trim();
+  if (!cn) return null;
+
+  const up = (prompt(
+    'Inserisci il nome dell\'UPLOAD PRESET (quello che hai creato come "Unsigned"):'
+  ) || '').trim();
+  if (!up) return null;
+
+  setCloudinaryConfig(cn, up);
+  return { cloudName: cn, uploadPreset: up };
+}
+
 // Upload di un file su Supabase Storage tramite signed URL (bypass limite Vercel)
-// Flusso: 1) backend genera URL firmato → 2) PUT diretto al bucket Supabase
+// Per file >45MB usa automaticamente Cloudinary.
+// Flusso Supabase: 1) backend genera URL firmato → 2) PUT diretto al bucket
 async function uploadMediaToSupabase(file, onProgress) {
   const secret = getPublishSecret();
   if (!secret) throw new Error('Password di pubblicazione mancante.');
 
-  // Limite gratuito Supabase = 50MB. Se il file supera 45MB, blocchiamo con messaggio chiaro.
   const isVideo = (file.type || '').startsWith('video') || /\.(mp4|mov|m4v|webm|mkv)$/i.test(file.name || '');
+
+  // File >45MB → carica automaticamente su Cloudinary (gratuito, fino a ~100MB)
   if (file.size > 45 * 1024 * 1024) {
-    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
-    throw new Error(
-      `File troppo grande (${sizeMB} MB). ` +
-      (isVideo
-        ? 'Per Reel >45MB usa il campo "Link Google Drive" qui sotto: carica il video su Drive, rendilo pubblico e incolla il link.'
-        : 'Il piano gratuito Supabase accetta massimo 45MB per immagine.')
-    );
+    if (!isVideo) {
+      const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+      throw new Error(`Immagine troppo grande (${sizeMB}MB). Il piano gratuito Supabase accetta massimo 45MB.`);
+    }
+    return await uploadVideoToCloudinary(file, onProgress);
   }
 
   if (onProgress) onProgress('Caricamento su Supabase Storage in corso…');
@@ -219,40 +305,69 @@ async function clearPublishedQueue() {
   }
 }
 
-function calOnDirectUrlInput(val) {
-  val = (val || '').trim();
-  const mediaUrl = document.getElementById('calMediaUrl');
-  const mediaKind = document.getElementById('calMediaKind');
-  const status = document.getElementById('calUploadStatus');
-  const removeBtn = document.getElementById('calUploadRemove');
-  const type = document.getElementById('calType')?.value || 'IMAGE';
-
-  if (!val) {
-    if (mediaUrl) mediaUrl.value = '';
-    if (mediaKind) mediaKind.value = '';
-    if (status) { status.innerHTML = ''; status.className = 'cal-upload-status'; }
-    if (removeBtn) removeBtn.style.display = 'none';
-    return;
+// Mostra/nasconde il banner Cloudinary e aggiorna lo stato
+function calUpdateCloudinaryBanner(isLargeVideo) {
+  const banner = document.getElementById('calCloudinaryBanner');
+  const okBadge = document.getElementById('calCloudinaryOkBadge');
+  const statusText = document.getElementById('calCloudinaryStatus');
+  if (!banner) return;
+  if (!isLargeVideo) { banner.style.display = 'none'; return; }
+  banner.style.display = 'block';
+  if (isCloudinaryConfigured()) {
+    if (okBadge) okBadge.style.display = 'inline-flex';
+    const { cloudName } = getCloudinaryConfig();
+    if (statusText) statusText.textContent = `Pronto: upload automatico su Cloudinary (${cloudName}).`;
+  } else {
+    if (okBadge) okBadge.style.display = 'none';
+    if (statusText) statusText.textContent = 'Video >45MB rilevato. Configura Cloudinary (gratis) per caricare automaticamente.';
   }
+}
 
-  const isVideo = type === 'REELS' || /\.(mp4|mov|m4v|webm|mkv)$/i.test(val) || val.includes('drive.google.com') || val.includes('dropbox.com');
-  if (mediaUrl) mediaUrl.value = val;
-  if (mediaKind) mediaKind.value = isVideo ? 'video' : 'image';
+// Modale UI pulito per configurare Cloudinary (senza prompt browser)
+function calOpenCloudinarySettings() {
+  const { cloudName, uploadPreset } = getCloudinaryConfig();
+  const html = `
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);" id="cloudinarySetupOverlay" onclick="if(event.target===this)this.remove()">
+      <div style="background:#15151b;border-radius:12px;border:1px solid rgba(255,255,255,0.08);padding:28px;width:100%;max-width:420px;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+          <span class="material-symbols-rounded" style="color:var(--accent);font-size:24px;">cloud_upload</span>
+          <h3 style="margin:0;font-size:16px;">Configurazione Cloudinary</h3>
+        </div>
+        <p style="font-size:12px;color:var(--ink-soft);margin:0 0 16px;line-height:1.6;">
+          Cloudinary è <strong style="color:var(--pos);">gratuito</strong> e permette di caricare video fino a 100MB.<br>
+          1. Vai su <a href="https://cloudinary.com" target="_blank" style="color:var(--accent);">cloudinary.com</a> e crea un account free.<br>
+          2. Dalla dashboard copia il <strong>Cloud Name</strong>.<br>
+          3. Vai in <em>Settings → Upload → Add preset</em> → tipo <strong>Unsigned</strong>. Copia il nome.
+        </p>
+        <label style="font-size:11px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:4px;">CLOUD NAME</label>
+        <input id="cl_cloud_name" type="text" placeholder="es: mycloud123" value="${cloudName}" style="width:100%;padding:9px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:#1c1c24;color:#fff;font-size:13px;box-sizing:border-box;margin-bottom:12px;outline:none;">
+        <label style="font-size:11px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:4px;">UPLOAD PRESET (Unsigned)</label>
+        <input id="cl_upload_preset" type="text" placeholder="es: ml_default" value="${uploadPreset}" style="width:100%;padding:9px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:#1c1c24;color:#fff;font-size:13px;box-sizing:border-box;margin-bottom:20px;outline:none;">
+        <div style="display:flex;gap:10px;">
+          <button onclick="document.getElementById('cloudinarySetupOverlay').remove()" style="flex:1;padding:10px;border-radius:7px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:var(--ink-soft);cursor:pointer;">Annulla</button>
+          <button onclick="calSaveCloudinarySettings()" style="flex:1;padding:10px;border-radius:7px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:700;">Salva e Usa</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  setTimeout(() => document.getElementById('cl_cloud_name')?.focus(), 50);
+}
 
-  if (status) {
-    status.className = 'cal-upload-status ok';
-    status.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> Link Cloud collegato con successo (${isVideo ? 'Video/Reel' : 'Immagine'})!`;
-  }
+function calSaveCloudinarySettings() {
+  const cn = (document.getElementById('cl_cloud_name')?.value || '').trim();
+  const up = (document.getElementById('cl_upload_preset')?.value || '').trim();
+  if (!cn || !up) { alert('Inserisci sia il Cloud Name che l\'Upload Preset.'); return; }
+  setCloudinaryConfig(cn, up);
+  document.getElementById('cloudinarySetupOverlay')?.remove();
+  calUpdateCloudinaryBanner(true);
 }
 
 // Gestione UI dell'area upload nel modal
 function calResetUpload() {
   const u = document.getElementById('calMediaUrl');
   const k = document.getElementById('calMediaKind');
-  const directInput = document.getElementById('calMediaDirectUrl');
   if (u) u.value = '';
   if (k) k.value = '';
-  if (directInput) directInput.value = '';
   const prev = document.getElementById('calUploadPreview');
   if (prev) { prev.innerHTML = ''; prev.classList.remove('show'); }
   const st = document.getElementById('calUploadStatus');
@@ -261,6 +376,7 @@ function calResetUpload() {
   if (rm) rm.style.display = 'none';
   const inp = document.getElementById('calUploadInput');
   if (inp) inp.value = '';
+  calUpdateCloudinaryBanner(false);
 }
 
 async function calHandleFiles(files) {
@@ -284,6 +400,13 @@ async function calHandleFiles(files) {
 
   const urls = [];
   const kinds = [];
+
+  // Controlla se almeno un file è un video grande → mostra banner Cloudinary
+  const hasLargeVideo = filesToUpload.some(f =>
+    f.size > 45 * 1024 * 1024 &&
+    ((f.type || '').startsWith('video') || /\.(mp4|mov|m4v|webm|mkv)$/i.test(f.name || ''))
+  );
+  calUpdateCloudinaryBanner(hasLargeVideo);
 
   for (let i = 0; i < filesToUpload.length; i++) {
     const file = filesToUpload[i];
