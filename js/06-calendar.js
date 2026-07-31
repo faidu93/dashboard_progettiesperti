@@ -876,31 +876,25 @@ function calSetupEvents() {
         await schedulePublish({ mediaUrl, mediaKind, caption: finalNotes, scheduledAtIso });
         willAutoPublish = true;
 
-        // STEP 2: Se PUBBLICAZIONE IMMEDIATA, forza la pubblicazione istantanea inviando direttamente la richiesta
+        // Piccola pausa per garantire che il record sia persisted su Supabase prima del cron
+        if (isImmediate) await new Promise(r => setTimeout(r, 800));
+
+        // STEP 2: Se PUBBLICAZIONE IMMEDIATA, forza subito l'esecuzione del cron
         if (isImmediate) {
           const secret = getPublishSecret();
           if (secret && typeof BACKEND_BASE !== 'undefined') {
-            let pubRes = await fetch(`${BACKEND_BASE}/api/cron-publish?immediate=1`, {
-              method: 'GET',
-              headers: { 'X-Publish-Secret': secret }
+            const pubRes = await fetch(`${BACKEND_BASE}/api/cron-publish?immediate=1`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret }
             });
-            let pubData = await pubRes.json().catch(() => ({}));
-            
-            // Se GET non attiva la risposta, eseguiamo la chiamata POST diretta di pubblicazione immediata
-            if (!pubRes.ok || pubData.error || pubData.publishedCount === 0) {
-              pubRes = await fetch(`${BACKEND_BASE}/api/publish`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret },
-                body: JSON.stringify({
-                  mediaType: mediaKind === 'video' ? 'REELS' : (mediaKind === 'carousel' ? 'CAROUSEL_ALBUM' : 'IMAGE'),
-                  mediaUrl,
-                  caption: finalNotes
-                })
-              });
-              pubData = await pubRes.json().catch(() => ({}));
-              if (!pubRes.ok || pubData.error) {
-                throw new Error(pubData.error || pubData.details || `Pubblicazione immediata fallita (HTTP ${pubRes.status})`);
-              }
+            const pubData = await pubRes.json().catch(() => ({}));
+            if (!pubRes.ok || pubData.error) {
+              throw new Error(pubData.error || pubData.details || `Pubblicazione immediata fallita (HTTP ${pubRes.status})`);
+            }
+            // Controlla che almeno un post sia stato pubblicato
+            if (pubData.published === 0 && pubData.failed > 0) {
+              const errMsg = pubData.results?.find(r => !r.ok)?.error || 'Errore sconosciuto durante la pubblicazione.';
+              throw new Error(`Pubblicazione fallita: ${errMsg}`);
             }
           }
         }
