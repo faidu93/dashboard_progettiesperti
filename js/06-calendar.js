@@ -893,10 +893,14 @@ function calSetupEvents() {
             if (!pubRes.ok || pubData.error) {
               throw new Error(pubData.error || pubData.details || `Pubblicazione immediata fallita (HTTP ${pubRes.status})`);
             }
-            // Controlla che almeno un post sia stato pubblicato
+            // Se nessun post pubblicato e ci sono errori, mostra errore specifico
             if (pubData.published === 0 && pubData.failed > 0) {
-              const errMsg = pubData.results?.find(r => !r.ok)?.error || 'Errore sconosciuto durante la pubblicazione.';
-              throw new Error(`Pubblicazione fallita: ${errMsg}`);
+              const errMsg = pubData.results?.find(r => !r.ok)?.error || 'Errore durante la pubblicazione su Instagram.';
+              throw new Error(`Instagram ha rifiutato il post: ${errMsg}`);
+            }
+            // Se published === 0 senza errori (raro), avvisiamo senza crashare
+            if (pubData.published === 0) {
+              console.warn('Pubblicazione immediata: nessun post pubblicato. Verifica la coda.');
             }
           }
         }
@@ -939,7 +943,12 @@ function calSetupEvents() {
       document.getElementById('calModal').classList.remove('show');
 
       if (isImmediate) {
-        alert('⚡ Pubblicazione immediata completata con successo!');
+        // Ricarica la coda pubblicazione per mostrare il nuovo stato
+        if (typeof loadPublishQueue === 'function') setTimeout(loadPublishQueue, 1000);
+        alert('⚡ Reel/Post pubblicato con successo su Instagram!');
+      } else {
+        // Programma contenuto: mostra toast o messaggio silenzioso
+        setStatus && setStatus('ok', '✅ Post programmato con successo!');
       }
 
     } catch(e) {

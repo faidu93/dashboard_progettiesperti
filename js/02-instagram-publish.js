@@ -162,9 +162,10 @@ async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso })
   if (!secret) throw new Error('Password di pubblicazione mancante.');
 
   let mediaType = 'IMAGE';
+  // Controlla video PRIMA di carosello: un Reel+copertina ha mediaUrl con virgola ma deve essere REELS
   if (mediaKind === 'video' || (mediaKind && mediaKind.includes('video'))) {
     mediaType = 'REELS';
-  } else if (mediaKind === 'carousel' || (mediaUrl && mediaUrl.includes(','))) {
+  } else if (mediaKind === 'carousel' || (!mediaKind.includes('video') && mediaUrl && mediaUrl.includes(','))) {
     mediaType = 'CAROUSEL_ALBUM';
   }
 
