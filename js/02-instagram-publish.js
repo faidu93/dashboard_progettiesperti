@@ -245,13 +245,13 @@ async function calHandleFiles(files) {
 
   for (let i = 0; i < filesToUpload.length; i++) {
     const file = filesToUpload[i];
-    const isVideo = (file.type || '').startsWith('video');
+    const isVideo = (file.type || '').startsWith('video') || /\.(mp4|mov|m4v|webm|mkv)$/i.test(file.name || '');
     const localUrl = URL.createObjectURL(file);
 
     const previewItem = document.createElement('div');
     previewItem.className = 'cal-preview-item';
     previewItem.innerHTML = isVideo
-      ? `<video src="${localUrl}#t=0.5" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--line);" preload="metadata"></video>`
+      ? `<video src="${localUrl}#t=0.5" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--line);" preload="metadata" muted playsinline></video>`
       : `<img src="${localUrl}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--line);">`;
     prev.appendChild(previewItem);
 
@@ -262,8 +262,8 @@ async function calHandleFiles(files) {
       kinds.push(isVideo ? 'video' : 'image');
     } catch (e) {
       status.className = 'cal-upload-status err';
-      status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">error</span> ' + (e.message || 'Errore upload');
-      calResetUpload();
+      status.style.color = 'var(--neg)';
+      status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;margin-right:4px;">error</span> <strong>Errore caricamento:</strong> ' + (e.message || 'Errore durante l\'upload del file.');
       return;
     }
   }
