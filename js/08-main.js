@@ -28,9 +28,6 @@ async function init() {
 
   try {
     // 1. Avvio dei fetch in parallelo (concorrenza per caricamento veloce)
-    let savedSecret = '';
-    try { savedSecret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
-
     const igPromise = fetchCachedBackend('/api/instagram-insights', 'cache_ig_insights')
       .catch(e => {
         console.warn('Errore connessione backend Instagram:', e);

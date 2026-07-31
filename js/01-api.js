@@ -31,31 +31,42 @@ async function fetchBackend(path) {
   return j;
 }
 
-// Caching helper per velocizzare il caricamento della dashboard
+// Caching helper iper-veloce (Stale-While-Revalidate) per rendering istantaneo 0ms
 async function fetchCachedBackend(endpoint, cacheKey, ttlMs = 3600 * 1000) {
   const now = Date.now();
+  let cachedData = null;
+
   try {
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       const parsed = JSON.parse(cached);
+      cachedData = parsed.data;
+      // Se la cache è valida dentro il TTL, la usiamo subito senza rifare la fetch
       if (now - parsed.timestamp < ttlMs) {
-        console.log(`Caricato da cache: ${endpoint}`);
-        return parsed.data;
+        return cachedData;
       }
     }
   } catch(e) {
-    console.warn(`Errore cache per ${endpoint}:`, e);
+    console.warn(`Errore lettura cache per ${endpoint}:`, e);
   }
-  
+
+  // Se abbiamo una cache (anche se scaduta), la restituiamo subito per un rendering ISTANTANEO (0ms)
+  // ed eseguiamo il re-fetch in background senza bloccare la UI dell'utente.
+  if (cachedData) {
+    fetchBackend(endpoint).then(freshData => {
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: freshData }));
+      } catch(e) {}
+    }).catch(e => console.warn(`Re-fetch background fallito per ${endpoint}:`, e));
+
+    return cachedData;
+  }
+
+  // Se è la prima volta assoluta (nessuna cache), facciamo la fetch sincrona
   const freshData = await fetchBackend(endpoint);
   try {
-    localStorage.setItem(cacheKey, JSON.stringify({
-      timestamp: now,
-      data: freshData
-    }));
-  } catch(e) {
-    console.warn(`Errore scrittura cache per ${endpoint}:`, e);
-  }
+    localStorage.setItem(cacheKey, JSON.stringify({ timestamp: now, data: freshData }));
+  } catch(e) {}
   return freshData;
 }
 
