@@ -24,6 +24,23 @@ function clearPublishSecret() {
   try { localStorage.removeItem('publish_secret'); } catch(e) {}
 }
 
+// Converte automaticamente link Google Drive e Dropbox in URL di download diretto usabili da Meta API
+function normalizeCloudDirectUrl(url) {
+  if (!url) return '';
+  url = url.trim();
+  const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (driveMatch && driveMatch[1]) {
+    return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+  }
+  if (url.includes('dropbox.com')) {
+    if (url.includes('dl=0')) return url.replace('dl=0', 'raw=1');
+    if (!url.includes('raw=1') && !url.includes('dl=1')) {
+      return url + (url.includes('?') ? '&raw=1' : '?raw=1');
+    }
+  }
+  return url;
+}
+
 // ── CLOUDINARY CONFIG (per video >45MB gratis fino a 100MB) ───────────────────
 function getCloudinaryConfig() {
   try {
@@ -161,8 +178,11 @@ async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso })
   const secret = getPublishSecret();
   if (!secret) throw new Error('Password di pubblicazione mancante.');
 
+  // Normalizza gli URL (es: conversione automatica di Google Drive / Dropbox in link diretti)
+  const cleanMediaUrl = (mediaUrl || '').split(',').map(u => normalizeCloudDirectUrl(u)).join(',');
+
   const kindStr = String(mediaKind || '').toLowerCase();
-  const urlStr = String(mediaUrl || '');
+  const urlStr = String(cleanMediaUrl || '');
 
   let mediaType = 'IMAGE';
   // Controlla video PRIMA di carosello: un Reel+copertina ha mediaUrl con virgola ma deve essere REELS
@@ -177,7 +197,7 @@ async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso })
     headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret },
     body: JSON.stringify({
       mediaType,
-      mediaUrl,
+      mediaUrl: cleanMediaUrl,
       caption: caption || '',
       scheduledAt: scheduledAtIso
     })
@@ -253,6 +273,9 @@ function renderPublishQueue(queue) {
         <div class="queue-cap">${cap}${cap.length >= 70 ? '…' : ''}</div>
         <div class="queue-meta">${kind} · ${when} · <span style="color:${m.color};">${m.label}</span>${p.status==='error' && p.error ? ' · <span style="color:var(--neg);">'+p.error.slice(0,40)+'</span>' : ''}</div>
       </div>
+      ${p.status === 'error' ? `
+      <button class="queue-del" style="color:var(--pos); margin-right:8px;" title="Riprova Pubblicazione" onclick="retryPublishQueue('${p.id}')"><span class="material-symbols-rounded">replay</span></button>
+      ` : ''}
       ${canDelete ? `
       <button class="queue-del" style="color:var(--accent); margin-right:8px;" title="Modifica" onclick="openEditQueueModal('${p.id}', '${escapedCaption}', '${p.scheduledAt}')"><span class="material-symbols-rounded">edit</span></button>
       <button class="queue-del" title="Rimuovi dalla coda" onclick="deleteFromQueue('${p.id}')"><span class="material-symbols-rounded">delete</span></button>
@@ -260,6 +283,41 @@ function renderPublishQueue(queue) {
     </div>`;
   });
   box.innerHTML = h;
+}
+
+// Riprova la pubblicazione di un post in errore
+async function retryPublishQueue(id) {
+  const secret = getPublishSecret();
+  if (!secret) { alert('Password di pubblicazione mancante.'); return; }
+
+  // Ripristina stato a pending prima del retry
+  try {
+    await fetch(`${BACKEND_BASE}/api/schedule?action=update&id=${encodeURIComponent(id)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret },
+      body: JSON.stringify({ status: 'pending', error: null })
+    });
+  } catch(e) {}
+
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/cron-publish?immediate=1&postId=${encodeURIComponent(id)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret }
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || j.error) throw new Error(j.error || `HTTP ${res.status}`);
+
+    if (j.published > 0) {
+      alert('⚡ Pubblicazione riprovata e completata con successo!');
+    } else if (j.failed > 0) {
+      const errMsg = j.results?.find(r => !r.ok)?.error || 'Errore durante il tentativo';
+      alert('⚠️ Riprova fallita: ' + errMsg);
+    }
+  } catch (e) {
+    alert('Tentativo di ripubblicazione fallito: ' + e.message);
+  } finally {
+    loadPublishQueue();
+  }
 }
 
 async function deleteFromQueue(id) {
@@ -309,8 +367,25 @@ async function clearPublishedQueue() {
   }
 }
 
+// Aggiorna il badge nella barra di navigazione in alto
+function updateNavCloudinaryBadge() {
+  const badgeText = document.getElementById('cloudinaryNavText');
+  const badgeIcon = document.getElementById('cloudinaryNavIcon');
+  if (!badgeText) return;
+
+  if (isCloudinaryConfigured()) {
+    const { cloudName } = getCloudinaryConfig();
+    badgeText.textContent = `Cloud: ${cloudName}`;
+    if (badgeIcon) { badgeIcon.style.color = 'var(--pos)'; badgeIcon.textContent = 'cloud_done'; }
+  } else {
+    badgeText.textContent = 'Cloud: configura';
+    if (badgeIcon) { badgeIcon.style.color = 'var(--accent)'; badgeIcon.textContent = 'cloud_upload'; }
+  }
+}
+
 // Mostra/nasconde il banner Cloudinary e aggiorna lo stato
 function calUpdateCloudinaryBanner(isLargeVideo) {
+  updateNavCloudinaryBadge();
   const banner = document.getElementById('calCloudinaryBanner');
   const okBadge = document.getElementById('calCloudinaryOkBadge');
   const statusText = document.getElementById('calCloudinaryStatus');
@@ -364,6 +439,41 @@ function calSaveCloudinarySettings() {
   setCloudinaryConfig(cn, up);
   document.getElementById('cloudinarySetupOverlay')?.remove();
   calUpdateCloudinaryBanner(true);
+  updateNavCloudinaryBadge();
+}
+
+// Cambia l'aspect ratio dell'anteprima Instagram (9:16 / 4:5 / 1:1)
+function setCalPreviewAspect(aspect) {
+  const container = document.getElementById('calPreviewContainer');
+  if (container) container.style.aspectRatio = aspect;
+
+  const btnMap = { '9/16': 'aspBtn916', '4/5': 'aspBtn45', '1/1': 'aspBtn11' };
+  Object.keys(btnMap).forEach(asp => {
+    const btn = document.getElementById(btnMap[asp]);
+    if (!btn) return;
+    const isSel = (asp === aspect);
+    btn.style.background = isSel ? 'var(--accent)' : 'transparent';
+    btn.style.color = isSel ? '#fff' : 'var(--ink-soft)';
+    btn.style.fontWeight = isSel ? '600' : '400';
+  });
+}
+
+// Aggiorna il media mostrato nell'anteprima resa Instagram
+function updateCalPreviewMedia(url, isVideo) {
+  const box = document.getElementById('calAspectPreviewBox');
+  const holder = document.getElementById('calPreviewMediaHolder');
+  if (!box || !holder) return;
+
+  if (!url) {
+    box.style.display = 'none';
+    holder.innerHTML = '';
+    return;
+  }
+
+  box.style.display = 'block';
+  holder.innerHTML = isVideo
+    ? `<video src="${url}#t=0.5" style="width:100%;height:100%;object-fit:cover;display:block;" preload="metadata" muted playsinline autoplay loop></video>`
+    : `<img src="${url}" style="width:100%;height:100%;object-fit:cover;display:block;">`;
 }
 
 // Gestione UI dell'area upload nel modal
@@ -381,6 +491,7 @@ function calResetUpload() {
   const inp = document.getElementById('calUploadInput');
   if (inp) inp.value = '';
   calUpdateCloudinaryBanner(false);
+  updateCalPreviewMedia(null);
 }
 
 async function calHandleFiles(files) {
@@ -416,6 +527,11 @@ async function calHandleFiles(files) {
     const file = filesToUpload[i];
     const isVideo = (file.type || '').startsWith('video') || /\.(mp4|mov|m4v|webm|mkv)$/i.test(file.name || '');
     const localUrl = URL.createObjectURL(file);
+
+    if (i === 0) {
+      updateCalPreviewMedia(localUrl, isVideo);
+      setCalPreviewAspect(type === 'REELS' || isVideo ? '9/16' : '4/5');
+    }
 
     const previewItem = document.createElement('div');
     previewItem.className = 'cal-preview-item';

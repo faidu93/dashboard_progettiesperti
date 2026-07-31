@@ -49,6 +49,12 @@
         <span>Iscritti</span>
       </button>
 
+      <!-- Badge Stato Cloudinary (Video >45MB) -->
+      <button type="button" class="nav-btn" onclick="calOpenCloudinarySettings()" id="cloudinaryNavBadge" title="Configura Cloudinary per Video >45MB" style="gap:5px;">
+        <span class="material-symbols-rounded" style="font-size:15px; color:var(--accent);" id="cloudinaryNavIcon">cloud_upload</span>
+        <span id="cloudinaryNavText">Cloud: ...</span>
+      </button>
+
       <!-- Pulsante Aggiorna Tutto -->
       <button class="nav-btn" id="btnForceRefreshAllTop" onclick="forceRefreshAllAnalytics(event)">
         <span class="material-symbols-rounded" style="transition: transform 0.5s ease;" id="iconForceRefreshAllTop">refresh</span>
@@ -771,6 +777,28 @@
             <div class="cal-upload-preview" id="calUploadPreview"></div>
             <div class="cal-upload-status" id="calUploadStatus"></div>
             <button type="button" class="cal-upload-remove" id="calUploadRemove" style="display:none;">Rimuovi media</button>
+
+            <!-- Box Anteprima Layout Instagram (9:16 / 4:5 / 1:1) -->
+            <div id="calAspectPreviewBox" style="display:none; margin-top:12px; padding:12px; background:#121216; border-radius:10px; border:1px solid rgba(255,255,255,0.08);">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                <span style="font-size:11px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.5px;">Anteprima Resa Instagram</span>
+                <div style="display:flex; gap:4px;">
+                  <button type="button" onclick="setCalPreviewAspect('9/16')" class="cal-aspect-btn" id="aspBtn916" style="font-size:10px; padding:4px 8px; border-radius:5px; border:1px solid rgba(255,255,255,0.15); background:var(--accent); color:#fff; cursor:pointer; font-weight:600;">📱 9:16 Reel</button>
+                  <button type="button" onclick="setCalPreviewAspect('4/5')" class="cal-aspect-btn" id="aspBtn45" style="font-size:10px; padding:4px 8px; border-radius:5px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--ink-soft); cursor:pointer;">🖼️ 4:5 Feed</button>
+                  <button type="button" onclick="setCalPreviewAspect('1/1')" class="cal-aspect-btn" id="aspBtn11" style="font-size:10px; padding:4px 8px; border-radius:5px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--ink-soft); cursor:pointer;">🔲 1:1 Griglia</button>
+                </div>
+              </div>
+              <div id="calPreviewContainer" style="position:relative; width:100%; max-width:200px; margin:0 auto; aspect-ratio:9/16; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.15); background:#000; transition:all 0.25s ease;">
+                <div id="calPreviewMediaHolder" style="width:100%; height:100%;"></div>
+                <div style="position:absolute; bottom:8px; left:8px; right:8px; display:flex; align-items:center; justify-content:space-between; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.9); font-size:11px; pointer-events:none; z-index:2;">
+                  <div style="display:flex; align-items:center; gap:5px; font-weight:600; background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:10px; backdrop-filter:blur(2px);">
+                    <span style="width:12px; height:12px; border-radius:50%; background:var(--accent); display:inline-block;"></span>
+                    <span style="font-size:10px;">progettiesperti</span>
+                  </div>
+                  <span class="material-symbols-rounded" style="font-size:16px;">favorite</span>
+                </div>
+              </div>
+            </div>
             <!-- Banner Cloudinary (video >45MB) -->
             <div id="calCloudinaryBanner" style="margin-top:10px; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,107,0,0.25); background:rgba(255,107,0,0.07); display:none;">
               <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
@@ -1330,14 +1358,14 @@
   </div>
 </div>
 
-  <script src="js/01-api.js?v=20260731_2310"></script>
-  <script src="js/02-instagram-publish.js?v=20260731_2310"></script>
-  <script src="js/03-kpi.js?v=20260731_2310"></script>
-  <script src="js/04-subscribers.js?v=20260731_2310"></script>
-  <script src="js/05-insights.js?v=20260731_2310"></script>
-  <script src="js/06-calendar.js?v=20260731_2310"></script>
-  <script src="js/07-analytics.js?v=20260731_2310"></script>
-  <script src="js/08-main.js?v=20260731_2310"></script>
+  <script src="js/01-api.js?v=20260731_2320"></script>
+  <script src="js/02-instagram-publish.js?v=20260731_2320"></script>
+  <script src="js/03-kpi.js?v=20260731_2320"></script>
+  <script src="js/04-subscribers.js?v=20260731_2320"></script>
+  <script src="js/05-insights.js?v=20260731_2320"></script>
+  <script src="js/06-calendar.js?v=20260731_2320"></script>
+  <script src="js/07-analytics.js?v=20260731_2320"></script>
+  <script src="js/08-main.js?v=20260731_2320"></script>
   <!-- MODAL: Modifica Post Programmato in Coda -->
   <div class="cal-modal-bg" id="editQueueModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
     <div class="cal-modal" style="background:#15151b; width:100%; max-width:560px; padding:24px; border-radius:12px; border:1px solid rgba(255,255,255,0.05); color:#fff; box-shadow:0 8px 32px rgba(0,0,0,0.5);">

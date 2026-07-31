@@ -22,6 +22,7 @@ async function init() {
   }
   gcalInit(); // Google Calendar init sempre
   intelRestoreFields(); // ripristina API key e preferenze Intelligence
+  if (typeof updateNavCloudinaryBadge === 'function') updateNavCloudinaryBadge();
   loadingDone('setup', 'Interfaccia pronta');
   loadingProgress(10);
 
