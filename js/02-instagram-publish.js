@@ -60,6 +60,27 @@ function isCloudinaryConfigured() {
   return !!(cloudName && uploadPreset);
 }
 
+// Helper universale per mostrare la barra di caricamento con percentuale % reale
+function renderProgressBar(elementId, pct, message, color = 'var(--accent)') {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  const percentage = Math.min(100, Math.max(0, Math.round(pct || 0)));
+  el.className = 'cal-upload-status loading';
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="margin:6px 0 4px 0; background:rgba(255,255,255,0.08); border-radius:6px; overflow:hidden; height:8px; width:100%; position:relative;">
+      <div style="width:${percentage}%; height:100%; background:linear-gradient(90deg, ${color}, var(--pos)); transition:width 0.25s ease; border-radius:6px;"></div>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--ink-soft); font-family:var(--font-mono); margin-top:2px;">
+      <span style="display:flex; align-items:center; gap:4px;">
+        <span class="material-symbols-rounded" style="font-size:13px; animation:spin 1s linear infinite;">progress_activity</span>
+        ${message || 'Caricamento in corso…'}
+      </span>
+      <strong style="color:var(--ink); font-weight:700;">${percentage}%</strong>
+    </div>
+  `;
+}
+
 // Upload diretto su Cloudinary (unsigned) — restituisce URL pubblico permanente
 async function uploadVideoToCloudinary(file, onProgress) {
   let { cloudName, uploadPreset } = getCloudinaryConfig();
@@ -72,7 +93,7 @@ async function uploadVideoToCloudinary(file, onProgress) {
     uploadPreset = info.uploadPreset;
   }
 
-  if (onProgress) onProgress('Caricamento video su Cloudinary…');
+  if (onProgress) onProgress(5, 'Inizio caricamento video su Cloudinary…');
 
   return new Promise((resolve, reject) => {
     const formData = new FormData();
@@ -86,7 +107,7 @@ async function uploadVideoToCloudinary(file, onProgress) {
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) {
         const pct = Math.round((e.loaded / e.total) * 100);
-        onProgress(`Caricamento video ${pct}%…`);
+        onProgress(pct, `Caricamento video su Cloudinary ${pct}%…`);
       }
     };
 
@@ -94,6 +115,7 @@ async function uploadVideoToCloudinary(file, onProgress) {
       try {
         const data = JSON.parse(xhr.responseText);
         if (xhr.status === 200 && data.secure_url) {
+          if (onProgress) onProgress(100, 'Caricamento video completato 100% ✓');
           resolve(data.secure_url);
         } else {
           reject(new Error(data.error?.message || `Cloudinary errore HTTP ${xhr.status}`));
@@ -145,7 +167,7 @@ async function uploadMediaToSupabase(file, onProgress) {
     return await uploadVideoToCloudinary(file, onProgress);
   }
 
-  if (onProgress) onProgress('Caricamento su Supabase Storage in corso…');
+  if (onProgress) onProgress(5, 'Richiesta autorizzazione upload…');
 
   // STEP 1: richiedo l'URL firmato al backend
   const signRes = await fetch(
@@ -158,18 +180,32 @@ async function uploadMediaToSupabase(file, onProgress) {
     throw new Error(signData.error || `Errore signed URL (HTTP ${signRes.status})`);
   }
 
-  // STEP 2: carico direttamente su Supabase
-  const uploadRes = await fetch(signData.signedUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': file.type || 'application/octet-stream' },
-    body: file,
-  });
-  if (!uploadRes.ok) {
-    const errText = await uploadRes.text().catch(() => '');
-    throw new Error(`Upload Supabase fallito (HTTP ${uploadRes.status}) — ${errText.slice(0,120)}`);
-  }
+  if (onProgress) onProgress(10, 'Inizio caricamento file…');
 
-  return signData.publicUrl;
+  // STEP 2: carico direttamente su Supabase tramite XHR con percentuale % reale
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', signData.signedUrl);
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) {
+        const pct = Math.round(10 + (e.loaded / e.total) * 90);
+        onProgress(pct, `Caricamento file su Supabase ${pct}%…`);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        if (onProgress) onProgress(100, 'Upload completato 100% ✓');
+        resolve(signData.publicUrl);
+      } else {
+        reject(new Error(`Upload Supabase fallito (HTTP ${xhr.status}) — ${(xhr.responseText || '').slice(0,120)}`));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Errore di rete durante upload Supabase'));
+    xhr.send(file);
+  });
 }
 
 
@@ -541,9 +577,10 @@ async function calHandleFiles(files) {
     prev.appendChild(previewItem);
 
     try {
-      status.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;">progress_activity</span> Caricamento file ${i + 1}/${filesToUpload.length}…`;
-      const url = await uploadMediaToSupabase(file, (msg) => {
-        status.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;animation:spin 1s linear infinite;">progress_activity</span> ${msg}`;
+      const url = await uploadMediaToSupabase(file, (pctOrMsg, msg) => {
+        let pct = typeof pctOrMsg === 'number' ? pctOrMsg : 50;
+        let text = typeof pctOrMsg === 'number' ? (msg || `Upload ${pct}%`) : pctOrMsg;
+        renderProgressBar('calUploadStatus', pct, `File ${i + 1}/${filesToUpload.length}: ${text}`);
       });
       urls.push(url);
       kinds.push(isVideo ? 'video' : 'image');
@@ -555,11 +592,10 @@ async function calHandleFiles(files) {
     }
   }
 
-  document.getElementById('calMediaUrl').value = urls.join(',');
-  document.getElementById('calMediaKind').value = kinds.join(',');
+  if (mediaUrl) mediaUrl.value = urls.join(',');
+  if (mediaKind) mediaKind.value = kinds.includes('video') ? 'video' : (kinds.length > 1 ? 'carousel' : 'image');
 
-  status.className = 'cal-upload-status ok';
-  status.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> ${urls.length > 1 ? urls.length + ' media caricati' : 'Media caricato'} con successo`;
+  renderProgressBar('calUploadStatus', 100, `Caricamento completato (${urls.length} file) ✓`, 'var(--pos)');
   if (removeBtn) removeBtn.style.display = 'inline-block';
 }
 
@@ -581,22 +617,18 @@ function calSetupUpload() {
 
 // Gestione Copertina Reel (Upload)
 async function calHandleCoverFile(files) {
+  if (!files || !files.length) return;
   const file = files[0];
-  if (!file) return;
-  const prev = document.getElementById('calCoverUploadPreview');
   const status = document.getElementById('calCoverUploadStatus');
+  const prev = document.getElementById('calCoverUploadPreview');
   const removeBtn = document.getElementById('calCoverUploadRemove');
   if (!prev || !status) return;
 
-  prev.innerHTML = '';
-  status.className = 'cal-upload-status';
-  status.innerHTML = '';
+  status.className = 'cal-upload-status loading';
+  renderProgressBar('calCoverUploadStatus', 5, 'Preparazione copertina…');
 
-  if (!file.type.startsWith('image/')) {
-    status.className = 'cal-upload-status err';
-    status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">error</span> La copertina deve essere un\'immagine.';
-    return;
-  }
+  prev.innerHTML = '';
+  prev.classList.add('show');
 
   const localUrl = URL.createObjectURL(file);
   const previewItem = document.createElement('div');
@@ -605,11 +637,13 @@ async function calHandleCoverFile(files) {
   prev.appendChild(previewItem);
 
   try {
-    status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;animation:spin 1s linear infinite;">progress_activity</span> Caricamento copertina…';
-    const url = await uploadMediaToSupabase(file);
+    const url = await uploadMediaToSupabase(file, (pctOrMsg, msg) => {
+      let pct = typeof pctOrMsg === 'number' ? pctOrMsg : 50;
+      let text = typeof pctOrMsg === 'number' ? (msg || `Upload ${pct}%`) : pctOrMsg;
+      renderProgressBar('calCoverUploadStatus', pct, `Copertina: ${text}`);
+    });
     document.getElementById('calCoverUrl').value = url;
-    status.className = 'cal-upload-status ok';
-    status.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> Copertina caricata con successo';
+    renderProgressBar('calCoverUploadStatus', 100, 'Copertina caricata con successo 100% ✓', 'var(--pos)');
     if (removeBtn) removeBtn.style.display = 'inline-block';
   } catch (e) {
     status.className = 'cal-upload-status err';

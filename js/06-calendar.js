@@ -872,13 +872,20 @@ function calSetupEvents() {
           scheduledAtIso = localDateTime.toISOString();
         }
 
+        if (isImmediate && typeof renderProgressBar === 'function') {
+          renderProgressBar('calUploadStatus', 20, 'Salvataggio in coda…');
+        }
+
         // STEP 1: Salva nella coda di pubblicazione del backend (/api/schedule)
         const scheduledPost = await schedulePublish({ mediaUrl, mediaKind, caption: finalNotes, scheduledAtIso });
         const scheduledPostId = scheduledPost?.id || null;
         willAutoPublish = true;
 
-        // Piccola pausa per garantire che il record sia persisted su Supabase prima del cron
-        if (isImmediate) await new Promise(r => setTimeout(r, 800));
+        if (isImmediate) {
+          if (typeof renderProgressBar === 'function') renderProgressBar('calUploadStatus', 45, 'Invio a Instagram Graph API…');
+          await new Promise(r => setTimeout(r, 800));
+          if (typeof renderProgressBar === 'function') renderProgressBar('calUploadStatus', 75, 'Elaborazione Reel sui server Meta…');
+        }
 
         // STEP 2: Se PUBBLICAZIONE IMMEDIATA, forza subito l'esecuzione del cron SOLO per questo post
         if (isImmediate) {
@@ -902,6 +909,9 @@ function calSetupEvents() {
             if (pubData.published === 0) {
               console.warn('Pubblicazione immediata: nessun post pubblicato. Verifica la coda.');
             }
+          }
+          if (typeof renderProgressBar === 'function') {
+            renderProgressBar('calUploadStatus', 100, '⚡ Pubblicato con successo!', 'var(--pos)');
           }
         }
       }
