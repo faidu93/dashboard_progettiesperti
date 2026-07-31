@@ -24,11 +24,99 @@ function clearPublishSecret() {
   try { localStorage.removeItem('publish_secret'); } catch(e) {}
 }
 
+// Compressione video automatica lato browser se il file supera i 45 MB (limite Supabase Free 50MB)
+async function compressVideoIfOverLimit(file, onProgress) {
+  const maxBytes = 45 * 1024 * 1024; // 45 MB
+  if (file.size <= maxBytes) return file;
+
+  if (onProgress) onProgress('Ottimizzo la dimensione del video per Supabase (< 45MB)…');
+
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.src = URL.createObjectURL(file);
+    video.muted = true;
+    video.playsInline = true;
+
+    video.onloadedmetadata = () => {
+      const canvas = document.createElement('canvas');
+      // Mantiene 1080p verticali/orizzontali ottimizzati per Instagram Reel
+      let w = video.videoWidth || 1080;
+      let h = video.videoHeight || 1920;
+      if (w > 1080) {
+        h = Math.round((h * 1080) / w);
+        w = 1080;
+      }
+      canvas.width = w;
+      canvas.height = h;
+
+      const ctx = canvas.getContext('2d');
+      const stream = canvas.captureStream(30);
+
+      // Aggiunge la traccia audio originale se presente
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaElementSource(video);
+        const dest = audioCtx.createMediaStreamDestination();
+        source.connect(dest);
+        source.connect(audioCtx.destination);
+        dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+      } catch(e) {}
+
+      const recorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('video/mp4;codecs=h264') ? 'video/mp4;codecs=h264' :
+                  MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm',
+        videoBitsPerSecond: 2500000 // 2.5 Mbps -> per 60 secondi fa ~18MB!
+      });
+
+      const chunks = [];
+      recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: recorder.mimeType || 'video/mp4' });
+        const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + "_opt.mp4", { type: 'video/mp4' });
+        URL.revokeObjectURL(video.src);
+        resolve(compressedFile);
+      };
+
+      video.play();
+      recorder.start(100);
+
+      let animId;
+      function drawFrame() {
+        if (video.paused || video.ended) {
+          if (recorder.state === 'recording') recorder.stop();
+          return;
+        }
+        ctx.drawImage(video, 0, 0, w, h);
+        animId = requestAnimationFrame(drawFrame);
+      }
+      drawFrame();
+
+      video.onended = () => {
+        cancelAnimationFrame(animId);
+        if (recorder.state === 'recording') recorder.stop();
+      };
+    };
+
+    video.onerror = () => {
+      // In caso di problemi nel player HTML5, ritorna il file originale
+      resolve(file);
+    };
+  });
+}
+
 // Upload di un file su Supabase Storage tramite signed URL (bypass limite Vercel)
 // Flusso: 1) backend genera URL firmato → 2) PUT diretto al bucket Supabase
-async function uploadMediaToSupabase(file) {
+async function uploadMediaToSupabase(file, onProgress) {
   const secret = getPublishSecret();
   if (!secret) throw new Error('Password di pubblicazione mancante.');
+
+  // Se è un video pesante (> 45MB), lo ottimizziamo automaticamente
+  const isVideo = (file.type || '').startsWith('video') || /\.(mp4|mov|m4v|webm|mkv)$/i.test(file.name || '');
+  if (isVideo && file.size > 45 * 1024 * 1024) {
+    file = await compressVideoIfOverLimit(file, onProgress);
+  }
+
+  if (onProgress) onProgress('Caricamento su Supabase Storage in corso…');
 
   // STEP 1: richiedo l'URL firmato al backend
   const signRes = await fetch(
@@ -41,7 +129,7 @@ async function uploadMediaToSupabase(file) {
     throw new Error(signData.error || `Errore signed URL (HTTP ${signRes.status})`);
   }
 
-  // STEP 2: carico direttamente su Supabase (nessun limite di dimensione)
+  // STEP 2: carico direttamente su Supabase
   const uploadRes = await fetch(signData.signedUrl, {
     method: 'PUT',
     headers: { 'Content-Type': file.type || 'application/octet-stream' },
@@ -257,7 +345,9 @@ async function calHandleFiles(files) {
 
     try {
       status.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;">progress_activity</span> Caricamento file ${i + 1}/${filesToUpload.length}…`;
-      const url = await uploadMediaToSupabase(file);
+      const url = await uploadMediaToSupabase(file, (msg) => {
+        status.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;animation:spin 1s linear infinite;">progress_activity</span> ${msg}`;
+      });
       urls.push(url);
       kinds.push(isVideo ? 'video' : 'image');
     } catch (e) {
