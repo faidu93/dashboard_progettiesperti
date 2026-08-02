@@ -97,24 +97,24 @@ function renderKPIs(daily, profile, posts) {
   document.getElementById('metaPeriod').textContent = `${fmtDate(dStart)} – ${fmtDate(dEnd)} · ${period.length}g`;
   document.getElementById('reachPanelSub').textContent = `${period.length} giorni`;
 
-  // === TARGET DINAMICI (basati sul profilo) ===
-  // Calcolo target a partire dai dati storici/medie del profilo stesso
-  const reachMedianDaily = (function() {
-    const reaches = period.map(r => r.reach || 0).sort((a,b) => a-b);
-    return reaches[Math.floor(reaches.length/2)] || 0;
-  })();
-  // Targets:
-  // - Follower: +50/sett (linea-base obiettivo per profilo in crescita)
-  // - Reach: settimana attesa = mediana_daily * 7 * 1.2 (20% sopra il trend medio)
-  // - Interazioni: ER 5% * reach_target (per nicchia fantacalcio)
-  // - ER medio: 3% benchmark nicchia (>3% buono, <2% scarso)
-  // - Shareability: 1% benchmark Instagram (>1% buono)
+  // === TARGET DINAMICI (basati sulla storia reale e recente del profilo) ===
+  // Estraggo la prestazione delle ultime settimane attive (last7 e prev7)
+  const activeWkReach = Math.max(last7.reach || 0, prev7.reach || 0, 15000);
+  const activeWkInt = Math.max(last7.int || 0, prev7.int || 0, 250);
+  const activeWkFoll = Math.max(last7.foll || 0, prev7.foll || 0, 35);
+
+  // Targets ricalibrati sulla nicchia fantacalcio e sulla storia reale:
+  // - Follower: target settimanale basato sul picco recente +5% (+50-55/sett)
+  // - Reach: +5% sopra il picco recente (sfidante ma perfettamente raggiungibile)
+  // - Interazioni: commisurato all'engagement reale della pagina (~1.6-1.8% della reach)
+  // - ER medio: 3.5% (benchmark d'eccellenza per la nicchia; la pagina viaggia al 3.8%-4.9%)
+  // - Shareability: 0.35% (commisurato allo 0.33% reale della pagina, raggiungibile e stimolante)
   const targets = {
-    follow: 50,        // follower/settimana
-    reach: Math.round(reachMedianDaily * 7 * 1.2),
-    int: Math.round(reachMedianDaily * 7 * 1.2 * 0.05),
-    er: 3.0,
-    share: 1.0,
+    follow: Math.max(40, Math.round(activeWkFoll * 1.05)),
+    reach: Math.round(activeWkReach * 1.05),
+    int: Math.round(Math.max(activeWkInt * 1.10, activeWkReach * 0.018)),
+    er: 3.5,
+    share: 0.35,
     conv: 1.2          // reach→follower %
   };
 
