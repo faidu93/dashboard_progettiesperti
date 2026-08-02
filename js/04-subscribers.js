@@ -68,6 +68,7 @@ async function unlockSubscribers() {
         try {
           sessionStorage.setItem('publish_secret', pw);
           localStorage.setItem('publish_secret', pw);
+          localStorage.setItem('cached_subscribers_v1', JSON.stringify(data));
         } catch(e) {}
         
         window.CACHED_SUBSCRIBERS = data;

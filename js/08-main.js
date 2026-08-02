@@ -148,12 +148,25 @@ async function init() {
     }
     loadingProgress(92);
 
-    // === FASE 5: Dati iscritti ===
+    // === FASE 5: Dati iscritti (SWR cache per rendering istantaneo 0ms) ===
     loadingStep('subscribers', 'Caricamento dati iscritti…');
+    try {
+      const cachedSubStr = localStorage.getItem('cached_subscribers_v1');
+      if (cachedSubStr) {
+        const cachedSub = JSON.parse(cachedSubStr);
+        if (cachedSub && Array.isArray(cachedSub.subscribers)) {
+          window.CACHED_SUBSCRIBERS = cachedSub;
+          renderSubscribersKPIs(cachedSub);
+          loadingDone('subscribers', `Iscritti · ${cachedSub.subscribers.length} totali`);
+        }
+      }
+    } catch(e) {}
+
     const subData = await subPromise;
     if (subData) {
       if (Array.isArray(subData.subscribers)) {
         window.CACHED_SUBSCRIBERS = subData;
+        try { localStorage.setItem('cached_subscribers_v1', JSON.stringify(subData)); } catch(e) {}
         renderSubscribersKPIs(subData);
         loadingDone('subscribers', `Iscritti · ${subData.subscribers.length} totali`);
       } else if (subData.unauthorized) {
@@ -161,14 +174,18 @@ async function init() {
         renderSubscribersUnauthorized();
         loadingDone('subscribers', 'Iscritti · sbloccare con password');
       } else {
+        if (!window.CACHED_SUBSCRIBERS || window.CACHED_SUBSCRIBERS.error) {
+          window.CACHED_SUBSCRIBERS = { error: true };
+          renderSubscribersError();
+          loadingWarn('subscribers', 'Iscritti non disponibili');
+        }
+      }
+    } else {
+      if (!window.CACHED_SUBSCRIBERS || window.CACHED_SUBSCRIBERS.error) {
         window.CACHED_SUBSCRIBERS = { error: true };
         renderSubscribersError();
         loadingWarn('subscribers', 'Iscritti non disponibili');
       }
-    } else {
-      window.CACHED_SUBSCRIBERS = { error: true };
-      renderSubscribersError();
-      loadingWarn('subscribers', 'Iscritti non disponibili');
     }
     loadingProgress(98);
 
