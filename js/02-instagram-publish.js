@@ -289,9 +289,10 @@ function renderPublishQueue(queue) {
     return new Date(a.scheduledAt) - new Date(b.scheduledAt);
   });
   const statusMeta = {
-    pending:   { label: 'in attesa', color: 'var(--accent)', icon: 'schedule' },
-    published: { label: 'pubblicato', color: 'var(--pos)', icon: 'check_circle' },
-    error:     { label: 'errore', color: 'var(--neg)', icon: 'error' }
+    pending:    { label: 'in attesa', color: 'var(--accent)', icon: 'schedule' },
+    processing: { label: 'in pubblicazione…', color: 'var(--accent)', icon: 'progress_activity' },
+    published:  { label: 'pubblicato', color: 'var(--pos)', icon: 'check_circle' },
+    error:      { label: 'errore', color: 'var(--neg)', icon: 'error' }
   };
   let h = '';
   sorted.forEach(p => {
