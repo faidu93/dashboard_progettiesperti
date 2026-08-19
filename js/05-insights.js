@@ -607,7 +607,6 @@ function tabSwitch(btn) {
       loadPublishQueue();
     }
   }
-  if (tabId === 'intelligence') { intelInitHistoryBars(); }
   if (tabId === 'acquisizioni') { renderSubscribersChart(); }
 }
 

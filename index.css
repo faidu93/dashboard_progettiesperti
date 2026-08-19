@@ -359,10 +359,10 @@ body {
 .top-item-collab { font-family: var(--font-mono); font-size: 10px; padding: 2px 6px; border-radius: 3px; background: rgba(90,174,240,0.12); color: var(--info); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
 
 /* ============ PI LIST ============ */
-.lab-pi-row { display: grid; grid-template-columns: 24px 60px 50px 1fr 60px 75px; gap: 12px; padding: 11px 0; align-items: center; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+.lab-pi-row { display: grid; grid-template-columns: 24px 60px 50px minmax(0, 1fr) 60px 75px; gap: 12px; padding: 11px 0; align-items: center; border-bottom: 1px solid var(--line); font-size: 12.5px; }
 .lab-pi-row:last-child { border-bottom: none; }
 .lab-pi-bar-wrap { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.lab-pi-title { font-size: 12px; color: var(--ink); font-weight: 500; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lab-pi-title { min-width: 0; font-size: 12px; color: var(--ink); font-weight: 500; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lab-pi-bar { height: 5px; background: var(--bg-elev-2); border-radius: 100px; overflow: hidden; }
 .lab-pi-bar-fill { height: 100%; background: var(--accent); border-radius: 100px; min-width: 4px; }
 .lab-pi-bar-fill.weak { background: var(--ink-mute); }
@@ -481,7 +481,7 @@ body {
   .funnel-step { border-right: none; border-bottom: 1px solid var(--line); padding: 14px 18px; }
   .funnel-step:last-child { border-bottom: none; }
   .funnel-step-arrow { display: none !important; }
-  .panel-grid.two-col, .panel-grid.equal, .panel-grid.three-col, .top-cols { grid-template-columns: 1fr; }
+  .panel-grid.two-col, .panel-grid.equal, .panel-grid.three-col, .top-cols { grid-template-columns: minmax(0, 1fr); }
   .slot-grid { grid-template-columns: 1fr; }
   .daily-action-list { grid-template-columns: 1fr 1fr; }
 }
@@ -549,7 +549,11 @@ body {
   .lab-grid-3 { grid-template-columns: 1fr; }
   .lab-fmt-table { font-size: 11px; }
   .lab-fmt-table th, .lab-fmt-table td { padding: 7px 5px; }
-  .wow-toggle { display: none; } /* su mobile nascondo il toggle WoW — troppo stretto */
+  .wow-toggle { display: none !important; } /* su mobile nascondo il toggle WoW — troppo stretto (!important: la regola base più sotto nel file altrimenti vince per ordine sorgente) */
+  /* Le 6 colonne (rank/data/formato/titolo/PI/reach) non entrano leggibili sotto 768px:
+     stesso pattern di scroll orizzontale già usato per calendario e heatmap. */
+  #piList { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .lab-pi-row { min-width: 480px; }
 
   /* Heatmap */
   .heatmap { gap: 3px; }
@@ -1861,8 +1865,8 @@ body {
   .cal-nav { flex-direction: column; align-items: stretch; gap: 10px; }
   .cal-nav-btns { justify-content: space-between; width: 100%; }
   .cal-filter-bar { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
-  .top-cols { grid-template-columns: 1fr; }
-  .panel-grid.two-col, .panel-grid.equal, .panel-grid.three-col { grid-template-columns: 1fr; }
+  .top-cols { grid-template-columns: minmax(0, 1fr); }
+  .panel-grid.two-col, .panel-grid.equal, .panel-grid.three-col { grid-template-columns: minmax(0, 1fr); }
   .layout-header-actions { flex-wrap: wrap; gap: 8px; }
   .layout-header-actions button { flex: 1; text-align: center; justify-content: center; }
   .cal-filters { flex-wrap: wrap; }

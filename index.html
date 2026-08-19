@@ -15,7 +15,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="index.css?v=20260730_0043">
+  <link rel="stylesheet" href="index.css?v=20260819_reels3">
 </head>
 <body>
 
@@ -695,15 +695,15 @@
     <div class="cal-modal" style="max-width: 900px; width: 95%;">
       
       <!-- Testata Modal -->
-      <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
-        <div>
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:8px; gap:8px;">
+        <div style="flex:1; min-width:0;">
           <h3 id="calModalTitle" style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink); margin:0;">Pianifica un post</h3>
           <div style="font-size:11px; color:var(--accent); font-family:var(--font-mono); margin-top:2px; display:flex; align-items:center; gap:4px;">
             <span class="material-symbols-rounded" style="font-size:13px;">workspace_premium</span>
             <span>Brand Preset Attivo: Logo, Colori &amp; Font Progetto Esperti pre-applicati</span>
           </div>
         </div>
-        <button class="cal-btn" onclick="document.getElementById('calModal').classList.remove('show')" style="border-radius:50%; width:32px; height:32px; padding:0; display:grid; place-items:center; background:var(--bg-elev-2); border-color:var(--line);">
+        <button class="cal-btn" onclick="document.getElementById('calModal').classList.remove('show')" style="border-radius:50%; width:32px; height:32px; padding:0; display:grid; place-items:center; background:var(--bg-elev-2); border-color:var(--line); flex-shrink:0;">
           <span class="material-symbols-rounded" style="font-size:18px;">close</span>
         </button>
       </div>
@@ -943,7 +943,6 @@
       <div class="cal-detail-caption" id="cdCaption"></div>
       <div class="cal-detail-actions">
         <a id="cdLink" href="#" target="_blank" rel="noopener" class="cal-btn"><svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Apri su Instagram</a>
-        <button type="button" id="cdRepurposeBtn" class="cal-btn" style="display:none; background:rgba(255,140,30,0.1); color:var(--accent); border-color:rgba(255,140,30,0.3);"><svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Ricicla in Instagram</button>
         <button class="cal-btn" id="cdClose">Chiudi</button>
       </div>
     </div>

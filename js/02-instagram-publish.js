@@ -853,24 +853,6 @@ function calSetupCoverUpload() {
   if (rm) rm.addEventListener('click', calResetCoverUpload);
 }
 
-// Mostra l'area media solo per Instagram, l'area copertina per i Reel e i collaboratori per IG (tranne Story)
-function calToggleMediaField() {
-  const platform = document.getElementById('calPlatform').value;
-  const type = document.getElementById('calType').value;
-  const field = document.getElementById('calMediaField');
-  if (field) field.style.display = (platform === 'ig') ? 'flex' : 'none';
-
-  const coverField = document.getElementById('calCoverField');
-  if (coverField) {
-    coverField.style.display = (platform === 'ig' && type === 'REELS') ? 'flex' : 'none';
-  }
-
-  const collabField = document.getElementById('calCollabField');
-  if (collabField) {
-    collabField.style.display = (platform === 'ig' && type !== 'STORY') ? 'flex' : 'none';
-  }
-}
-
 const MONTHS_NUM = ['01','02','03','04','05','06','07','08','09','10','11','12'];
 const COLLAB_KEY = 'epf_collab_posts'; // localStorage key per i post collaborativi
 
@@ -987,18 +969,25 @@ function normalizeType(t) {
   if (t === 'VIDEO' || t === 'REEL') return 'REELS';
   return t;
 }
+// Taglia una stringa a `max` caratteri Unicode (non unità UTF-16), così le emoji
+// a cavallo del limite non vengono spezzate a metà producendo caratteri corrotti.
+function truncateUnicode(s, max) {
+  const chars = [...s];
+  return chars.length > max ? chars.slice(0, max - 1).join('') + '…' : s;
+}
 function shortCaption(c, max=110) {
   if (!c) return '';
-  let s = c.split('\n')[0].replace(/\*\*/g,'');
-  if (s.length > max) s = s.slice(0,max-1) + '…';
-  return s;
+  const s = c.split('\n')[0].replace(/\*\*/g,'');
+  return truncateUnicode(s, max);
 }
 // Estrae un "titolo" breve significativo dal post per uso compatto
 function titleFromCaption(c, max=50) {
   if (!c) return 'Post';
-  let s = c.split('\n')[0].replace(/\*\*/g,'').replace(/^[🔥🛡️🧤⚽️🎯🚨🚀📊⚡️🎮👽⚫🔵💎🏆🎟️⚔️📈⬇️✍️🔵🧙🟣]+/g,'').trim();
-  // Rimuove punti finali e taglia alla prima frase breve
-  if (s.length > max) s = s.slice(0,max-1) + '…';
+  // Flag "u" obbligatorio: senza, la classe di caratteri tratta le emoji come
+  // singole unità UTF-16 e può staccarne solo metà (es. 🎮 e 🎙️ condividono lo
+  // stesso surrogate alto), corrompendo il testo con un carattere "�".
+  let s = c.split('\n')[0].replace(/\*\*/g,'').replace(/^[🔥🛡️🧤⚽️🎯🚨🚀📊⚡️🎮👽⚫🔵💎🏆🎟️⚔️📈⬇️✍️🔵🧙🟣]+/gu,'').trim();
+  s = truncateUnicode(s, max);
   return s || 'Post';
 }
 

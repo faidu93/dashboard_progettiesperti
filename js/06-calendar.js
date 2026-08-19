@@ -513,68 +513,6 @@ function calDayClick(e, ds) {
 
 
 
-async function repurposeYoutubeToInstagram(url) {
-  try {
-    let videoId = "";
-    try {
-      if (url.includes("v=")) videoId = url.split("v=")[1].split("&")[0];
-      else if (url.includes("youtu.be/")) videoId = url.split("youtu.be/")[1].split("?")[0];
-    } catch(e) {}
-    
-    if(!videoId) { alert("Impossibile estrarre l\"ID del video."); return; }
-
-    document.getElementById("calDetail").classList.remove("show");
-    const intTabBtn = document.querySelector('button[data-tab="intelligence"]');
-    if (intTabBtn) tabSwitch(intTabBtn);
-    setTimeout(() => {
-      // Switcha al sotto-tab Generatore Idee e scrolla al form IG
-      intelSwitchSubTab('studio');
-      const igSection = document.getElementById('igIntelConfig');
-      if(igSection) igSection.scrollIntoView({behavior: 'smooth', block: 'start'});
-    }, 150);
-    
-    loadingStart();
-    document.getElementById('loadingTitle').textContent = 'Riciclo Contenuti AI';
-    loadingStep('yt_sub', 'Estraggo i sottotitoli del video YouTube...', 'active');
-
-    const res = await fetch(BACKEND_BASE + "/api/youtube-transcript?videoId=" + videoId);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Errore fetch transcript");
-
-    loadingDone('yt_sub', 'Sottotitoli estratti.');
-
-    let userReq = prompt(
-      "Cosa vuoi creare da questo video?\nEs: \"3 Reel tecnici e 1 Carosello divertente\" oppure \"1 post testuale su X\"", 
-      "3 idee per Reel e 2 per Caroselli"
-    );
-    if (!userReq) {
-      loadingFinish(false);
-      return; 
-    }
-
-    loadingStep('yt_claude', 'Genero idee di contenuto con Claude...', 'active');
-
-    const claudePrompt = "Ecco l\"esatto transcript di un mio video YouTube appena scaricato:\n\n\"" + data.transcript + "\"\n\nAgisci come un Social Media Manager esperto.\nEstrai i concetti di maggior valore e trasformali in idee di contenuto per Instagram (per il mio account, usa il tono informale, appassionato e dritto al punto che mi contraddistingue).\n\nVoglio che crei esattamente:\n" + userReq + "\n\nDevono essere formattate esattamente usando il formato standard richiesto dal mio sistema, ossia:\nNUMERO) [FORMATO] - TITOLO FORTE\n[Spiegazione del contenuto, gancio iniziale, sviluppo ed eventuale call to action]";
-
-    const ideas = await callClaudeForIdeas(claudePrompt, "igIdeas", "ig");
-    
-    loadingDone('yt_claude', 'Idee generate e salvate!');
-    
-    document.getElementById('igIntelConfig').style.display = 'none';
-    document.getElementById('igIntelOutput').style.display = 'block';
-    const nowStr = new Date().toLocaleString('it-IT');
-    document.getElementById('igIntelOutTitle').textContent = 'Idee da YouTube · ' + nowStr;
-    
-    renderIdeas(ideas, "igIdeas", "ig", null, {});
-    setTimeout(() => loadingFinish(true), 800);
-
-  } catch(e) {
-    console.error(e);
-    loadingError('yt_err', e.message);
-    setTimeout(() => loadingFinish(false), 2500);
-  }
-}
-
 function calShowYtDetail(e, encoded) {
   e.stopPropagation();
   const d = JSON.parse(decodeURIComponent(encoded));
@@ -590,16 +528,12 @@ function calShowYtDetail(e, encoded) {
   document.getElementById('cdCaption').textContent = '';
   // Link a YouTube
   const linkEl = document.getElementById("cdLink");
-  const repBtn = document.getElementById("cdRepurposeBtn");
   if (d.url) {
     linkEl.href = d.url;
     linkEl.innerHTML = '<svg class="brand-ico yt" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C.5 8.056.5 12 .5 12s0 3.944.501 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.377.55 9.377.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C23.5 15.944 23.5 12 23.5 12s0-3.944-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> Apri su YouTube';
     linkEl.style.display = "inline-flex";
-    repBtn.style.display = "inline-flex";
-    repBtn.onclick = () => repurposeYoutubeToInstagram(d.url);
   } else {
     linkEl.style.display = "none";
-    repBtn.style.display = "none";
   }
   document.getElementById("calDetail").classList.add("show");
 }
@@ -623,8 +557,6 @@ function calShowDetail(e, encoded) {
   document.getElementById('cdCaption').textContent = d.caption || '—';
   // Reset link: torna a "Apri su Instagram" e ricostruisce contenuto originale
   const linkEl = document.getElementById("cdLink");
-  const repBtn = document.getElementById("cdRepurposeBtn");
-  if(repBtn) repBtn.style.display = "none";
   if (d.url) {
     linkEl.href = d.url;
     linkEl.style.display = 'inline-flex';
