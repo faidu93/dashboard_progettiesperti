@@ -894,33 +894,36 @@ function calSetupEvents() {
         const scheduledPostId = scheduledPost?.id || null;
         willAutoPublish = true;
 
+        // STEP 2: Se PUBBLICAZIONE IMMEDIATA, forza subito l'esecuzione del cron SOLO per questo post.
+        // I Reel usano il polling passo-passo (pollReelPublish): non blocchiamo mai una
+        // singola richiesta in attesa che Meta finisca di processare il video.
         if (isImmediate) {
-          if (typeof renderProgressBar === 'function') renderProgressBar('calUploadStatus', 45, 'Invio a Instagram Graph API…');
-          await new Promise(r => setTimeout(r, 800));
-          if (typeof renderProgressBar === 'function') renderProgressBar('calUploadStatus', 75, 'Elaborazione Reel sui server Meta…');
-        }
-
-        // STEP 2: Se PUBBLICAZIONE IMMEDIATA, forza subito l'esecuzione del cron SOLO per questo post
-        if (isImmediate) {
-          const secret = getPublishSecret();
-          if (secret && typeof BACKEND_BASE !== 'undefined') {
-            const qp = scheduledPostId ? `&postId=${encodeURIComponent(scheduledPostId)}` : '';
-            const pubRes = await fetch(`${BACKEND_BASE}/api/cron-publish?immediate=1${qp}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret }
+          if (type === 'REELS') {
+            if (typeof renderProgressBar === 'function') renderProgressBar('calUploadStatus', 45, 'Invio a Instagram Graph API…');
+            if (!scheduledPostId) throw new Error('Post non salvato correttamente in coda.');
+            await pollReelPublish(scheduledPostId, {
+              onProgress: (msg) => { if (typeof renderProgressBar === 'function') renderProgressBar('calUploadStatus', 75, msg); }
             });
-            const pubData = await pubRes.json().catch(() => ({}));
-            if (!pubRes.ok || pubData.error) {
-              throw new Error(pubData.error || pubData.details || `Pubblicazione immediata fallita (HTTP ${pubRes.status})`);
-            }
-            // Se nessun post pubblicato e ci sono errori, mostra errore specifico
-            if (pubData.published === 0 && pubData.failed > 0) {
-              const errMsg = pubData.results?.find(r => !r.ok)?.error || 'Errore durante la pubblicazione su Instagram.';
-              throw new Error(`Instagram ha rifiutato il post: ${errMsg}`);
-            }
-            // Se published === 0 senza errori (raro), avvisiamo senza crashare
-            if (pubData.published === 0) {
-              console.warn('Pubblicazione immediata: nessun post pubblicato. Verifica la coda.');
+          } else {
+            if (typeof renderProgressBar === 'function') renderProgressBar('calUploadStatus', 75, 'Invio a Instagram Graph API…');
+            const secret = getPublishSecret();
+            if (secret && typeof BACKEND_BASE !== 'undefined') {
+              const qp = scheduledPostId ? `&postId=${encodeURIComponent(scheduledPostId)}` : '';
+              const pubRes = await fetch(`${BACKEND_BASE}/api/cron-publish?immediate=1${qp}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret }
+              });
+              const pubData = await pubRes.json().catch(() => ({}));
+              if (!pubRes.ok || pubData.error) {
+                throw new Error(pubData.error || pubData.details || `Pubblicazione immediata fallita (HTTP ${pubRes.status})`);
+              }
+              if (pubData.published === 0 && pubData.failed > 0) {
+                const errMsg = pubData.results?.find(r => !r.ok)?.error || 'Errore durante la pubblicazione su Instagram.';
+                throw new Error(`Instagram ha rifiutato il post: ${errMsg}`);
+              }
+              if (pubData.published === 0) {
+                console.warn('Pubblicazione immediata: nessun post pubblicato. Verifica la coda.');
+              }
             }
           }
           if (typeof renderProgressBar === 'function') {

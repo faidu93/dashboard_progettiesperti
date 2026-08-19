@@ -209,6 +209,44 @@ async function uploadMediaToSupabase(file, onProgress) {
 }
 
 
+// Pubblica un Reel facendo polling: ogni chiamata al backend fa avanzare la
+// pubblicazione di UN passo (creazione container, poi controllo stato) — mai
+// un'unica attesa bloccante che rischia di superare i timeout di rete/Vercel.
+// Se una singola chiamata fallisce per un errore di rete, il post resta comunque
+// salvato in coda lato server: si continua a ripollare invece di far fallire subito.
+async function pollReelPublish(postId, { onProgress, maxWaitMs = 180000, intervalMs = 4000 } = {}) {
+  const secret = getPublishSecret();
+  if (!secret) throw new Error('Password di pubblicazione mancante.');
+  const startedAt = Date.now();
+  let attempt = 0;
+
+  while (Date.now() - startedAt < maxWaitMs) {
+    attempt++;
+    let data;
+    try {
+      const res = await fetch(`${BACKEND_BASE}/api/cron-publish?immediate=1&postId=${encodeURIComponent(postId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret }
+      });
+      data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    } catch (e) {
+      if (onProgress) onProgress(`Connessione instabile, riprovo… (tentativo ${attempt})`);
+      await new Promise(r => setTimeout(r, intervalMs));
+      continue;
+    }
+
+    if (data.error) throw new Error(data.error);
+    if (data.done) return data.results?.[0]?.postId || null;
+    if (data.message && /pubblicato/i.test(data.message)) return null; // pubblicato nel frattempo da un altro giro
+
+    if (onProgress) onProgress(`Elaborazione Reel sui server Meta… (tentativo ${attempt})`);
+    await new Promise(r => setTimeout(r, intervalMs));
+  }
+
+  throw new Error('Instagram sta impiegando più del solito a elaborare il video. Il post resta in coda e verrà pubblicato automaticamente appena pronto — controlla tra qualche minuto.');
+}
+
 // Aggiunge un post alla coda di pubblicazione reale (/api/schedule)
 async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso }) {
   const secret = getPublishSecret();
