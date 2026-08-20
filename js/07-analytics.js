@@ -875,8 +875,9 @@ function ytCompNewSearch() {
 
 async function fetchYtApi(buildUrlFn) {
   const userKey = (document.getElementById('ytApiKey')?.value || '').trim() || localStorage.getItem('intel_yt_apikey') || '';
-  const pool = userKey ? [userKey, ...YT_KEY_POOL] : YT_KEY_POOL;
-  
+  const pool = userKey ? [userKey] : [];
+  if (pool.length === 0) throw new Error('Nessuna chiave YouTube API disponibile. Inseriscine una.');
+
   let attempts = 0;
   let lastError = null;
   while (attempts < pool.length) {
