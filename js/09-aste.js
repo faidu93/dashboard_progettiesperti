@@ -145,13 +145,14 @@ function renderAsteSummary(rows) {
   const totMontepremi = rows.reduce((s, r) => s + (r.montepremi || 0), 0);
   const totProgetto = rows.reduce((s, r) => s + (r.progetto || 0), 0);
   const totMancanti = rows.reduce((s, r) => s + (r.mancanti || 0), 0);
+  const totEsperti = rows.reduce((s, r) => s + (r.esperti || 0), 0);
   const ytLiveSet = getAsteYtLiveSet();
 
   const trs = rows.map(r => {
     if (r.error) {
       return `<tr style="border-bottom:1px solid var(--line); opacity:0.6;">
         <td style="padding:8px 10px; color:var(--ink);">${r.name}</td>
-        <td colspan="7" style="padding:8px 10px; color:var(--neg); font-family:var(--font-mono); font-size:11px;">Errore: ${r.error}</td>
+        <td colspan="8" style="padding:8px 10px; color:var(--neg); font-family:var(--font-mono); font-size:11px;">Errore: ${r.error}</td>
       </tr>`;
     }
     const completa = r.mancanti === 0;
@@ -161,6 +162,7 @@ function renderAsteSummary(rows) {
       <td style="padding:8px 10px; color:var(--ink); font-weight:600;">${weekday ? `<span style="color:var(--ink-mute); font-weight:400;">${weekday}</span> ` : ''}${r.name}</td>
       <td style="padding:8px 10px; color:var(--ink-soft); font-family:var(--font-mono); font-size:11px;">${r.modalita || '—'}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono);">${r.count}${r.maxPosti !== null ? ` / ${r.maxPosti}` : ''}</td>
+      <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); color:var(--ink-soft);" title="Utenti che pagano solo la quota montepremi, senza sovrapprezzo">${r.esperti !== undefined ? r.esperti : '—'}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); font-weight:600; color:${completa ? 'var(--pos)' : 'var(--accent)'};">${r.mancanti !== null ? r.mancanti : '—'}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); color:var(--ink-soft);">€${r.montepremi}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); font-weight:600; color:var(--pos);">€${r.progetto}</td>
@@ -177,6 +179,7 @@ function renderAsteSummary(rows) {
           <th style="padding:8px 10px; font-weight:600;">Data</th>
           <th style="padding:8px 10px; font-weight:600;">Tipo</th>
           <th style="padding:8px 10px; font-weight:600; text-align:right;">Partecipanti</th>
+          <th style="padding:8px 10px; font-weight:600; text-align:right;" title="Utenti che pagano solo la quota montepremi, senza sovrapprezzo">Esperti</th>
           <th style="padding:8px 10px; font-weight:600; text-align:right;">Mancanti</th>
           <th style="padding:8px 10px; font-weight:600; text-align:right;" title="Va ridistribuito al vincitore dell'asta">Montepremi</th>
           <th style="padding:8px 10px; font-weight:600; text-align:right;" title="I 5€ extra dei soci normali — questo è il vero guadagno">Ricavo progetto</th>
@@ -187,6 +190,7 @@ function renderAsteSummary(rows) {
       <tfoot>
         <tr style="border-top:2px solid var(--line-strong); font-weight:700;">
           <td colspan="3" style="padding:10px; color:var(--ink);">Totale</td>
+          <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--ink-soft);">${totEsperti}</td>
           <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--accent);">${totMancanti}</td>
           <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--ink-soft);">€${totMontepremi}</td>
           <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--pos);">€${totProgetto}</td>
