@@ -411,7 +411,11 @@ async function onSubscribersRefresh() {
   
   let savedSecret = '';
   try { savedSecret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
-  
+
+  // Aggiorna anche il riepilogo Aste in parallelo (silenzioso, non blocca gli iscritti
+  // se fallisce — vedi refreshAsteQuietly in 09-aste.js).
+  if (typeof refreshAsteQuietly === 'function') refreshAsteQuietly();
+
   try {
     const subRes = await fetch(`${BACKEND_BASE}/api/subscribers`, {
       headers: { 'X-Publish-Secret': savedSecret }

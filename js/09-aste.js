@@ -5,6 +5,22 @@
 
 let asteCache = { tabs: [], selectedGid: null, summary: null };
 
+// Richiamato dal pulsante "Iscritti" in alto (onSubscribersRefresh): rilegge il
+// riepilogo e, se sei già sulla tab Aste con un'asta aperta, anche il suo dettaglio.
+// Silenzioso: se la password non è ancora salvata o la tab Aste non è mai stata
+// aperta non fa nulla — niente prompt a sorpresa, niente da aggiornare comunque.
+async function refreshAsteQuietly() {
+  let secret = '';
+  try { secret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch (e) {}
+  if (!secret || asteCache.tabs.length === 0) return;
+  try {
+    await loadAsteSummary();
+    if (asteCache.selectedGid) await loadAsteData(asteCache.selectedGid);
+  } catch (e) {
+    console.warn('Aggiornamento aste fallito:', e.message);
+  }
+}
+
 async function loadAsteTabs() {
   const sel = document.getElementById('asteSelect');
   const content = document.getElementById('asteContent');
