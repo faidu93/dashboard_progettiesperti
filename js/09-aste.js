@@ -123,15 +123,16 @@ function renderAsteSummary(rows) {
     return;
   }
 
-  const totIncassato = rows.reduce((s, r) => s + (r.totale || 0), 0);
-  const totMancante = rows.reduce((s, r) => s + (r.stimaMancante || 0), 0);
+  const totMontepremi = rows.reduce((s, r) => s + (r.montepremi || 0), 0);
+  const totProgetto = rows.reduce((s, r) => s + (r.progetto || 0), 0);
+  const totProgettoMancante = rows.reduce((s, r) => s + (r.stimaProgettoMancante || 0), 0);
   const ytLiveSet = getAsteYtLiveSet();
 
   const trs = rows.map(r => {
     if (r.error) {
       return `<tr style="border-bottom:1px solid var(--line); opacity:0.6;">
         <td style="padding:8px 10px; color:var(--ink);">${r.name}</td>
-        <td colspan="6" style="padding:8px 10px; color:var(--neg); font-family:var(--font-mono); font-size:11px;">Errore: ${r.error}</td>
+        <td colspan="7" style="padding:8px 10px; color:var(--neg); font-family:var(--font-mono); font-size:11px;">Errore: ${r.error}</td>
       </tr>`;
     }
     const completa = r.mancanti === 0;
@@ -141,8 +142,9 @@ function renderAsteSummary(rows) {
       <td style="padding:8px 10px; color:var(--ink-soft); font-family:var(--font-mono); font-size:11px;">${r.modalita || '—'}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono);">${r.count}${r.maxPosti !== null ? ` / ${r.maxPosti}` : ''}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); font-weight:600; color:${completa ? 'var(--pos)' : 'var(--accent)'};">${r.mancanti !== null ? r.mancanti : '—'}</td>
-      <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); font-weight:600; color:var(--pos);">€${r.totale}</td>
-      <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); color:var(--ink-mute);">${r.stimaMancante ? '€' + r.stimaMancante : '—'}</td>
+      <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); color:var(--ink-soft);">€${r.montepremi}</td>
+      <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); font-weight:600; color:var(--pos);">€${r.progetto}</td>
+      <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); color:var(--ink-mute);">${r.stimaProgettoMancante ? '€' + r.stimaProgettoMancante : '—'}</td>
       <td style="padding:8px 10px; text-align:center;" onclick="event.stopPropagation()">
         <input type="checkbox" ${isLive ? 'checked' : ''} onchange="toggleAsteYtLive('${r.gid}', this.checked)" style="width:16px; height:16px; cursor:pointer; accent-color: var(--accent);">
       </td>
@@ -157,8 +159,9 @@ function renderAsteSummary(rows) {
           <th style="padding:8px 10px; font-weight:600;">Tipo</th>
           <th style="padding:8px 10px; font-weight:600; text-align:right;">Partecipanti</th>
           <th style="padding:8px 10px; font-weight:600; text-align:right;">Mancanti</th>
-          <th style="padding:8px 10px; font-weight:600; text-align:right;">Incassato</th>
-          <th style="padding:8px 10px; font-weight:600; text-align:right;">Da incassare (stima)</th>
+          <th style="padding:8px 10px; font-weight:600; text-align:right;" title="Va ridistribuito al vincitore dell'asta">Montepremi</th>
+          <th style="padding:8px 10px; font-weight:600; text-align:right;" title="I 5€ extra dei soci normali — questo è il vero guadagno">Ricavo progetto</th>
+          <th style="padding:8px 10px; font-weight:600; text-align:right;">Progetto mancante (stima)</th>
           <th style="padding:8px 10px; font-weight:600; text-align:center;" title="Va in diretta sul canale YouTube — spunta manuale">📺 Live YT</th>
         </tr>
       </thead>
@@ -166,13 +169,14 @@ function renderAsteSummary(rows) {
       <tfoot>
         <tr style="border-top:2px solid var(--line-strong); font-weight:700;">
           <td colspan="4" style="padding:10px; color:var(--ink);">Totale</td>
-          <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--pos);">€${totIncassato}</td>
-          <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--ink-mute);">€${totMancante}</td>
+          <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--ink-soft);">€${totMontepremi}</td>
+          <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--pos);">€${totProgetto}</td>
+          <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--ink-mute);">€${totProgettoMancante}</td>
           <td></td>
         </tr>
       </tfoot>
     </table>
-    <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:8px;">"Da incassare" è una stima basata sulla quota media già versata in ciascuna asta — non sappiamo se i posti liberi saranno "esperti" (20€) o soci normali (25€).</div>
+    <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:8px;">Ogni quota si divide in <strong>montepremi</strong> (fino a 20€, va al vincitore dell'asta) e <strong>ricavo progetto</strong> (l'eccedenza — 5€ per i soci normali, 0€ per gli esperti). Le stime sui posti mancanti usano la quota media già versata in ciascuna asta.</div>
   `;
 }
 
@@ -214,6 +218,8 @@ function renderAsteContent(data) {
 
   const partecipanti = Array.isArray(data.partecipanti) ? data.partecipanti : [];
   const totale = data.totale || 0;
+  const montepremi = data.montepremi || 0;
+  const progetto = data.progetto || 0;
   const count = data.count || 0;
   const perImporto = data.perImporto || {};
   const maxPosti = typeof data.maxPosti === 'number' ? data.maxPosti : null;
@@ -257,6 +263,21 @@ function renderAsteContent(data) {
         <div class="kpi-label">🪑 Posti mancanti</div>
         <div class="kpi-value" style="color:${mancanti > 0 ? 'var(--accent)' : 'var(--pos)'};">${mancanti !== null ? mancanti : '—'}</div>
         <div class="kpi-target">${maxPosti !== null ? `Asta da ${maxPosti} posti` : 'Capienza non trovata'}</div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-title"><span class="material-symbols-rounded" style="color:var(--accent);">payments</span> Ripartizione incasso</div>
+      <div class="panel-sub">Montepremi (va al vincitore) vs ricavo effettivo del progetto</div>
+      <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:8px;">
+        <div style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:12px 16px;">
+          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🏆 Montepremi</div>
+          <div style="font-family:var(--font-display); font-size:22px; font-weight:800; color:var(--ink-soft);">€${montepremi}</div>
+        </div>
+        <div style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--pos); border-radius:8px; padding:12px 16px;">
+          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">💵 Ricavo progetto</div>
+          <div style="font-family:var(--font-display); font-size:22px; font-weight:800; color:var(--pos);">€${progetto}</div>
+        </div>
       </div>
     </div>
 
