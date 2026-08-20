@@ -247,8 +247,10 @@ async function pollReelPublish(postId, { onProgress, maxWaitMs = 180000, interva
   throw new Error('Instagram sta impiegando più del solito a elaborare il video. Il post resta in coda e verrà pubblicato automaticamente appena pronto — controlla tra qualche minuto.');
 }
 
-// Aggiunge un post alla coda di pubblicazione reale (/api/schedule)
-async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso }) {
+// Aggiunge (o aggiorna, se existingQueueId è passato) un post nella coda reale (/api/schedule).
+// L'update è usato quando si modifica un post già programmato dal calendario: senza,
+// ogni modifica creerebbe un secondo post duplicato invece di correggere quello esistente.
+async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso, existingQueueId }) {
   const secret = getPublishSecret();
   if (!secret) throw new Error('Password di pubblicazione mancante.');
 
@@ -266,7 +268,8 @@ async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso })
     mediaType = 'CAROUSEL_ALBUM';
   }
 
-  const res = await fetch(`${BACKEND_BASE}/api/schedule?action=add`, {
+  const action = existingQueueId ? `update&id=${encodeURIComponent(existingQueueId)}` : 'add';
+  const res = await fetch(`${BACKEND_BASE}/api/schedule?action=${action}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Publish-Secret': secret },
     body: JSON.stringify({
@@ -281,7 +284,9 @@ async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso })
     if (res.status === 401) clearPublishSecret();
     throw new Error(j.error || `Coda fallita (HTTP ${res.status})`);
   }
-  return j.post;
+  // action=update non restituisce un oggetto "post" come action=add: lo ricostruisco
+  // io così il chiamante ha sempre un id coerente, sia per un post nuovo che modificato.
+  return existingQueueId ? { id: existingQueueId } : j.post;
 }
 
 // ===== CODA DI PUBBLICAZIONE (#1) =====
@@ -341,7 +346,6 @@ function renderPublishQueue(queue) {
     const kindMap = { REELS: '<svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Reel', CAROUSEL_ALBUM: '<svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Carosello', IMAGE: '<svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Foto', STORY: '<svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Story' };
     const kind = kindMap[p.mediaType] || '<svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Foto';
     const canDelete = p.status === 'pending' || p.status === 'error';
-    const escapedCaption = (p.caption || '').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
     h += `<div class="queue-row">
       <span class="material-symbols-rounded" style="color:${m.color};font-size:20px;">${m.icon}</span>
       <div class="queue-main">
@@ -352,7 +356,6 @@ function renderPublishQueue(queue) {
       <button class="queue-del" style="color:var(--pos); margin-right:8px;" title="Riprova Pubblicazione" onclick="retryPublishQueue('${p.id}')"><span class="material-symbols-rounded">replay</span></button>
       ` : ''}
       ${canDelete ? `
-      <button class="queue-del" style="color:var(--accent); margin-right:8px;" title="Modifica" onclick="openEditQueueModal('${p.id}', '${escapedCaption}', '${p.scheduledAt}')"><span class="material-symbols-rounded">edit</span></button>
       <button class="queue-del" title="Rimuovi dalla coda" onclick="deleteFromQueue('${p.id}')"><span class="material-symbols-rounded">delete</span></button>
       ` : ''}
     </div>`;
@@ -624,6 +627,55 @@ function updateCalPreviewMedia(url, isVideo, resetIndex = true) {
     if (dotsBox) dotsBox.innerHTML = '';
     currentPreviewSlideIndex = 0;
   }
+}
+
+// Popola l'area upload con il media già caricato di un post in coda, quando si apre
+// "Modifica" su un post già programmato (altrimenti la modale lo mostrerebbe vuoto,
+// dato che il calendario Google non conosce l'URL del media — solo la coda Supabase).
+function calPopulateExistingMedia(mediaType, mediaUrl) {
+  if (!mediaUrl) return;
+  const isVideoUrl = url => /\.(mp4|mov|m4v|webm|mkv)(\?|$)/i.test(url) || url.toLowerCase().includes('video');
+  const urls = mediaUrl.split(',').map(u => u.trim()).filter(Boolean);
+
+  let mainUrls = urls;
+  if (mediaType === 'REELS' && urls.length > 1) {
+    // Per i Reel il secondo URL (se presente) è la copertina, non uno slide del carosello
+    mainUrls = [urls[0]];
+    const coverUrl = urls[1];
+    document.getElementById('calCoverUrl').value = coverUrl;
+    const coverPrev = document.getElementById('calCoverUploadPreview');
+    if (coverPrev) {
+      coverPrev.innerHTML = `<div class="cal-preview-item"><img src="${coverUrl}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--line);"></div>`;
+      coverPrev.classList.add('show');
+    }
+    const coverRm = document.getElementById('calCoverUploadRemove');
+    if (coverRm) coverRm.style.display = 'inline-block';
+  }
+
+  const kind = mediaType === 'REELS' ? 'video' : (mediaType === 'CAROUSEL_ALBUM' ? 'carousel' : 'image');
+  document.getElementById('calMediaUrl').value = mainUrls.join(',');
+  document.getElementById('calMediaKind').value = kind;
+
+  const prev = document.getElementById('calUploadPreview');
+  prev.innerHTML = '';
+  prev.classList.add('show');
+  mainUrls.forEach(url => {
+    const isVideo = isVideoUrl(url);
+    const item = document.createElement('div');
+    item.className = 'cal-preview-item';
+    item.innerHTML = isVideo
+      ? `<video src="${url}#t=0.5" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--line);" preload="metadata" muted playsinline></video>`
+      : `<img src="${url}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--line);">`;
+    prev.appendChild(item);
+    enablePreviewItemDrag(item, url, isVideo ? 'video' : 'image');
+  });
+
+  const removeBtn = document.getElementById('calUploadRemove');
+  if (removeBtn) removeBtn.style.display = 'inline-block';
+
+  updateCalPreviewMedia(mainUrls[0], isVideoUrl(mainUrls[0]));
+  setCalPreviewAspect(mediaType === 'REELS' || isVideoUrl(mainUrls[0]) ? '9/16' : '4/5');
+  renderProgressBar('calUploadStatus', 100, 'Media già caricato · sostituiscilo trascinandone uno nuovo se vuoi cambiarlo', 'var(--pos)');
 }
 
 // Gestione UI dell'area upload nel modal

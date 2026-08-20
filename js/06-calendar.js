@@ -83,52 +83,6 @@ function serializeStructuredNotes(strategy, visual, script, caption) {
   return parts.join('\n\n');
 }
 
-function parseAiTextToEditorFields(text) {
-  const result = {
-    strategy: '',
-    visual: '',
-    script: '',
-    caption: ''
-  };
-  
-  if (!text) return result;
-  
-  // Dividiamo in blocchi usando lookahead per intercettare i tag
-  const sections = text.split(/(?=\n(?:STRATEGIA|Strategia|OBIETTIVO|Obiettivo|VISUAL|Visual|CONTESTO VISIVO|Contesto visivo|COPIONE|Copione|SCRIPT|Script|DIDASCALIA|Didascalia|CAPTION|Caption|Slide \d|SLIDE \d)[:\n\-#])/i);
-  
-  let unclassified = [];
-  
-  sections.forEach(sec => {
-    const trimmed = sec.trim();
-    if (!trimmed) return;
-    
-    if (trimmed.match(/^(?:STRATEGIA|Strategia|OBIETTIVO|Obiettivo)[:\n\-#\s]/i)) {
-      result.strategy = trimmed.replace(/^(?:STRATEGIA|Strategia|OBIETTIVO|Obiettivo)[:\n\-#\s]+/i, '').trim();
-    } else if (trimmed.match(/^(?:VISUAL|Visual|CONTESTO VISIVO|Contesto visivo|GRAFICA|Grafica)[:\n\-#\s]/i)) {
-      result.visual = trimmed.replace(/^(?:VISUAL|Visual|CONTESTO VISIVO|Contesto visivo|GRAFICA|Grafica)[:\n\-#\s]+/i, '').trim();
-    } else if (trimmed.match(/^(?:COPIONE|Copione|SCRIPT|Script|STRUTTURA|Struttura)[:\n\-#\s]/i)) {
-      result.script = trimmed.replace(/^(?:COPIONE|Copione|SCRIPT|Script|STRUTTURA|Struttura)[:\n\-#\s]+/i, '').trim();
-    } else if (trimmed.match(/^(?:DIDASCALIA|Didascalia|CAPTION|Caption)[:\n\-#\s]/i)) {
-      result.caption = trimmed.replace(/^(?:DIDASCALIA|Didascalia|CAPTION|Caption)[:\n\-#\s]+/i, '').trim();
-    } else {
-      unclassified.push(trimmed);
-    }
-  });
-  
-  if (!result.caption && !result.script) {
-    result.caption = text.trim();
-  } else if (unclassified.length > 0) {
-    if (result.caption) {
-      result.caption += '\n\n' + unclassified.join('\n\n');
-    } else {
-      result.script += '\n\n' + unclassified.join('\n\n');
-    }
-  }
-  
-  return result;
-}
-
-
 function calSetFilter(btn) {
   document.querySelectorAll('.cal-filter').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -567,23 +521,41 @@ function calShowDetail(e, encoded) {
   document.getElementById('calDetail').classList.add('show');
 }
 
-function calEditPlanned(e, id, platform) {
+async function calEditPlanned(e, id, platform) {
   e.stopPropagation();
   platform = platform || 'ig';
-  
+
   let itemList = [];
   if (typeof gcalSignedIn !== 'undefined' && gcalSignedIn) {
     itemList = platform === 'yt' ? gcalGetYtPlanned() : gcalGetIgPlanned();
   } else {
     itemList = platform === 'yt' ? ytCalLoad() : calLoad();
   }
-  
+
   const item = itemList.find(i => i.id === id);
   if (!item) {
     console.warn('calEditPlanned: evento non trovato', { id, platform });
     return;
   }
+
+  // Se l'evento è collegato a un post reale nella coda di pubblicazione (Supabase),
+  // recupero da lì media e didascalia veri — l'evento Google Calendar da solo non li conosce.
+  let queuePost = null;
+  if (platform === 'ig' && item.queuePostId) {
+    try {
+      const secret = getPublishSecret();
+      if (secret) {
+        const res = await fetch(`${BACKEND_BASE}/api/schedule?action=list`, { headers: { 'X-Publish-Secret': secret } });
+        const j = await res.json().catch(() => ({}));
+        if (res.ok && Array.isArray(j.posts)) {
+          queuePost = j.posts.find(p => p.id === item.queuePostId) || null;
+        }
+      }
+    } catch(err) { console.warn('calEditPlanned: impossibile recuperare il post dalla coda', err); }
+  }
+
   document.getElementById('calEditId').value = id;
+  document.getElementById('calQueuePostId').value = queuePost ? queuePost.id : '';
   document.getElementById('calPlatform').value = platform;
   calOnPlatformChange(); // aggiorna pulsanti formato in base alla piattaforma
   document.getElementById('calDate').value = item.date;
@@ -591,29 +563,35 @@ function calEditPlanned(e, id, platform) {
   calSetType(item.type); // aggiorna pulsante tipo attivo
 
   document.getElementById('calTitle').value = item.title;
-  
-  // Estrai il tag [COLLAB:...] dalle note e ripristina il campo collaboratori
-  let editNotes = item.notes || '';
+
+  // Preferisco la didascalia vera della coda (se collegata); altrimenti quella salvata
+  // nelle note dell'evento Google Calendar (post più vecchi, o senza pubblicazione automatica).
+  let editNotes = queuePost ? (queuePost.caption || '') : (item.notes || '');
   let editCollaborators = '';
   const collabMatch = editNotes.match(/\[COLLAB:([^\]]+)\]/);
   if (collabMatch) {
     editCollaborators = collabMatch[1];
     editNotes = editNotes.replace(/\s*\[COLLAB:[^\]]+\]/, '').trim();
   }
-  
+
   // Destrutturiamo le note per il Bynor Editor
   const parsed = parseStructuredNotes(editNotes);
   document.getElementById('calStrategy').value = parsed.strategy;
   document.getElementById('calVisual').value = parsed.visual;
   document.getElementById('calScript').value = parsed.script;
   document.getElementById('calNotes').value = parsed.caption;
-  
+
   document.getElementById('calCollaborators').value = editCollaborators;
   document.getElementById('calHost').value = item.host || '';
   document.getElementById('calModal').dataset.platform = platform;
   document.getElementById('calDeleteBtn').style.display = 'inline-flex';
   document.getElementById('calModalTitle').textContent = 'Modifica post';
+
   calResetUpload();
+  if (queuePost && queuePost.mediaUrl) {
+    calPopulateExistingMedia(queuePost.mediaType, queuePost.mediaUrl);
+  }
+
   calToggleMediaField();
   calToggleHostField();
   calUpdateUploadInputMultiple();
@@ -622,6 +600,7 @@ function calEditPlanned(e, id, platform) {
 
 function calOpenModal(ds, id) {
   document.getElementById('calEditId').value = id || '';
+  document.getElementById('calQueuePostId').value = '';
   document.getElementById('calDate').value = ds || calDateStr(new Date());
   document.getElementById('calTime').value = '10:00';
   document.getElementById('calPlatform').value = 'ig';
@@ -738,6 +717,7 @@ function calSetupEvents() {
   async function executeSaveAndPublish({ isImmediate = false } = {}) {
     const platform = document.getElementById('calPlatform')?.value || 'ig';
     const id = document.getElementById('calEditId')?.value || '';
+    const existingQueueId = document.getElementById('calQueuePostId')?.value || '';
     const date = document.getElementById('calDate')?.value || '';
     const time = document.getElementById('calTime')?.value || '10:00';
     const type = document.getElementById('calType')?.value || 'IMAGE';
@@ -802,6 +782,7 @@ function calSetupEvents() {
     }
 
     let willAutoPublish = false;
+    let scheduledPostId = null;
 
     try {
       if (platform === 'ig' && mediaUrl) {
@@ -821,9 +802,11 @@ function calSetupEvents() {
           renderProgressBar('calUploadStatus', 20, 'Salvataggio in coda…');
         }
 
-        // STEP 1: Salva nella coda di pubblicazione del backend (/api/schedule)
-        const scheduledPost = await schedulePublish({ mediaUrl, mediaKind, caption: finalNotes, scheduledAtIso });
-        const scheduledPostId = scheduledPost?.id || null;
+        // STEP 1: Salva nella coda di pubblicazione del backend (/api/schedule).
+        // Se stiamo modificando un post già collegato alla coda, aggiorno quella riga
+        // invece di crearne una seconda (altrimenti ogni modifica duplicherebbe il post).
+        const scheduledPost = await schedulePublish({ mediaUrl, mediaKind, caption: finalNotes, scheduledAtIso, existingQueueId: existingQueueId || null });
+        scheduledPostId = scheduledPost?.id || existingQueueId || null;
         willAutoPublish = true;
 
         // STEP 2: Se PUBBLICAZIONE IMMEDIATA, forza subito l'esecuzione del cron SOLO per questo post.
@@ -870,9 +853,14 @@ function calSetupEvents() {
         ? (finalNotes + '\n\n[Pubblicazione automatica programmata · media caricato]')
         : finalNotes;
 
+      // Collego l'evento Google Calendar al post reale della coda (se esiste), così
+      // riaprendolo con "Modifica" la modale può recuperare media e didascalia veri
+      // invece di mostrarli vuoti.
+      const linkedQueueId = platform === 'ig' ? (scheduledPostId || existingQueueId || '') : '';
+
       if (gcalSignedIn) {
-        if (id) { await gcalUpdateEvent(id, platform, finalDate, finalTime, type, titleForCal, notesForCal, host); }
-        else { await gcalCreateEvent(platform, finalDate, finalTime, type, titleForCal, notesForCal, host); }
+        if (id) { await gcalUpdateEvent(id, platform, finalDate, finalTime, type, titleForCal, notesForCal, host, linkedQueueId); }
+        else { await gcalCreateEvent(platform, finalDate, finalTime, type, titleForCal, notesForCal, host, linkedQueueId); }
       } else {
         const loadFn = platform === 'yt' ? ytCalLoad : calLoad;
         const saveFn = platform === 'yt' ? ytCalSave : calSave;
@@ -925,12 +913,29 @@ function calSetupEvents() {
   document.getElementById('calDeleteBtn').onclick = async () => {
     const platform = document.getElementById('calPlatform').value || 'ig';
     const id = document.getElementById('calEditId').value;
+    const queuePostId = document.getElementById('calQueuePostId').value;
     if (!id) { alert('ID evento mancante.'); return; }
     if (!confirm('Eliminare questo post pianificato?')) return;
 
     const btn = document.getElementById('calDeleteBtn');
     btn.disabled = true;
     btn.textContent = 'Eliminazione...';
+
+    // Se il post è collegato alla coda di pubblicazione automatica, elimino anche
+    // quella riga: altrimenti resterebbe lì e verrebbe pubblicata comunque.
+    if (queuePostId) {
+      try {
+        const secret = getPublishSecret();
+        if (secret) {
+          await fetch(`${BACKEND_BASE}/api/schedule?action=delete&id=${encodeURIComponent(queuePostId)}`, {
+            method: 'POST',
+            headers: { 'X-Publish-Secret': secret }
+          });
+        }
+      } catch(err) {
+        console.error('Eliminazione dalla coda fallita:', err);
+      }
+    }
 
     try {
       if (gcalSignedIn) {
@@ -953,6 +958,7 @@ function calSetupEvents() {
         saveFn(loadFn().filter(i => i.id !== id));
         calRender();
       }
+      if (queuePostId && typeof loadPublishQueue === 'function') loadPublishQueue();
       document.getElementById('calModal').classList.remove('show');
     } catch(e) {
       console.error('Delete error:', e);

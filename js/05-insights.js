@@ -6,27 +6,6 @@
 // ============================================================================
 // SLOT PUBBLICAZIONE: identifica top performer e slot da testare
 // ============================================================================
-const DAYS_IT = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
-const BUCKETS = [
-  { id: 'morning', label: '06–10', from: 6, to: 9 },
-  { id: 'midday', label: '10–14', from: 10, to: 13 },
-  { id: 'afternoon', label: '14–18', from: 14, to: 17 },
-  { id: 'evening', label: '18–22', from: 18, to: 21 },
-  { id: 'night', label: '22–06', from: 22, to: 5 }
-];
-function bucketIdx(h) {
-  if (h>=6 && h<10) return 0;
-  if (h>=10 && h<14) return 1;
-  if (h>=14 && h<18) return 2;
-  if (h>=18 && h<22) return 3;
-  return 4;
-}
-// dayIdx ISO: 0=Lun ... 6=Dom
-function dayIdxIso(d) {
-  const w = d.getDay(); // 0=Dom, 1=Lun ... 6=Sab
-  return (w + 6) % 7;
-}
-
 function renderSlots(posts) {
   // === HEATMAP 7 giorni x 5 fasce orarie ===
   const grid = document.getElementById('heatmap');

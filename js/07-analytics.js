@@ -465,7 +465,7 @@ function gcalEnsureToken() {
   return true;
 }
 
-async function gcalCreateEvent(platform, date, time, type, title, notes, host) {
+async function gcalCreateEvent(platform, date, time, type, title, notes, host, queuePostId) {
   console.log('[gcalCreateEvent] start', { platform, date, time, type, title, host });
 
   // Diagnostica preliminare
@@ -507,7 +507,7 @@ async function gcalCreateEvent(platform, date, time, type, title, notes, host) {
     description,
     start: { dateTime: start.toISOString(), timeZone: 'Europe/Rome' },
     end: { dateTime: end.toISOString(), timeZone: 'Europe/Rome' },
-    extendedProperties: { private: { platform, type, title, notes: notes||'', host: host||'' } }
+    extendedProperties: { private: { platform, type, title, notes: notes||'', host: host||'', queuePostId: queuePostId||'' } }
   };
 
   console.log('[gcalCreateEvent] sending', { calendarId: GCAL_CALENDAR_ID, resource });
@@ -542,7 +542,7 @@ async function gcalCreateEvent(platform, date, time, type, title, notes, host) {
   }
 }
 
-async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes, host) {
+async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes, host, queuePostId) {
   console.log('[gcalUpdateEvent] start', { eventId, platform, date, time, type, host });
   if (typeof gapi === 'undefined' || !gapi.client || !gapi.client.calendar) {
     alert('Google API non caricata. Ricarica la pagina.'); return false;
@@ -572,7 +572,7 @@ async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes
         summary, description,
         start: { dateTime: start.toISOString(), timeZone: 'Europe/Rome' },
         end: { dateTime: end.toISOString(), timeZone: 'Europe/Rome' },
-        extendedProperties: { private: { platform, type, title, notes: notes||'', host: host||'' } }
+        extendedProperties: { private: { platform, type, title, notes: notes||'', host: host||'', queuePostId: queuePostId||'' } }
       }
     });
     console.log('[gcalUpdateEvent] success');
@@ -651,7 +651,8 @@ function gcalEventToInternal(ev) {
     title: ext.title || (ev.summary||'').replace(/^\[(IG|YT)\]\s*[\u{1F300}-\u{1FAFF}]?\s*/u, ''),
     notes: ext.notes || '',
     host: ext.host || '',
-    platform: ext.platform || (ev.summary?.startsWith('[YT]') ? 'yt' : 'ig')
+    platform: ext.platform || (ev.summary?.startsWith('[YT]') ? 'yt' : 'ig'),
+    queuePostId: ext.queuePostId || ''
   };
 }
 
@@ -1158,18 +1159,6 @@ async function runYtCompetitorAnalysis() {
     document.getElementById('ytCompConfig').style.display = 'none';
     document.getElementById('ytCompOutput').style.display = 'block';
     document.getElementById('ytCompOutTitle').textContent = balancedVideos.length + ' video analizzati · ' + periodLabel;
-    
-    document.getElementById('ytIdeas').innerHTML = `
-      <div class="idea-card loading" style="border-style:dashed;background:transparent;flex-direction:column;gap:12px;padding:24px;text-align:center;min-height:120px;justify-content:center;">
-        <span class="material-symbols-rounded" style="font-size:32px;color:var(--accent);">lightbulb</span>
-        <div>
-          <strong style="display:block;margin-bottom:4px;color:var(--ink);">Competitor analizzati!</strong>
-          <span style="font-size:12px;color:var(--ink-mute);">Ora clicca sulla scheda <strong>"2. Generatore Idee"</strong> in alto per creare idee con l'IA.</span>
-        </div>
-      </div>
-    `;
-    document.getElementById('ytIdeasConfig').style.display = 'block';
-    document.getElementById('ytIdeasOutput').style.display = 'none';
 
     status.textContent = '';
   } catch(e) { status.textContent = '❌ ' + e.message; }

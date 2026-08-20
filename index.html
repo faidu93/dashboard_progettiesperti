@@ -709,6 +709,7 @@
       </div>
       
       <input type="hidden" id="calEditId">
+      <input type="hidden" id="calQueuePostId">
       
       <!-- Layout a due colonne Bynor Editor -->
       <div class="cal-editor-grid">
@@ -1405,37 +1406,6 @@
   <script src="js/06-calendar.js?v=20260819_reels"></script>
   <script src="js/07-analytics.js?v=20260802_1652"></script>
   <script src="js/08-main.js?v=20260802_1652"></script>
-  <!-- MODAL: Modifica Post Programmato in Coda -->
-  <div class="cal-modal-bg" id="editQueueModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
-    <div class="cal-modal" style="background:#15151b; width:100%; max-width:560px; padding:24px; border-radius:12px; border:1px solid rgba(255,255,255,0.05); color:#fff; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
-      <h3 style="font-size:18px; margin-bottom:4px;">Modifica post programmato</h3>
-      <p style="font-size:12px; color:var(--ink-mute); font-family:var(--font-mono); margin-bottom:16px;">Modifica la didascalia, i tag o la data di pubblicazione.</p>
-      
-      <input type="hidden" id="editQueueId">
-      
-      <div class="cal-field" style="margin-top:16px;">
-        <label>Caption, Tag e Collaboratori</label>
-        <textarea id="editQueueCaption" rows="8" style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:#fff; font-family:var(--font-mono); resize:vertical;" placeholder="Inserisci qui il testo del post e i tag..."></textarea>
-      </div>
-      
-      <div class="cal-modal-row" style="display:flex; gap:12px; margin-top:16px;">
-        <div class="cal-field" style="flex:1;">
-          <label>Data</label>
-          <input type="date" id="editQueueDate" style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:#fff; color-scheme:dark;">
-        </div>
-        <div class="cal-field" style="flex:1;">
-          <label>Ora</label>
-          <input type="time" id="editQueueTime" style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:#fff; color-scheme:dark;">
-        </div>
-      </div>
-      
-      <div class="cal-modal-row" style="display:flex; gap:12px; margin-top:24px; justify-content:flex-end;">
-        <button type="button" class="cal-btn-sec" onclick="closeEditQueueModal()" style="padding:10px 16px; background:rgba(255,255,255,0.05); border:none; color:#fff; border-radius:8px; cursor:pointer;">Annulla</button>
-        <button type="button" class="cal-btn-pri" id="saveEditQueueBtn" onclick="saveEditQueueModal()" style="padding:10px 16px; background:var(--accent); border:none; color:#fff; border-radius:8px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:6px;">Salva Modifiche</button>
-      </div>
-    </div>
-  </div>
-
   <!-- OVERLAY: Generatore Slide Carosello Stile Bynor -->
   <div class="slide-gen-overlay" id="slideGeneratorOverlay" style="display:none;">
     <div class="slide-gen-container">

@@ -74,8 +74,8 @@ async function fetchCachedBackend(endpoint, cacheKey, ttlMs = 3600 * 1000) {
 async function forceRefreshAllAnalytics(event) {
   if (event) event.preventDefault();
   
-  const links = [document.getElementById('btnForceRefreshAll'), document.getElementById('btnForceRefreshAllTop')].filter(Boolean);
-  const icons = [document.getElementById('iconForceRefreshAll'), document.getElementById('iconForceRefreshAllTop')].filter(Boolean);
+  const links = [document.getElementById('btnForceRefreshAllTop')].filter(Boolean);
+  const icons = [document.getElementById('iconForceRefreshAllTop')].filter(Boolean);
   
   if (links.length > 0 && links[0].dataset.loading === 'true') return;
   
