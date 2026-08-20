@@ -125,7 +125,7 @@ function renderAsteSummary(rows) {
 
   const totMontepremi = rows.reduce((s, r) => s + (r.montepremi || 0), 0);
   const totProgetto = rows.reduce((s, r) => s + (r.progetto || 0), 0);
-  const totProgettoMancante = rows.reduce((s, r) => s + (r.stimaProgettoMancante || 0), 0);
+  const totMancanti = rows.reduce((s, r) => s + (r.mancanti || 0), 0);
   const ytLiveSet = getAsteYtLiveSet();
 
   const trs = rows.map(r => {
@@ -144,7 +144,6 @@ function renderAsteSummary(rows) {
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); font-weight:600; color:${completa ? 'var(--pos)' : 'var(--accent)'};">${r.mancanti !== null ? r.mancanti : '—'}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); color:var(--ink-soft);">€${r.montepremi}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); font-weight:600; color:var(--pos);">€${r.progetto}</td>
-      <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); color:var(--ink-mute);">${r.stimaProgettoMancante ? '€' + r.stimaProgettoMancante : '—'}</td>
       <td style="padding:8px 10px; text-align:center;" onclick="event.stopPropagation()">
         <input type="checkbox" ${isLive ? 'checked' : ''} onchange="toggleAsteYtLive('${r.gid}', this.checked)" style="width:16px; height:16px; cursor:pointer; accent-color: var(--accent);">
       </td>
@@ -161,22 +160,21 @@ function renderAsteSummary(rows) {
           <th style="padding:8px 10px; font-weight:600; text-align:right;">Mancanti</th>
           <th style="padding:8px 10px; font-weight:600; text-align:right;" title="Va ridistribuito al vincitore dell'asta">Montepremi</th>
           <th style="padding:8px 10px; font-weight:600; text-align:right;" title="I 5€ extra dei soci normali — questo è il vero guadagno">Ricavo progetto</th>
-          <th style="padding:8px 10px; font-weight:600; text-align:right;">Progetto mancante (stima)</th>
           <th style="padding:8px 10px; font-weight:600; text-align:center;" title="Va in diretta sul canale YouTube — spunta manuale">📺 Live YT</th>
         </tr>
       </thead>
       <tbody>${trs}</tbody>
       <tfoot>
         <tr style="border-top:2px solid var(--line-strong); font-weight:700;">
-          <td colspan="4" style="padding:10px; color:var(--ink);">Totale</td>
+          <td colspan="3" style="padding:10px; color:var(--ink);">Totale</td>
+          <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--accent);">${totMancanti}</td>
           <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--ink-soft);">€${totMontepremi}</td>
           <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--pos);">€${totProgetto}</td>
-          <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--ink-mute);">€${totProgettoMancante}</td>
           <td></td>
         </tr>
       </tfoot>
     </table>
-    <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:8px;">Ogni quota si divide in <strong>montepremi</strong> (fino a 20€, va al vincitore dell'asta) e <strong>ricavo progetto</strong> (l'eccedenza — 5€ per i soci normali, 0€ per gli esperti). Le stime sui posti mancanti usano la quota media già versata in ciascuna asta.</div>
+    <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:8px;">Ogni quota si divide in <strong>montepremi</strong> (fino a 20€, va al vincitore dell'asta) e <strong>ricavo progetto</strong> (l'eccedenza — 5€ per i soci normali, 0€ per gli esperti). "Mancanti" è il numero di posti/quote ancora da versare — non un importo, perché non sappiamo se saranno esperti o soci normali.</div>
   `;
 }
 
