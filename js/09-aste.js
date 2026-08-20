@@ -64,8 +64,11 @@ async function loadAsteData(gid) {
   const secret = getPublishSecret();
   if (!secret) return;
 
+  const tab = asteCache.tabs.find(t => t.gid === gid);
+  const nameParam = tab ? `&name=${encodeURIComponent(tab.name)}` : '';
+
   try {
-    const res = await fetch(`${BACKEND_BASE}/api/aste?action=data&gid=${encodeURIComponent(gid)}`, { headers: { 'X-Publish-Secret': secret } });
+    const res = await fetch(`${BACKEND_BASE}/api/aste?action=data&gid=${encodeURIComponent(gid)}${nameParam}`, { headers: { 'X-Publish-Secret': secret } });
     const j = await res.json().catch(() => ({}));
     if (!res.ok || j.error) {
       if (res.status === 401) clearPublishSecret();
@@ -85,6 +88,8 @@ function renderAsteContent(data) {
   const totale = data.totale || 0;
   const count = data.count || 0;
   const perImporto = data.perImporto || {};
+  const maxPosti = typeof data.maxPosti === 'number' ? data.maxPosti : null;
+  const mancanti = maxPosti !== null ? Math.max(0, maxPosti - count) : null;
 
   const breakdownHtml = Object.keys(perImporto).sort((a, b) => b - a).map(importo =>
     `<span style="font-family:var(--font-mono); font-size:11.5px; color:var(--ink-soft); background:var(--bg-elev-2); border:1px solid var(--line); border-radius:6px; padding:4px 10px;">€${importo} · ${perImporto[importo]} ${perImporto[importo] === 1 ? 'persona' : 'persone'}</span>`
@@ -117,8 +122,13 @@ function renderAsteContent(data) {
       </div>
       <div class="kpi">
         <div class="kpi-label">👥 Partecipanti</div>
-        <div class="kpi-value">${count}</div>
+        <div class="kpi-value">${count}${maxPosti !== null ? `<span style="font-size:16px;color:var(--ink-mute);"> / ${maxPosti}</span>` : ''}</div>
         <div class="kpi-target">Hanno confermato il pagamento</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">🪑 Posti mancanti</div>
+        <div class="kpi-value" style="color:${mancanti > 0 ? 'var(--accent)' : 'var(--pos)'};">${mancanti !== null ? mancanti : '—'}</div>
+        <div class="kpi-target">${maxPosti !== null ? `Asta da ${maxPosti} posti` : 'Capienza non trovata'}</div>
       </div>
     </div>
 
@@ -150,10 +160,17 @@ function renderAsteContent(data) {
 
     <div class="panel">
       <div class="panel-title"><span class="material-symbols-rounded" style="color:var(--ink-mute);">person_search</span> Utenti mancanti</div>
-      <div class="panel-sub">Chi doveva partecipare ma non ha ancora versato la quota</div>
+      <div class="panel-sub">Quanti posti mancano per riempire l'asta — solo il numero: per sapere <em>chi</em> manca serve la lista completa iscritti, non ancora collegata</div>
+      ${maxPosti === null ? `
       <div style="font-family:var(--font-mono); font-size:12px; color:var(--ink-mute); padding:16px 0; text-align:center; border:1px dashed var(--line); border-radius:8px; margin-top:8px;">
-        In attesa della lista completa iscritti per calcolare chi manca.
-      </div>
+        Capienza non trovata per questa asta sul sito iscrizioni.
+      </div>` : mancanti === 0 ? `
+      <div style="font-family:var(--font-mono); font-size:12px; color:var(--pos); padding:16px 0; text-align:center; border:1px dashed var(--line); border-radius:8px; margin-top:8px;">
+        <span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;">check_circle</span> Asta al completo — nessun posto mancante.
+      </div>` : `
+      <div style="font-family:var(--font-mono); font-size:13px; color:var(--ink); padding:16px 0; text-align:center; border:1px dashed var(--line); border-radius:8px; margin-top:8px;">
+        Mancano <strong style="color:var(--accent);">${mancanti}</strong> ${mancanti === 1 ? 'persona' : 'persone'} per riempire questa asta da ${maxPosti} posti.
+      </div>`}
     </div>
   `;
 }
