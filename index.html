@@ -139,6 +139,10 @@
       <span class="material-symbols-rounded">groups</span>
       <span class="tab-label">Iscritti</span>
     </button>
+    <button class="tab-btn" data-tab="aste" onclick="tabSwitch(this)" role="tab">
+      <span class="material-symbols-rounded">gavel</span>
+      <span class="tab-label">Aste</span>
+    </button>
   </nav>
 
   <!-- TAB: SUMMARY (daily action + funnel + KPI) -->
@@ -1317,6 +1321,34 @@
     </div>
   </section>
 
+  <!-- TAB: ASTE (recap quote raccolte per asta) -->
+  <section class="section" data-tab="aste">
+    <div class="section-head">
+      <div>
+        <div class="section-eyebrow">🔨 Aste</div>
+        <div class="section-title">Quote raccolte</div>
+      </div>
+      <div class="section-meta live">Live · Google Sheet</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span class="material-symbols-rounded" style="color:var(--accent);">event</span>
+          Seleziona asta
+        </span>
+        <select id="asteSelect" onchange="onAsteSelectChange()" style="padding:8px 12px; background:var(--bg-elev-2); border:1px solid var(--line-strong); border-radius:6px; color:var(--ink); font-size:13px; font-family:var(--font-body); cursor:pointer; min-width:160px;">
+          <option value="">Caricamento…</option>
+        </select>
+      </div>
+      <div class="panel-sub">Un'asta per ogni data — i dati arrivano direttamente dal foglio delle iscrizioni</div>
+    </div>
+
+    <div id="asteContent">
+      <div style="font-family:var(--font-mono); font-size:12px; color:var(--ink-mute); padding:24px 0; text-align:center;">Seleziona un'asta per vedere il recap.</div>
+    </div>
+  </section>
+
   <!-- LOADING OVERLAY -->
   <div id="loadingOverlay">
     <div id="loadingBox">
@@ -1406,6 +1438,7 @@
   <script src="js/06-calendar.js?v=20260819_reels"></script>
   <script src="js/07-analytics.js?v=20260802_1652"></script>
   <script src="js/08-main.js?v=20260802_1652"></script>
+  <script src="js/09-aste.js?v=20260820_1"></script>
   <!-- OVERLAY: Generatore Slide Carosello Stile Bynor -->
   <div class="slide-gen-overlay" id="slideGeneratorOverlay" style="display:none;">
     <div class="slide-gen-container">
