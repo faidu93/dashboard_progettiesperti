@@ -101,6 +101,19 @@ async function loadAsteSummary() {
   }
 }
 
+// Flag manuale "va in diretta su YouTube" — non deducibile da nessun dato, lo
+// spunti tu a mano. Salvato in locale, sopravvive al ricaricamento della pagina.
+const ASTE_YT_LIVE_KEY = 'epf_aste_yt_live';
+function getAsteYtLiveSet() {
+  try { return new Set(JSON.parse(localStorage.getItem(ASTE_YT_LIVE_KEY) || '[]')); }
+  catch (e) { return new Set(); }
+}
+function toggleAsteYtLive(gid, checked) {
+  const s = getAsteYtLiveSet();
+  if (checked) s.add(gid); else s.delete(gid);
+  try { localStorage.setItem(ASTE_YT_LIVE_KEY, JSON.stringify([...s])); } catch (e) {}
+}
+
 function renderAsteSummary(rows) {
   const box = document.getElementById('asteSummary');
   if (!box) return;
@@ -112,15 +125,17 @@ function renderAsteSummary(rows) {
 
   const totIncassato = rows.reduce((s, r) => s + (r.totale || 0), 0);
   const totMancante = rows.reduce((s, r) => s + (r.stimaMancante || 0), 0);
+  const ytLiveSet = getAsteYtLiveSet();
 
   const trs = rows.map(r => {
     if (r.error) {
       return `<tr style="border-bottom:1px solid var(--line); opacity:0.6;">
         <td style="padding:8px 10px; color:var(--ink);">${r.name}</td>
-        <td colspan="5" style="padding:8px 10px; color:var(--neg); font-family:var(--font-mono); font-size:11px;">Errore: ${r.error}</td>
+        <td colspan="6" style="padding:8px 10px; color:var(--neg); font-family:var(--font-mono); font-size:11px;">Errore: ${r.error}</td>
       </tr>`;
     }
     const completa = r.mancanti === 0;
+    const isLive = ytLiveSet.has(r.gid);
     return `<tr style="border-bottom:1px solid var(--line); cursor:pointer;" onclick="selectAstaFromSummary('${r.gid}')" onmouseover="this.style.background='var(--bg-elev-2)'" onmouseout="this.style.background='transparent'">
       <td style="padding:8px 10px; color:var(--ink); font-weight:600;">${r.name}</td>
       <td style="padding:8px 10px; color:var(--ink-soft); font-family:var(--font-mono); font-size:11px;">${r.modalita || '—'}</td>
@@ -128,6 +143,9 @@ function renderAsteSummary(rows) {
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); font-weight:600; color:${completa ? 'var(--pos)' : 'var(--accent)'};">${r.mancanti !== null ? r.mancanti : '—'}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); font-weight:600; color:var(--pos);">€${r.totale}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); color:var(--ink-mute);">${r.stimaMancante ? '€' + r.stimaMancante : '—'}</td>
+      <td style="padding:8px 10px; text-align:center;" onclick="event.stopPropagation()">
+        <input type="checkbox" ${isLive ? 'checked' : ''} onchange="toggleAsteYtLive('${r.gid}', this.checked)" style="width:16px; height:16px; cursor:pointer; accent-color: var(--accent);">
+      </td>
     </tr>`;
   }).join('');
 
@@ -141,6 +159,7 @@ function renderAsteSummary(rows) {
           <th style="padding:8px 10px; font-weight:600; text-align:right;">Mancanti</th>
           <th style="padding:8px 10px; font-weight:600; text-align:right;">Incassato</th>
           <th style="padding:8px 10px; font-weight:600; text-align:right;">Da incassare (stima)</th>
+          <th style="padding:8px 10px; font-weight:600; text-align:center;" title="Va in diretta sul canale YouTube — spunta manuale">📺 Live YT</th>
         </tr>
       </thead>
       <tbody>${trs}</tbody>
@@ -149,6 +168,7 @@ function renderAsteSummary(rows) {
           <td colspan="4" style="padding:10px; color:var(--ink);">Totale</td>
           <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--pos);">€${totIncassato}</td>
           <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--ink-mute);">€${totMancante}</td>
+          <td></td>
         </tr>
       </tfoot>
     </table>
