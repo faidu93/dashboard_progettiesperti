@@ -152,7 +152,7 @@ function renderAsteSummary(rows) {
     if (r.error) {
       return `<tr style="border-bottom:1px solid var(--line); opacity:0.6;">
         <td style="padding:8px 10px; color:var(--ink);">${r.name}</td>
-        <td colspan="8" style="padding:8px 10px; color:var(--neg); font-family:var(--font-mono); font-size:11px;">Errore: ${r.error}</td>
+        <td colspan="7" style="padding:8px 10px; color:var(--neg); font-family:var(--font-mono); font-size:11px;">Errore: ${r.error}</td>
       </tr>`;
     }
     const completa = r.mancanti === 0;
