@@ -873,6 +873,8 @@ function ytCompNewSearch() {
   document.getElementById('ytCompOutput').style.display = 'none';
 }
 
+let ytKeyIdx = 0;
+
 async function fetchYtApi(buildUrlFn) {
   const userKey = (document.getElementById('ytApiKey')?.value || '').trim() || localStorage.getItem('intel_yt_apikey') || '';
   const pool = userKey ? [userKey] : [];
