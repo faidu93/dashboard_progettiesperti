@@ -412,6 +412,16 @@ async function deleteFromQueue(id) {
       if (res.status === 401) clearPublishSecret();
       throw new Error(j.error || `HTTP ${res.status}`);
     }
+
+    // Se questo post ha un evento collegato sul calendario, lo elimino anche lì:
+    // altrimenti resterebbe un evento "fantasma" che sembra ancora programmato.
+    if (typeof gcalSignedIn !== 'undefined' && gcalSignedIn && typeof gcalEvents !== 'undefined') {
+      const linkedEvent = gcalEvents.find(e => e.extendedProperties?.private?.queuePostId === id);
+      if (linkedEvent) {
+        try { await gcalDeleteEvent(linkedEvent.id); } catch(err) { console.error('Eliminazione evento collegato fallita:', err); }
+      }
+    }
+
     loadPublishQueue(); // ricarico
   } catch (e) {
     alert('Eliminazione fallita: ' + e.message);
