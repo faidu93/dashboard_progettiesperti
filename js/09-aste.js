@@ -5,6 +5,25 @@
 
 let asteCache = { tabs: [], selectedGid: null, summary: null };
 
+// I tab del foglio si chiamano "9 Ago", "2 Set" — solo giorno e mese, senza anno.
+// Per ricavare il giorno della settimana assumo la stagione in corso (anno corrente,
+// o l'anno prossimo se il mese del tab è già passato rispetto a oggi — evita che le
+// aste di inizio stagione risultino nel passato quando si è a cavallo di un anno nuovo).
+const ASTE_MESI_IT = { gen: 0, feb: 1, mar: 2, apr: 3, mag: 4, giu: 5, lug: 6, ago: 7, set: 8, ott: 9, nov: 10, dic: 11 };
+const ASTE_GIORNI_IT = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+function astaWeekday(name) {
+  const m = /^(\d{1,2})\s+([A-Za-zàèìòù]+)/.exec((name || '').trim());
+  if (!m) return null;
+  const day = parseInt(m[1], 10);
+  const month = ASTE_MESI_IT[m[2].toLowerCase().slice(0, 3)];
+  if (month === undefined || !day) return null;
+  const now = new Date();
+  let year = now.getFullYear();
+  const candidate = new Date(year, month, day);
+  if (candidate < new Date(now.getFullYear(), now.getMonth(), now.getDate() - 300)) year++;
+  return ASTE_GIORNI_IT[new Date(year, month, day).getDay()];
+}
+
 // Richiamato dal pulsante "Iscritti" in alto (onSubscribersRefresh): rilegge il
 // riepilogo e, se sei già sulla tab Aste con un'asta aperta, anche il suo dettaglio.
 // Silenzioso: se la password non è ancora salvata o la tab Aste non è mai stata
@@ -137,8 +156,9 @@ function renderAsteSummary(rows) {
     }
     const completa = r.mancanti === 0;
     const isLive = ytLiveSet.has(r.gid);
+    const weekday = astaWeekday(r.name);
     return `<tr style="border-bottom:1px solid var(--line); cursor:pointer;" onclick="selectAstaFromSummary('${r.gid}')" onmouseover="this.style.background='var(--bg-elev-2)'" onmouseout="this.style.background='transparent'">
-      <td style="padding:8px 10px; color:var(--ink); font-weight:600;">${r.name}</td>
+      <td style="padding:8px 10px; color:var(--ink); font-weight:600;">${weekday ? `<span style="color:var(--ink-mute); font-weight:400;">${weekday}</span> ` : ''}${r.name}</td>
       <td style="padding:8px 10px; color:var(--ink-soft); font-family:var(--font-mono); font-size:11px;">${r.modalita || '—'}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono);">${r.count}${r.maxPosti !== null ? ` / ${r.maxPosti}` : ''}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); font-weight:600; color:${completa ? 'var(--pos)' : 'var(--accent)'};">${r.mancanti !== null ? r.mancanti : '—'}</td>
