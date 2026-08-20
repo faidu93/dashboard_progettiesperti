@@ -3,12 +3,14 @@
 // Dipendenze: 01-api.js (BACKEND_BASE), 02-instagram-publish.js (getPublishSecret)
 // ============================================================================
 
-let asteCache = { tabs: [], selectedGid: null };
+let asteCache = { tabs: [], selectedGid: null, summary: null };
 
 async function loadAsteTabs() {
   const sel = document.getElementById('asteSelect');
   const content = document.getElementById('asteContent');
   if (!sel || !content) return;
+
+  loadAsteSummary();
 
   const secret = getPublishSecret();
   if (!secret) {
@@ -46,6 +48,96 @@ async function loadAsteTabs() {
     : asteCache.tabs[asteCache.tabs.length - 1].gid; // ultimo tab del foglio = asta più recente
   sel.value = gidToSelect;
   loadAsteData(gidToSelect);
+}
+
+// Selezionando una riga del riepilogo si salta al dettaglio di quell'asta qui sotto.
+function selectAstaFromSummary(gid) {
+  const sel = document.getElementById('asteSelect');
+  if (!sel) return;
+  sel.value = gid;
+  onAsteSelectChange();
+  document.getElementById('asteContent')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function loadAsteSummary() {
+  const box = document.getElementById('asteSummary');
+  if (!box) return;
+
+  const secret = getPublishSecret();
+  if (!secret) {
+    box.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:16px 0;text-align:center;">Inserisci la password di pubblicazione per vedere il riepilogo.</div>';
+    return;
+  }
+
+  box.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:16px 0;text-align:center;"><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;animation:spin 1s linear infinite;">progress_activity</span> Caricamento riepilogo…</div>';
+
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/aste?action=summary`, { headers: { 'X-Publish-Secret': secret } });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || j.error) {
+      if (res.status === 401) clearPublishSecret();
+      throw new Error(j.error || `HTTP ${res.status}`);
+    }
+    asteCache.summary = Array.isArray(j.aste) ? j.aste : [];
+    renderAsteSummary(asteCache.summary);
+  } catch (e) {
+    box.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:16px 0;text-align:center;">Impossibile caricare il riepilogo: ${e.message}</div>`;
+  }
+}
+
+function renderAsteSummary(rows) {
+  const box = document.getElementById('asteSummary');
+  if (!box) return;
+
+  if (!rows || rows.length === 0) {
+    box.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:16px 0;text-align:center;">Nessuna asta trovata.</div>';
+    return;
+  }
+
+  const totIncassato = rows.reduce((s, r) => s + (r.totale || 0), 0);
+  const totMancante = rows.reduce((s, r) => s + (r.stimaMancante || 0), 0);
+
+  const trs = rows.map(r => {
+    if (r.error) {
+      return `<tr style="border-bottom:1px solid var(--line); opacity:0.6;">
+        <td style="padding:8px 10px; color:var(--ink);">${r.name}</td>
+        <td colspan="5" style="padding:8px 10px; color:var(--neg); font-family:var(--font-mono); font-size:11px;">Errore: ${r.error}</td>
+      </tr>`;
+    }
+    const completa = r.mancanti === 0;
+    return `<tr style="border-bottom:1px solid var(--line); cursor:pointer;" onclick="selectAstaFromSummary('${r.gid}')" onmouseover="this.style.background='var(--bg-elev-2)'" onmouseout="this.style.background='transparent'">
+      <td style="padding:8px 10px; color:var(--ink); font-weight:600;">${r.name}</td>
+      <td style="padding:8px 10px; color:var(--ink-soft); font-family:var(--font-mono); font-size:11px;">${r.modalita || '—'}</td>
+      <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono);">${r.count}${r.maxPosti !== null ? ` / ${r.maxPosti}` : ''}</td>
+      <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); font-weight:600; color:${completa ? 'var(--pos)' : 'var(--accent)'};">${r.mancanti !== null ? r.mancanti : '—'}</td>
+      <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); font-weight:600; color:var(--pos);">€${r.totale}</td>
+      <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); color:var(--ink-mute);">${r.stimaMancante ? '€' + r.stimaMancante : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  box.innerHTML = `
+    <table style="width:100%; border-collapse:collapse; font-size:12.5px; text-align:left;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--line); color:var(--ink-soft); font-family:var(--font-mono); font-size:10px; text-transform:uppercase;">
+          <th style="padding:8px 10px; font-weight:600;">Data</th>
+          <th style="padding:8px 10px; font-weight:600;">Tipo</th>
+          <th style="padding:8px 10px; font-weight:600; text-align:right;">Partecipanti</th>
+          <th style="padding:8px 10px; font-weight:600; text-align:right;">Mancanti</th>
+          <th style="padding:8px 10px; font-weight:600; text-align:right;">Incassato</th>
+          <th style="padding:8px 10px; font-weight:600; text-align:right;">Da incassare (stima)</th>
+        </tr>
+      </thead>
+      <tbody>${trs}</tbody>
+      <tfoot>
+        <tr style="border-top:2px solid var(--line-strong); font-weight:700;">
+          <td colspan="4" style="padding:10px; color:var(--ink);">Totale</td>
+          <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--pos);">€${totIncassato}</td>
+          <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--ink-mute);">€${totMancante}</td>
+        </tr>
+      </tfoot>
+    </table>
+    <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:8px;">"Da incassare" è una stima basata sulla quota media già versata in ciascuna asta — non sappiamo se i posti liberi saranno "esperti" (20€) o soci normali (25€).</div>
+  `;
 }
 
 function onAsteSelectChange() {
