@@ -158,7 +158,8 @@ function renderAsteSummary(rows) {
     const completa = r.mancanti === 0;
     const isLive = ytLiveSet.has(r.gid);
     const weekday = astaWeekday(r.name);
-    return `<tr style="border-bottom:1px solid var(--line); cursor:pointer;" onclick="selectAstaFromSummary('${r.gid}')" onmouseover="this.style.background='var(--bg-elev-2)'" onmouseout="this.style.background='transparent'">
+    const baseBg = completa ? 'rgba(34,197,94,0.08)' : 'transparent';
+    return `<tr style="border-bottom:1px solid var(--line); cursor:pointer; background:${baseBg};" onclick="selectAstaFromSummary('${r.gid}')" onmouseover="this.style.background='var(--bg-elev-2)'" onmouseout="this.style.background='${baseBg}'">
       <td style="padding:8px 10px; color:var(--ink); font-weight:600;">${weekday ? `<span style="color:var(--ink-mute); font-weight:400;">${weekday}</span> ` : ''}${r.name}</td>
       <td style="padding:8px 10px; color:var(--ink-soft); font-family:var(--font-mono); font-size:11px;">${r.modalita || '—'}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono);">${r.count}${r.maxPosti !== null ? ` / ${r.maxPosti}` : ''}</td>
