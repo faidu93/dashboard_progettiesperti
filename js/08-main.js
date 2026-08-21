@@ -28,7 +28,7 @@ async function init() {
 
   try {
     // 1. Avvio dei fetch in parallelo (concorrenza per caricamento veloce)
-    const igPromise = fetchCachedBackend('/api/instagram-insights', 'cache_ig_insights')
+    const igPromise = fetchCachedBackend('/api/instagram?type=insights', 'cache_ig_insights')
       .catch(e => {
         console.warn('Errore connessione backend Instagram:', e);
         return { isMock: true, data: generateMockInstagramData() };
@@ -40,7 +40,7 @@ async function init() {
         return { error: true };
       });
 
-    const demoPromise = fetchCachedBackend('/api/instagram-demographics', 'cache_ig_demo')
+    const demoPromise = fetchCachedBackend('/api/instagram?type=demographics', 'cache_ig_demo')
       .catch(e => {
         console.warn('Dati demografici non disponibili:', e);
         return null;
