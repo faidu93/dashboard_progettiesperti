@@ -1801,6 +1801,13 @@ body {
   height: 100%; width: 0%; background: var(--accent);
   border-radius: 2px; transition: width 0.4s ease;
 }
+.aste-progress {
+  height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 2px 0 16px;
+}
+.aste-progress-fill {
+  height: 100%; width: 0%; background: var(--accent);
+  border-radius: 2px; transition: width 0.3s ease;
+}
 .conv-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
 .conv-kpi { background: var(--bg-elev-2); border: 1px solid var(--line); border-radius: 9px; padding: 13px 14px; }
 .conv-kpi-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute); }

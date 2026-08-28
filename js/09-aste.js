@@ -5,6 +5,43 @@
 
 let asteCache = { tabs: [], selectedGid: null, summary: null };
 
+// Barra di caricamento in cima alla tab Aste — finché non si vede la barra
+// completarsi non è chiaro se i dati sono ancora in arrivo o già aggiornati.
+// Progresso simulato (il fetch non espone percentuali reali) più uno "scatto"
+// finale al 100% quando la risposta arriva davvero. Un contatore di richieste
+// attive evita che si nasconda mentre un'altra fetch (summary + dettaglio,
+// spesso in parallelo) è ancora in corso.
+let asteProgressActive = 0;
+let asteProgressInterval = null;
+function asteProgressStart() {
+  asteProgressActive++;
+  const bar = document.getElementById('asteProgress');
+  const fill = document.getElementById('asteProgressFill');
+  if (!bar || !fill) return;
+  bar.style.display = 'block';
+  if (asteProgressInterval) return; // già in corso, non riparte da zero
+  fill.style.width = '10%';
+  let pct = 10;
+  asteProgressInterval = setInterval(() => {
+    pct += (85 - pct) * 0.15;
+    fill.style.width = pct + '%';
+  }, 200);
+}
+function asteProgressDone() {
+  asteProgressActive = Math.max(0, asteProgressActive - 1);
+  if (asteProgressActive > 0) return; // altre richieste ancora in volo
+  const bar = document.getElementById('asteProgress');
+  const fill = document.getElementById('asteProgressFill');
+  clearInterval(asteProgressInterval);
+  asteProgressInterval = null;
+  if (!bar || !fill) return;
+  fill.style.width = '100%';
+  setTimeout(() => {
+    bar.style.display = 'none';
+    fill.style.width = '0%';
+  }, 350);
+}
+
 // I tab del foglio si chiamano "9 Ago", "2 Set" — solo giorno e mese, senza anno.
 // Per ricavare il giorno della settimana assumo la stagione in corso (anno corrente,
 // o l'anno prossimo se il mese del tab è già passato rispetto a oggi — evita che le
@@ -106,6 +143,7 @@ async function loadAsteSummary() {
 
   box.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:16px 0;text-align:center;"><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;animation:spin 1s linear infinite;">progress_activity</span> Caricamento riepilogo…</div>';
 
+  asteProgressStart();
   try {
     const res = await fetch(`${BACKEND_BASE}/api/aste?action=summary`, { headers: { 'X-Publish-Secret': secret } });
     const j = await res.json().catch(() => ({}));
@@ -117,6 +155,8 @@ async function loadAsteSummary() {
     renderAsteSummary(asteCache.summary);
   } catch (e) {
     box.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:16px 0;text-align:center;">Impossibile caricare il riepilogo: ${e.message}</div>`;
+  } finally {
+    asteProgressDone();
   }
 }
 
@@ -222,6 +262,7 @@ async function loadAsteData(gid) {
   const tab = asteCache.tabs.find(t => t.gid === gid);
   const nameParam = tab ? `&name=${encodeURIComponent(tab.name)}` : '';
 
+  asteProgressStart();
   try {
     const res = await fetch(`${BACKEND_BASE}/api/aste?action=data&gid=${encodeURIComponent(gid)}${nameParam}`, { headers: { 'X-Publish-Secret': secret } });
     const j = await res.json().catch(() => ({}));
@@ -232,6 +273,8 @@ async function loadAsteData(gid) {
     renderAsteContent(j);
   } catch (e) {
     content.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:24px 0;text-align:center;">Errore caricamento dati: ${e.message}</div>`;
+  } finally {
+    asteProgressDone();
   }
 }
 
