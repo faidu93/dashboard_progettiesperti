@@ -135,66 +135,81 @@ function renderProfitContent(d) {
     </tr>
   `).join('');
 
+  const fmtEuro = n => Number.isInteger(n) ? n : n.toFixed(2);
+  const quotaProfeta = d.utile * 0.20;
+  const quotaDirezionale = d.utile * 0.40;
+  const quotaEsperti = d.utile * 0.40;
+
   box.innerHTML = `
     <div class="panel" style="margin-bottom:28px;">
       <div class="panel-title"><span class="material-symbols-rounded" style="color:var(--accent);">account_balance</span> Conto economico</div>
       <div class="panel-sub">Ricavi e costi del progetto, da giugno in poi</div>
 
-      <div class="kpi-band" style="margin:14px 0 20px;">
-        <div class="kpi">
-          <div class="kpi-label">💰 Ricavi totali</div>
-          <div class="kpi-value accent">€${d.ricavoTotale}</div>
-          <div class="kpi-target">Iscrizioni + quota extra aste</div>
+      <div style="display:flex; gap:20px; flex-wrap:wrap; margin:12px 0 16px; padding:10px 14px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px;">
+        <div style="flex:1; min-width:110px;">
+          <div style="font-family:var(--font-mono); font-size:9.5px; color:var(--ink-mute); text-transform:uppercase;">💰 Ricavi</div>
+          <div style="font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--accent);">€${fmtEuro(d.ricavoTotale)}</div>
         </div>
-        <div class="kpi">
-          <div class="kpi-label">💸 Costi totali</div>
-          <div class="kpi-value" style="color:var(--neg);">€${d.totaleCostiSostenuti}</div>
-          <div class="kpi-target">${d.totaleCostiPrevisti > 0 ? `+ €${d.totaleCostiPrevisti} previsti` : 'Nessun costo previsto in più'}</div>
+        <div style="flex:1; min-width:110px;">
+          <div style="font-family:var(--font-mono); font-size:9.5px; color:var(--ink-mute); text-transform:uppercase;">💸 Costi</div>
+          <div style="font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--neg);">€${fmtEuro(d.totaleCostiSostenuti)}</div>
         </div>
-        <div class="kpi">
-          <div class="kpi-label">${d.utile >= 0 ? '📈' : '📉'} Utile netto</div>
-          <div class="kpi-value" style="color:${d.utile >= 0 ? 'var(--pos)' : 'var(--neg)'};">€${d.utile}</div>
-          <div class="kpi-target">Ricavi meno costi sostenuti</div>
+        <div style="flex:1; min-width:110px;">
+          <div style="font-family:var(--font-mono); font-size:9.5px; color:var(--ink-mute); text-transform:uppercase;">${d.utile >= 0 ? '📈' : '📉'} Utile netto</div>
+          <div style="font-family:var(--font-display); font-size:19px; font-weight:800; color:${d.utile >= 0 ? 'var(--pos)' : 'var(--neg)'};">€${fmtEuro(d.utile)}</div>
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start;">
         <div>
-          <div style="font-family:var(--font-mono); font-size:10px; color:var(--pos); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px;">Ricavi</div>
-          <div style="display:flex; flex-direction:column; gap:10px;">
-            <div style="background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:12px 16px;">
-              <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🎟️ Iscrizioni gruppo</div>
-              <div style="font-family:var(--font-display); font-size:22px; font-weight:800; color:var(--ink-soft);">€${d.ricavoIscrizioni}</div>
-              <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:2px;">${d.numIscrizioni} iscritti</div>
-            </div>
-            <div style="background:var(--bg-elev-2); border:1px solid var(--pos); border-radius:8px; padding:12px 16px;">
-              <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🔨 Quota extra aste</div>
-              <div style="font-family:var(--font-display); font-size:22px; font-weight:800; color:var(--pos);">€${d.ricavoAste}</div>
-              <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:2px;">I 5€ oltre al montepremio</div>
-            </div>
-          </div>
-          <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:10px;">Il montepremio delle aste non è ricavo: va ridistribuito al vincitore. Il FantaListone non è incluso qui.</div>
+          <div style="font-family:var(--font-mono); font-size:10px; color:var(--pos); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:6px;">Ricavi</div>
+          <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+            <tbody>
+              <tr style="border-bottom:1px solid var(--line);">
+                <td style="padding:7px 4px; color:var(--ink);">🎟️ Iscrizioni gruppo</td>
+                <td style="padding:7px 4px; color:var(--ink-mute); font-family:var(--font-mono); font-size:10.5px; text-align:right;">${d.numIscrizioni} isc.</td>
+                <td style="padding:7px 4px; text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--ink-soft);">€${d.ricavoIscrizioni}</td>
+              </tr>
+              <tr>
+                <td style="padding:7px 4px; color:var(--ink);">🔨 Quota extra aste</td>
+                <td style="padding:7px 4px; color:var(--ink-mute); font-family:var(--font-mono); font-size:10.5px; text-align:right;">5€/asta</td>
+                <td style="padding:7px 4px; text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--pos);">€${d.ricavoAste}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); margin-top:8px;">Il montepremio non è ricavo: va al vincitore. FantaListone escluso.</div>
         </div>
 
         <div>
-          <div style="font-family:var(--font-mono); font-size:10px; color:var(--neg); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px;">Costi</div>
+          <div style="font-family:var(--font-mono); font-size:10px; color:var(--neg); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:6px;">Costi</div>
           <div style="overflow-x:auto;">
-            <table style="width:100%; border-collapse:collapse; font-size:12.5px; text-align:left;">
-              <thead>
-                <tr style="border-bottom:1px solid var(--line); color:var(--ink-soft); font-family:var(--font-mono); font-size:10px; text-transform:uppercase;">
-                  <th style="padding:8px 10px; font-weight:600;">Mese</th>
-                  <th style="padding:8px 10px; font-weight:600;">Voce</th>
-                  <th style="padding:8px 10px; font-weight:600; text-align:right;">Importo</th>
-                </tr>
-              </thead>
+            <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left;">
               <tbody>${costiRowsHtml}</tbody>
               <tfoot>
                 <tr style="border-top:2px solid var(--line-strong); font-weight:700;">
-                  <td colspan="2" style="padding:10px; color:var(--ink);">Totale sostenuti</td>
-                  <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--neg);">€${d.totaleCostiSostenuti}</td>
+                  <td colspan="2" style="padding:7px 4px; color:var(--ink);">Totale sostenuti</td>
+                  <td style="padding:7px 4px; text-align:right; font-family:var(--font-mono); color:var(--neg);">€${d.totaleCostiSostenuti}</td>
                 </tr>
               </tfoot>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--line);">
+        <div style="font-family:var(--font-mono); font-size:10px; color:var(--accent); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px;">Suddivisione utile netto</div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 14px;">
+            <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">👤 Quota Profeta · 20%</div>
+            <div style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink-soft);">€${fmtEuro(quotaProfeta)}</div>
+          </div>
+          <div style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 14px;">
+            <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🧭 Gruppo Direzionale · 40%</div>
+            <div style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink-soft);">€${fmtEuro(quotaDirezionale)}</div>
+          </div>
+          <div style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 14px;">
+            <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🎙️ Gruppo Esperti · 40%</div>
+            <div style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink-soft);">€${fmtEuro(quotaEsperti)}</div>
           </div>
         </div>
       </div>
