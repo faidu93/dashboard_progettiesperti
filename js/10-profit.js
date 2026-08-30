@@ -180,7 +180,7 @@ function renderProfitContent(d) {
               </tr>
             </tbody>
           </table>
-          <div class="mini-label" style="margin-top:8px;">Il montepremio non è ricavo: va al vincitore. FantaListone escluso.</div>
+          <div class="mini-label" style="margin-top:8px; text-transform:none;">Il montepremio non è ricavo: va al vincitore. FantaListone escluso.</div>
         </div>
 
         <div>
@@ -201,7 +201,7 @@ function renderProfitContent(d) {
 
       <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--line);">
         <div class="mini-section-label" style="color:var(--accent);">Suddivisione ricavi</div>
-        <div class="mini-label" style="margin-bottom:8px;">Iscrizioni: 20% Profeta / 40% Direzionale / 40% Esperti · Quota extra aste: 50% Direzionale / 50% Esperti</div>
+        <div class="mini-label" style="margin-bottom:8px; text-transform:none;">Iscrizioni: 20% Profeta / 40% Direzionale / 40% Esperti · Quota extra aste: 50% Direzionale / 50% Esperti</div>
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
           <div class="mini-card" style="flex:1; min-width:140px;">
             <div class="mini-label">👤 Quota Profeta</div>
