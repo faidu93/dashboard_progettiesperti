@@ -1,15 +1,25 @@
 // ============================================================================
-// js/10-profit.js — Conto economico della stagione: ricavi (iscrizioni +
-// quota extra aste) meno costi (fissi, inseriti a mano — vedi PROFIT_COSTI).
+// js/10-profit.js — Due cose distinte, non confonderle:
+//   1. "Costi/Ricavi": ricavo del progetto (iscrizioni + quota extra 5€ aste,
+//      dall'inizio stagione) meno costi sostenuti → utile netto del progetto.
+//   2. "Saldo PayPal": tutto il denaro che dovrebbe fisicamente trovarsi sul
+//      conto PayPal — TUTTO ciò che è stato incassato (iscrizioni, aste per
+//      intero comprese di montepremio, FantaListone), senza filtri di data,
+//      meno gli stessi costi sostenuti. Il montepremio delle aste è ancora
+//      lì dentro finché non viene versato al vincitore, quindi conta.
 // Dipendenze: 01-api.js (BACKEND_BASE), 02-instagram-publish.js (getPublishSecret)
 // ============================================================================
 
-// Da quando si contano i ricavi della stagione in corso.
+// Da quando si contano i ricavi del progetto (sezione Costi/Ricavi soltanto —
+// il saldo PayPal non filtra mai per data, conta tutto quello che è arrivato).
 const PROFIT_PERIOD_START = '2026-06-01';
+
+// FantaListone: quota fissa, nessuna colonna importo nel foglio.
+const FANTALISTONE_QUOTA = 10;
 
 // Costi fissi della stagione, inseriti a mano (nessun foglio li tiene — se ne
 // aggiungi uno nuovo, aggiungi una riga qui). "previsto: true" = costo atteso
-// ma non ancora sostenuto, escluso dal totale principale e mostrato a parte.
+// ma non ancora sostenuto, escluso dai totali principali e mostrato a parte.
 const PROFIT_COSTI = [
   { mese: 'Luglio 2026', descrizione: 'ChatGPT', importo: 23 },
   { mese: 'Agosto 2026', descrizione: 'ChatGPT', importo: 23 },
@@ -34,9 +44,10 @@ async function loadProfitData() {
   box.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:24px 0;text-align:center;"><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;animation:spin 1s linear infinite;">progress_activity</span> Caricamento…</div>';
 
   try {
-    const [subRes, asteRes] = await Promise.all([
+    const [subRes, asteRes, flRes] = await Promise.all([
       fetch(`${BACKEND_BASE}/api/subscribers`, { headers: { 'X-Publish-Secret': secret } }),
       fetch(`${BACKEND_BASE}/api/aste?action=summary`, { headers: { 'X-Publish-Secret': secret } }),
+      fetch(`${BACKEND_BASE}/api/aste?action=fantalistone-count`, { headers: { 'X-Publish-Secret': secret } }),
     ]);
 
     const subJson = await subRes.json().catch(() => ({}));
@@ -49,28 +60,41 @@ async function loadProfitData() {
       if (asteRes.status === 401) clearPublishSecret();
       throw new Error(asteJson.error || `HTTP ${asteRes.status} (aste)`);
     }
+    const flJson = await flRes.json().catch(() => ({}));
+    if (!flRes.ok || flJson.error) {
+      if (flRes.status === 401) clearPublishSecret();
+      throw new Error(flJson.error || `HTTP ${flRes.status} (FantaListone)`);
+    }
 
-    // Ricavo iscrizioni: somma degli importi versati dall'inizio stagione in poi.
-    const periodStart = new Date(PROFIT_PERIOD_START);
     const subscribers = Array.isArray(subJson.subscribers) ? subJson.subscribers : [];
+    const asteRows = Array.isArray(asteJson.aste) ? asteJson.aste : [];
+    const fantalistoneCount = Number(flJson.count) || 0;
+
+    // --- 1) Costi/Ricavi: solo il ricavo del progetto, dall'inizio stagione ---
+    const periodStart = new Date(PROFIT_PERIOD_START);
     const iscrizioniStagione = subscribers.filter(s => {
       const d = new Date((s.date || '').replace(' ', 'T'));
       return !isNaN(d.getTime()) && d >= periodStart;
     });
     const ricavoIscrizioni = iscrizioniStagione.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
-
-    // Ricavo aste: solo la quota extra (5€), mai il montepremio (va al vincitore).
-    const asteRows = Array.isArray(asteJson.aste) ? asteJson.aste : [];
+    // Quota extra aste: solo i 5€, mai il montepremio (va al vincitore).
     const ricavoAste = asteRows.reduce((sum, r) => sum + (r.progetto || 0), 0);
-
     const ricavoTotale = ricavoIscrizioni + ricavoAste;
 
     const costiSostenuti = PROFIT_COSTI.filter(c => !c.previsto);
     const costiPrevisti = PROFIT_COSTI.filter(c => c.previsto);
     const totaleCostiSostenuti = costiSostenuti.reduce((sum, c) => sum + c.importo, 0);
     const totaleCostiPrevisti = costiPrevisti.reduce((sum, c) => sum + c.importo, 0);
-
     const utile = ricavoTotale - totaleCostiSostenuti;
+
+    // --- 2) Saldo PayPal: TUTTO quello che è stato incassato, senza filtri di
+    //     data — comprese le quote intere delle aste (montepremio incluso, è
+    //     ancora fisicamente sul conto finché non viene versato al vincitore). ---
+    const incassoIscrizioniTotale = subscribers.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+    const incassoAsteTotale = asteRows.reduce((sum, r) => sum + (r.totale || 0), 0);
+    const incassoFantalistone = fantalistoneCount * FANTALISTONE_QUOTA;
+    const incassoComplessivo = incassoIscrizioniTotale + incassoAsteTotale + incassoFantalistone;
+    const saldoPaypal = incassoComplessivo - totaleCostiSostenuti;
 
     renderProfitContent({
       ricavoIscrizioni, numIscrizioni: iscrizioniStagione.length,
@@ -78,6 +102,11 @@ async function loadProfitData() {
       ricavoTotale,
       totaleCostiSostenuti, totaleCostiPrevisti,
       utile,
+      incassoIscrizioniTotale, numIscrizioniTotale: subscribers.length,
+      incassoAsteTotale,
+      incassoFantalistone, fantalistoneCount,
+      incassoComplessivo,
+      saldoPaypal,
     });
   } catch (e) {
     box.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:24px 0;text-align:center;">Impossibile caricare il conto economico: ${e.message}</div>`;
@@ -97,7 +126,8 @@ function renderProfitContent(d) {
   `).join('');
 
   box.innerHTML = `
-    <div class="kpi-band" style="margin:20px 0;">
+    <p style="font-family:var(--font-mono); font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:0.04em; margin:4px 0 4px;">Costi / Ricavi</p>
+    <div class="kpi-band" style="margin:0 0 20px;">
       <div class="kpi">
         <div class="kpi-label">💰 Ricavi totali</div>
         <div class="kpi-value accent">€${d.ricavoTotale}</div>
@@ -130,10 +160,10 @@ function renderProfitContent(d) {
           <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:2px;">I 5€ oltre al montepremio</div>
         </div>
       </div>
-      <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:8px;">Il montepremio delle aste (20€ a persona) non è ricavo: va ridistribuito al vincitore. Il FantaListone non è incluso per ora.</div>
+      <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:8px;">Il montepremio delle aste (20€ a persona) non è ricavo: va ridistribuito al vincitore. Il FantaListone non è incluso qui.</div>
     </div>
 
-    <div class="panel">
+    <div class="panel" style="margin-bottom:20px;">
       <div class="panel-title"><span class="material-symbols-rounded" style="color:var(--neg);">receipt_long</span> Costi</div>
       <div class="panel-sub">Inseriti a mano — aggiungine uno chiedendomi di aggiornare la lista</div>
       <div style="overflow-x:auto; margin-top:8px;">
@@ -153,6 +183,46 @@ function renderProfitContent(d) {
             </tr>
           </tfoot>
         </table>
+      </div>
+    </div>
+
+    <p style="font-family:var(--font-mono); font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:0.04em; margin:24px 0 4px;">Saldo PayPal</p>
+    <div class="panel">
+      <div class="panel-title"><span class="material-symbols-rounded" style="color:var(--accent);">account_balance_wallet</span> Quanto dovremmo avere sul conto</div>
+      <div class="panel-sub">Tutto l'incassato, senza filtri di data — montepremio delle aste compreso, perché è ancora lì finché non lo versiamo al vincitore</div>
+      <div class="kpi-band" style="margin:12px 0 12px;">
+        <div class="kpi">
+          <div class="kpi-label">💳 Incassato totale</div>
+          <div class="kpi-value accent">€${d.incassoComplessivo}</div>
+          <div class="kpi-target">Iscrizioni + aste intere + FantaListone</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">💸 Costi sostenuti</div>
+          <div class="kpi-value" style="color:var(--neg);">€${d.totaleCostiSostenuti}</div>
+          <div class="kpi-target">Stessi costi di sopra</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">🏦 Saldo atteso</div>
+          <div class="kpi-value" style="color:var(--pos);">€${d.saldoPaypal}</div>
+          <div class="kpi-target">Incassato meno costi</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:150px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 14px;">
+          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🎟️ Iscrizioni</div>
+          <div style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink-soft);">€${d.incassoIscrizioniTotale}</div>
+          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); margin-top:2px;">${d.numIscrizioniTotale} iscritti, sempre</div>
+        </div>
+        <div style="flex:1; min-width:150px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 14px;">
+          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🔨 Aste (intere)</div>
+          <div style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink-soft);">€${d.incassoAsteTotale}</div>
+          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); margin-top:2px;">Quote da 20€ e 25€, tutte</div>
+        </div>
+        <div style="flex:1; min-width:150px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 14px;">
+          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🏆 FantaListone</div>
+          <div style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink-soft);">€${d.incassoFantalistone}</div>
+          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); margin-top:2px;">${d.fantalistoneCount} iscritti × 10€</div>
+        </div>
       </div>
     </div>
   `;
