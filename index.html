@@ -143,6 +143,10 @@
       <span class="material-symbols-rounded">gavel</span>
       <span class="tab-label">Aste</span>
     </button>
+    <button class="tab-btn" data-tab="profit" onclick="tabSwitch(this)" role="tab">
+      <span class="material-symbols-rounded">payments</span>
+      <span class="tab-label">Profit</span>
+    </button>
   </nav>
 
   <!-- TAB: SUMMARY (daily action + funnel + KPI) -->
@@ -1359,6 +1363,20 @@
     </div>
   </section>
 
+  <section class="section" data-tab="profit">
+    <div class="section-head">
+      <div>
+        <div class="section-eyebrow">💰 Profit</div>
+        <div class="section-title">Conto economico stagione</div>
+      </div>
+      <div class="section-meta live">Live · Google Sheet</div>
+    </div>
+
+    <div id="profitContent">
+      <div style="font-family:var(--font-mono); font-size:12px; color:var(--ink-mute); padding:24px 0; text-align:center;">Caricamento…</div>
+    </div>
+  </section>
+
   <!-- LOADING OVERLAY -->
   <div id="loadingOverlay">
     <div id="loadingBox">
@@ -1449,6 +1467,7 @@
   <script src="js/07-analytics.js?v=20260820_2" defer></script>
   <script src="js/08-main.js?v=20260802_1652" defer></script>
   <script src="js/09-aste.js?v=20260827_1" defer></script>
+  <script src="js/10-profit.js?v=20260830_1" defer></script>
   <!-- OVERLAY: Generatore Slide Carosello Stile Bynor -->
   <div class="slide-gen-overlay" id="slideGeneratorOverlay" style="display:none;">
     <div class="slide-gen-container">

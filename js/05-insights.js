@@ -588,5 +588,6 @@ function tabSwitch(btn) {
   }
   if (tabId === 'acquisizioni') { renderSubscribersChart(); }
   if (tabId === 'aste') { loadAsteTabs(); }
+  if (tabId === 'profit') { if (typeof loadProfitData === 'function') loadProfitData(); }
 }
 
