@@ -136,75 +136,79 @@ function renderProfitContent(d) {
   `).join('');
 
   box.innerHTML = `
-    <p style="font-family:var(--font-mono); font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:0.04em; margin:4px 0 4px;">Costi / Ricavi</p>
-    <div class="kpi-band" style="margin:0 0 20px;">
-      <div class="kpi">
-        <div class="kpi-label">💰 Ricavi totali</div>
-        <div class="kpi-value accent">€${d.ricavoTotale}</div>
-        <div class="kpi-target">Iscrizioni + quota extra aste, da giugno</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">💸 Costi sostenuti</div>
-        <div class="kpi-value" style="color:var(--neg);">€${d.totaleCostiSostenuti}</div>
-        <div class="kpi-target">${d.totaleCostiPrevisti > 0 ? `+ €${d.totaleCostiPrevisti} previsti` : 'Nessun costo previsto in più'}</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">${d.utile >= 0 ? '📈' : '📉'} Utile netto</div>
-        <div class="kpi-value" style="color:${d.utile >= 0 ? 'var(--pos)' : 'var(--neg)'};">€${d.utile}</div>
-        <div class="kpi-target">Ricavi meno costi sostenuti</div>
-      </div>
-    </div>
+    <div class="panel" style="margin-bottom:28px;">
+      <div class="panel-title"><span class="material-symbols-rounded" style="color:var(--accent);">account_balance</span> Conto economico</div>
+      <div class="panel-sub">Ricavi e costi del progetto, da giugno in poi</div>
 
-    <div class="panel" style="margin-bottom:20px;">
-      <div class="panel-title"><span class="material-symbols-rounded" style="color:var(--pos);">trending_up</span> Ricavi</div>
-      <div class="panel-sub">Da dove arrivano i €${d.ricavoTotale} raccolti</div>
-      <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:8px;">
-        <div style="flex:1; min-width:180px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:12px 16px;">
-          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🎟️ Iscrizioni gruppo</div>
-          <div style="font-family:var(--font-display); font-size:22px; font-weight:800; color:var(--ink-soft);">€${d.ricavoIscrizioni}</div>
-          <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:2px;">${d.numIscrizioni} iscritti × 15€</div>
+      <div class="kpi-band" style="margin:14px 0 20px;">
+        <div class="kpi">
+          <div class="kpi-label">💰 Ricavi totali</div>
+          <div class="kpi-value accent">€${d.ricavoTotale}</div>
+          <div class="kpi-target">Iscrizioni + quota extra aste</div>
         </div>
-        <div style="flex:1; min-width:180px; background:var(--bg-elev-2); border:1px solid var(--pos); border-radius:8px; padding:12px 16px;">
-          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🔨 Quota extra aste</div>
-          <div style="font-family:var(--font-display); font-size:22px; font-weight:800; color:var(--pos);">€${d.ricavoAste}</div>
-          <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:2px;">I 5€ oltre al montepremio</div>
+        <div class="kpi">
+          <div class="kpi-label">💸 Costi totali</div>
+          <div class="kpi-value" style="color:var(--neg);">€${d.totaleCostiSostenuti}</div>
+          <div class="kpi-target">${d.totaleCostiPrevisti > 0 ? `+ €${d.totaleCostiPrevisti} previsti` : 'Nessun costo previsto in più'}</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">${d.utile >= 0 ? '📈' : '📉'} Utile netto</div>
+          <div class="kpi-value" style="color:${d.utile >= 0 ? 'var(--pos)' : 'var(--neg)'};">€${d.utile}</div>
+          <div class="kpi-target">Ricavi meno costi sostenuti</div>
         </div>
       </div>
-      <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:8px;">Il montepremio delle aste (20€ a persona) non è ricavo: va ridistribuito al vincitore. Il FantaListone non è incluso qui.</div>
-    </div>
 
-    <div class="panel" style="margin-bottom:20px;">
-      <div class="panel-title"><span class="material-symbols-rounded" style="color:var(--neg);">receipt_long</span> Costi</div>
-      <div class="panel-sub">Inseriti a mano — aggiungine uno chiedendomi di aggiornare la lista</div>
-      <div style="overflow-x:auto; margin-top:8px;">
-        <table style="width:100%; border-collapse:collapse; font-size:12.5px; text-align:left;">
-          <thead>
-            <tr style="border-bottom:1px solid var(--line); color:var(--ink-soft); font-family:var(--font-mono); font-size:10px; text-transform:uppercase;">
-              <th style="padding:8px 10px; font-weight:600;">Mese</th>
-              <th style="padding:8px 10px; font-weight:600;">Voce</th>
-              <th style="padding:8px 10px; font-weight:600; text-align:right;">Importo</th>
-            </tr>
-          </thead>
-          <tbody>${costiRowsHtml}</tbody>
-          <tfoot>
-            <tr style="border-top:2px solid var(--line-strong); font-weight:700;">
-              <td colspan="2" style="padding:10px; color:var(--ink);">Totale sostenuti</td>
-              <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--neg);">€${d.totaleCostiSostenuti}</td>
-            </tr>
-          </tfoot>
-        </table>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;">
+        <div>
+          <div style="font-family:var(--font-mono); font-size:10px; color:var(--pos); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px;">Ricavi</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:12px 16px;">
+              <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🎟️ Iscrizioni gruppo</div>
+              <div style="font-family:var(--font-display); font-size:22px; font-weight:800; color:var(--ink-soft);">€${d.ricavoIscrizioni}</div>
+              <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:2px;">${d.numIscrizioni} iscritti</div>
+            </div>
+            <div style="background:var(--bg-elev-2); border:1px solid var(--pos); border-radius:8px; padding:12px 16px;">
+              <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🔨 Quota extra aste</div>
+              <div style="font-family:var(--font-display); font-size:22px; font-weight:800; color:var(--pos);">€${d.ricavoAste}</div>
+              <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:2px;">I 5€ oltre al montepremio</div>
+            </div>
+          </div>
+          <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:10px;">Il montepremio delle aste non è ricavo: va ridistribuito al vincitore. Il FantaListone non è incluso qui.</div>
+        </div>
+
+        <div>
+          <div style="font-family:var(--font-mono); font-size:10px; color:var(--neg); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px;">Costi</div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:12.5px; text-align:left;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--line); color:var(--ink-soft); font-family:var(--font-mono); font-size:10px; text-transform:uppercase;">
+                  <th style="padding:8px 10px; font-weight:600;">Mese</th>
+                  <th style="padding:8px 10px; font-weight:600;">Voce</th>
+                  <th style="padding:8px 10px; font-weight:600; text-align:right;">Importo</th>
+                </tr>
+              </thead>
+              <tbody>${costiRowsHtml}</tbody>
+              <tfoot>
+                <tr style="border-top:2px solid var(--line-strong); font-weight:700;">
+                  <td colspan="2" style="padding:10px; color:var(--ink);">Totale sostenuti</td>
+                  <td style="padding:10px; text-align:right; font-family:var(--font-mono); color:var(--neg);">€${d.totaleCostiSostenuti}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
-    <p style="font-family:var(--font-mono); font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:0.04em; margin:24px 0 4px;">Saldo PayPal</p>
     <div class="panel">
-      <div class="panel-title"><span class="material-symbols-rounded" style="color:var(--accent);">account_balance_wallet</span> Quanto dovremmo avere sul conto</div>
+      <div class="panel-title"><span class="material-symbols-rounded" style="color:var(--accent);">account_balance_wallet</span> Saldo PayPal</div>
       <div class="panel-sub">Tutto l'incassato, senza filtri di data — montepremio delle aste compreso, perché è ancora lì finché non lo versiamo al vincitore</div>
-      <div class="kpi-band" style="margin:12px 0 12px;">
+
+      <div class="kpi-band" style="margin:14px 0 16px;">
         <div class="kpi">
           <div class="kpi-label">💳 Incassato totale</div>
           <div class="kpi-value accent">€${d.incassoComplessivo}</div>
-          <div class="kpi-target">Iscrizioni + aste intere + FantaListone</div>
+          <div class="kpi-target">Iscrizioni + aste + FantaListone</div>
         </div>
         <div class="kpi">
           <div class="kpi-label">💸 Costi sostenuti</div>
@@ -217,23 +221,26 @@ function renderProfitContent(d) {
           <div class="kpi-target">Incassato meno costi</div>
         </div>
       </div>
-      <div style="display:flex; gap:12px; flex-wrap:wrap;">
-        <div style="flex:1; min-width:150px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 14px;">
-          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🎟️ Iscrizioni</div>
-          <div style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink-soft);">€${d.incassoIscrizioniTotale}</div>
-          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); margin-top:2px;">${d.numIscrizioniTotale} iscritti, sempre</div>
-        </div>
-        <div style="flex:1; min-width:150px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 14px;">
-          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🔨 Aste (intere)</div>
-          <div style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink-soft);">€${d.incassoAsteTotale}</div>
-          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); margin-top:2px;">Quote da 20€ e 25€, tutte</div>
-        </div>
-        <div style="flex:1; min-width:150px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 14px;">
-          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🏆 FantaListone</div>
-          <div style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink-soft);">€${d.incassoFantalistone}</div>
-          <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); margin-top:2px;">${d.fantalistoneCount} iscritti × 10€</div>
-        </div>
-      </div>
+
+      <table style="width:100%; border-collapse:collapse; font-size:13px;">
+        <tbody>
+          <tr style="border-bottom:1px solid var(--line);">
+            <td style="padding:9px 4px; color:var(--ink);">🎟️ Iscrizioni</td>
+            <td style="padding:9px 4px; color:var(--ink-mute); font-family:var(--font-mono); font-size:11px;">${d.numIscrizioniTotale} iscritti</td>
+            <td style="padding:9px 4px; text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--ink-soft);">€${d.incassoIscrizioniTotale}</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--line);">
+            <td style="padding:9px 4px; color:var(--ink);">🔨 Aste</td>
+            <td style="padding:9px 4px; color:var(--ink-mute); font-family:var(--font-mono); font-size:11px;">Tutte le quote</td>
+            <td style="padding:9px 4px; text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--ink-soft);">€${d.incassoAsteTotale}</td>
+          </tr>
+          <tr>
+            <td style="padding:9px 4px; color:var(--ink);">🏆 FantaListone</td>
+            <td style="padding:9px 4px; color:var(--ink-mute); font-family:var(--font-mono); font-size:11px;">${d.fantalistoneCount} iscritti × 10€</td>
+            <td style="padding:9px 4px; text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--ink-soft);">€${d.incassoFantalistone}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   `;
 }
