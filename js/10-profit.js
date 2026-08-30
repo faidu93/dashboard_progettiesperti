@@ -109,7 +109,17 @@ async function loadProfitData() {
       saldoPaypal,
     });
   } catch (e) {
-    box.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:24px 0;text-align:center;">Impossibile caricare il conto economico: ${e.message}</div>`;
+    // Errori di rete transitori (es. "Load failed") capitano — un pulsante per
+    // riprovare sul colpo è meglio che dover cambiare tab e tornare indietro.
+    box.innerHTML = `
+      <div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:24px 0;text-align:center;">
+        Impossibile caricare il conto economico: ${e.message}
+        <div style="margin-top:12px;">
+          <button onclick="loadProfitData()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg-elev-2);border:1px solid var(--line-strong);border-radius:6px;color:var(--ink);font-size:12px;font-family:var(--font-body);cursor:pointer;">
+            <span class="material-symbols-rounded" style="font-size:15px;">refresh</span> Riprova
+          </button>
+        </div>
+      </div>`;
   }
 }
 
@@ -203,7 +213,7 @@ function renderProfitContent(d) {
         </div>
         <div class="kpi">
           <div class="kpi-label">🏦 Saldo atteso</div>
-          <div class="kpi-value" style="color:var(--pos);">€${d.saldoPaypal}</div>
+          <div class="kpi-value" style="color:${d.saldoPaypal >= 0 ? 'var(--pos)' : 'var(--neg)'};">€${d.saldoPaypal}</div>
           <div class="kpi-target">Incassato meno costi</div>
         </div>
       </div>
