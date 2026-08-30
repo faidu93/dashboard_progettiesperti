@@ -136,9 +136,13 @@ function renderProfitContent(d) {
   `).join('');
 
   const fmtEuro = n => Number.isInteger(n) ? n : n.toFixed(2);
-  const quotaProfeta = d.utile * 0.20;
-  const quotaDirezionale = d.utile * 0.40;
-  const quotaEsperti = d.utile * 0.40;
+  // Suddivisione dei ricavi (non dell'utile netto: nessuna sottrazione costi qui):
+  // le iscrizioni gruppo si dividono 20% Profeta / 40% Direzionale / 40% Esperti;
+  // la quota extra aste va solo a Direzionale ed Esperti, 50/50 (il Profeta non
+  // ne prende parte).
+  const quotaProfeta = d.ricavoIscrizioni * 0.20;
+  const quotaDirezionale = d.ricavoIscrizioni * 0.40 + d.ricavoAste * 0.50;
+  const quotaEsperti = d.ricavoIscrizioni * 0.40 + d.ricavoAste * 0.50;
 
   box.innerHTML = `
     <div class="panel" style="margin-bottom:28px;">
@@ -197,18 +201,19 @@ function renderProfitContent(d) {
       </div>
 
       <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--line);">
-        <div style="font-family:var(--font-mono); font-size:10px; color:var(--accent); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px;">Suddivisione utile netto</div>
+        <div style="font-family:var(--font-mono); font-size:10px; color:var(--accent); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px;">Suddivisione ricavi</div>
+        <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); margin-bottom:8px;">Iscrizioni: 20% Profeta / 40% Direzionale / 40% Esperti · Quota extra aste: 50% Direzionale / 50% Esperti</div>
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
           <div style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 14px;">
-            <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">👤 Quota Profeta · 20%</div>
+            <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">👤 Quota Profeta</div>
             <div style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink-soft);">€${fmtEuro(quotaProfeta)}</div>
           </div>
           <div style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 14px;">
-            <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🧭 Gruppo Direzionale · 40%</div>
+            <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🧭 Gruppo Direzionale</div>
             <div style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink-soft);">€${fmtEuro(quotaDirezionale)}</div>
           </div>
           <div style="flex:1; min-width:140px; background:var(--bg-elev-2); border:1px solid var(--line); border-radius:8px; padding:10px 14px;">
-            <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🎙️ Gruppo Esperti · 40%</div>
+            <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); text-transform:uppercase;">🎙️ Gruppo Esperti</div>
             <div style="font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink-soft);">€${fmtEuro(quotaEsperti)}</div>
           </div>
         </div>
