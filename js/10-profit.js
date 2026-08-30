@@ -46,7 +46,7 @@ async function loadProfitData() {
   try {
     const [subRes, asteRes, flRes] = await Promise.all([
       fetch(`${BACKEND_BASE}/api/subscribers`, { headers: { 'X-Publish-Secret': secret } }),
-      fetch(`${BACKEND_BASE}/api/aste?action=summary`, { headers: { 'X-Publish-Secret': secret } }),
+      fetch(`${BACKEND_BASE}/api/aste?action=summary&notify=0`, { headers: { 'X-Publish-Secret': secret } }),
       fetch(`${BACKEND_BASE}/api/aste?action=fantalistone-count`, { headers: { 'X-Publish-Secret': secret } }),
     ]);
 
