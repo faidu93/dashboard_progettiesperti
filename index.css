@@ -227,6 +227,15 @@ body {
   font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-mute); margin-bottom: 20px;
   text-transform: uppercase; letter-spacing: 0.05em;
 }
+
+/* ============ PROFIT TAB (compact, riusate anche in altri riepiloghi) ============ */
+.mini-label { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute); text-transform: uppercase; }
+.mini-section-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+.mini-card { background: var(--bg-elev-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+.mini-value { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: var(--ink-soft); }
+.mini-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.mini-table td { padding: 7px 4px; }
+.mini-table tr + tr { border-top: 1px solid var(--line); }
 .chart-wrap { position: relative; width: 100%; }
 .chart-wrap.h-260 { height: 260px; }
 
