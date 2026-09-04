@@ -713,7 +713,11 @@ async function calHandleFiles(files) {
   const isCarousel = (platform === 'ig' && type === 'CAROUSEL_ALBUM');
 
   // Se non è carosello, carichiamo solo il primo file
-  const filesToUpload = isCarousel ? Array.from(files).slice(0, 10) : [files[0]];
+  // Limite caroselli: 10 elementi. L'app Instagram ne accetta 20, ma la Graph API
+  // usata per pubblicare i post programmati resta ferma a 10 — oltre viene rifiutato.
+  const allFiles = Array.from(files);
+  const wasTruncated = isCarousel && allFiles.length > 10;
+  const filesToUpload = isCarousel ? allFiles.slice(0, 10) : [files[0]];
 
   const status = document.getElementById('calUploadStatus');
   const prev = document.getElementById('calUploadPreview');
@@ -776,6 +780,9 @@ async function calHandleFiles(files) {
 
   const reorderHint = kinds.length > 1 ? ' · trascina le diapositive per riordinarle' : '';
   renderProgressBar('calUploadStatus', 100, `Caricamento completato (${urls.length} file)${reorderHint} ✓`, 'var(--pos)');
+  if (wasTruncated) {
+    status.innerHTML += `<div style="margin-top:6px;color:var(--accent);"><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;margin-right:4px;">warning</span>Selezionati ${allFiles.length} file, uso solo i primi 10 — limite carosello di Instagram (l'app ne mostra 20, ma la pubblicazione via API si ferma a 10).</div>`;
+  }
   if (removeBtn) removeBtn.style.display = 'inline-block';
 }
 
