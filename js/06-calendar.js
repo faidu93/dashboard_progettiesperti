@@ -441,10 +441,13 @@ function calRender() {
         title="YT · ${p.time||''} ${safeTitle}${hostSuffix} (trascina per spostare)">${calPostChip('yt', p.type||'VIDEO', (p.time?p.time.slice(0,5)+' ':'')+safeTitle)}</div>`;
     });
 
+    // La label del giorno settimana serve solo alla vista agenda mobile (il
+    // grid da desktop la mostra già una volta sola in cima, in .cal-dow).
+    const dowLabel = DOW[(date.getDay() + 6) % 7];
     h += `<div class="cal-day${cls}" data-date="${ds}"
       onclick="calDayClick(event,'${ds}')"
       ondragover="calDragOver(event)" ondrop="calDrop(event)" ondragleave="calDragLeave(event)">
-      <span class="cal-day-num">${day}</span>
+      <span class="cal-day-num">${day}<span class="cal-day-dow">${dowLabel}${isToday ? ' · oggi' : ''}</span></span>
       ${posts}
       <div class="cal-plus">+</div>
     </div>`;
