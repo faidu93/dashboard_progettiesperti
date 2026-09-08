@@ -140,15 +140,16 @@ function renderProfitContent(d) {
   `).join('');
 
   const fmtEuro = n => Number.isInteger(n) ? n : n.toFixed(2);
-  // Suddivisione dei ricavi (non dell'utile netto: nessuna sottrazione costi qui):
-  // base nominale iscrizioni = iscritti × 15€ (non la somma reale incassata, che
-  // varia perché ognuno versa cifre diverse). Il Profeta prende il 20% di quella
-  // base; l'80% restante va diviso 50/50 tra Direzionale ed Esperti, che si
-  // dividono in più anche la quota extra aste (5€/asta), sempre 50/50.
-  const baseIscrizioni = d.numIscrizioni * 15;
-  const quotaProfeta = baseIscrizioni * 0.20;
-  const restanteBase = baseIscrizioni * 0.80;
-  const quotaGruppo = restanteBase / 2 + d.ricavoAste / 2;
+  // Suddivisione dell'utile netto (i costi si sottraggono qui, non prima):
+  // 1) ricavo iscrizioni MENO i costi sostenuti = "netto iscrizioni", diviso
+  //    20% Profeta / 40% Direzionale / 40% Esperti.
+  // 2) quota extra aste (5€/asta) NON tocca il Profeta: va per intero divisa
+  //    50/50 tra Direzionale ed Esperti.
+  // Per costruzione Profeta + Direzionale + Esperti == utile netto (i costi
+  // sono sottratti una sola volta, dal solo netto iscrizioni).
+  const nettoIscrizioni = d.ricavoIscrizioni - d.totaleCostiSostenuti;
+  const quotaProfeta = nettoIscrizioni * 0.20;
+  const quotaGruppo = nettoIscrizioni * 0.40 + d.ricavoAste * 0.50;
 
   box.innerHTML = `
     <div class="panel" style="margin-bottom:28px;">
@@ -208,7 +209,7 @@ function renderProfitContent(d) {
 
       <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--line);">
         <div class="mini-section-label" style="color:var(--accent);">Suddivisione ricavi</div>
-        <div class="mini-label" style="margin-bottom:8px; text-transform:none;">Base iscrizioni: ${d.numIscrizioni} × 15€ = ${fmtEuro(baseIscrizioni)}€ · Profeta 20% · Restante 80% + quota extra aste diviso 50/50 tra Direzionale ed Esperti</div>
+        <div class="mini-label" style="margin-bottom:8px; text-transform:none;">Netto iscrizioni (${fmtEuro(d.ricavoIscrizioni)}€ − ${fmtEuro(d.totaleCostiSostenuti)}€ costi = ${fmtEuro(nettoIscrizioni)}€): 20% Profeta · 40% Direzionale · 40% Esperti. Quota extra aste: 50/50 Direzionale/Esperti, Profeta escluso.</div>
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
           <div class="mini-card" style="flex:1; min-width:140px;">
             <div class="mini-label">👤 Quota Profeta</div>
