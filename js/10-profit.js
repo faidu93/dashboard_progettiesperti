@@ -29,6 +29,7 @@ const PROFIT_COSTI = [
   { mese: 'Agosto 2026', descrizione: 'Editor', importo: 55 },
   { mese: 'Settembre 2026', descrizione: 'ChatGPT', importo: 23 },
   { mese: 'Settembre 2026', descrizione: 'Streamyard', importo: 45 },
+  { mese: 'Settembre 2026', descrizione: 'Claude', importo: 22 },
 ];
 
 async function loadProfitData() {
