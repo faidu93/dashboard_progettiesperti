@@ -141,13 +141,14 @@ function renderProfitContent(d) {
 
   const fmtEuro = n => Number.isInteger(n) ? n : n.toFixed(2);
   // Suddivisione dei ricavi (non dell'utile netto: nessuna sottrazione costi qui):
-  // la quota del Profeta è fissa, il numero di iscritti × 15€ nominali (non la
-  // somma reale incassata, che varia perché ognuno versa cifre diverse). Tutto
-  // il resto (iscrizioni oltre i 15€ nominali + quota extra aste) è "il
-  // restante", diviso 50/50 tra Gruppo Direzionale e Gruppo Esperti.
-  const quotaProfeta = d.numIscrizioni * 15;
-  const restante = d.ricavoTotale - quotaProfeta;
-  const quotaGruppo = restante / 2;
+  // base nominale iscrizioni = iscritti × 15€ (non la somma reale incassata, che
+  // varia perché ognuno versa cifre diverse). Il Profeta prende il 20% di quella
+  // base; l'80% restante va diviso 50/50 tra Direzionale ed Esperti, che si
+  // dividono in più anche la quota extra aste (5€/asta), sempre 50/50.
+  const baseIscrizioni = d.numIscrizioni * 15;
+  const quotaProfeta = baseIscrizioni * 0.20;
+  const restanteBase = baseIscrizioni * 0.80;
+  const quotaGruppo = restanteBase / 2 + d.ricavoAste / 2;
 
   box.innerHTML = `
     <div class="panel" style="margin-bottom:28px;">
@@ -207,7 +208,7 @@ function renderProfitContent(d) {
 
       <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--line);">
         <div class="mini-section-label" style="color:var(--accent);">Suddivisione ricavi</div>
-        <div class="mini-label" style="margin-bottom:8px; text-transform:none;">Profeta: ${d.numIscrizioni} iscritti × 15€ · Il restante (${fmtEuro(restante)}€) diviso 50/50 tra Direzionale ed Esperti</div>
+        <div class="mini-label" style="margin-bottom:8px; text-transform:none;">Base iscrizioni: ${d.numIscrizioni} × 15€ = ${fmtEuro(baseIscrizioni)}€ · Profeta 20% · Restante 80% + quota extra aste diviso 50/50 tra Direzionale ed Esperti</div>
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
           <div class="mini-card" style="flex:1; min-width:140px;">
             <div class="mini-label">👤 Quota Profeta</div>
