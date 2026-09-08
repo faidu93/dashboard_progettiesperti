@@ -16,6 +16,8 @@ const PROFIT_PERIOD_START = '2026-06-01';
 
 // FantaListone: quota fissa, nessuna colonna importo nel foglio.
 const FANTALISTONE_QUOTA = 10;
+// Un iscritto risulta nel foglio ma non paga la quota — va escluso dall'incasso.
+const FANTALISTONE_NON_PAGANTI = 1;
 
 // Costi fissi della stagione, inseriti a mano (nessun foglio li tiene — se ne
 // aggiungi uno nuovo, aggiungi una riga qui). "previsto: true" = costo atteso
@@ -93,7 +95,8 @@ async function loadProfitData() {
     //     ancora fisicamente sul conto finché non viene versato al vincitore). ---
     const incassoIscrizioniTotale = subscribers.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
     const incassoAsteTotale = asteRows.reduce((sum, r) => sum + (r.totale || 0), 0);
-    const incassoFantalistone = fantalistoneCount * FANTALISTONE_QUOTA;
+    const fantalistonePaganti = Math.max(0, fantalistoneCount - FANTALISTONE_NON_PAGANTI);
+    const incassoFantalistone = fantalistonePaganti * FANTALISTONE_QUOTA;
     const incassoComplessivo = incassoIscrizioniTotale + incassoAsteTotale + incassoFantalistone;
     const saldoPaypal = incassoComplessivo - totaleCostiSostenuti;
 
@@ -105,7 +108,7 @@ async function loadProfitData() {
       utile,
       incassoIscrizioniTotale, numIscrizioniTotale: subscribers.length,
       incassoAsteTotale,
-      incassoFantalistone, fantalistoneCount,
+      incassoFantalistone, fantalistoneCount, fantalistonePaganti,
       incassoComplessivo,
       saldoPaypal,
     });
@@ -256,7 +259,7 @@ function renderProfitContent(d) {
           </tr>
           <tr>
             <td style="color:var(--ink);">🏆 FantaListone</td>
-            <td style="color:var(--ink-mute); font-family:var(--font-mono); font-size:11px;">${d.fantalistoneCount} iscritti × 10€</td>
+            <td style="color:var(--ink-mute); font-family:var(--font-mono); font-size:11px;">${d.fantalistonePaganti} paganti × 10€ (${d.fantalistoneCount} iscritti)</td>
             <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--ink-soft);">€${d.incassoFantalistone}</td>
           </tr>
         </tbody>
