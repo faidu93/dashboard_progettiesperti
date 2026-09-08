@@ -34,13 +34,24 @@ const PROFIT_COSTI = [
   { mese: 'Settembre 2026', descrizione: 'Claude', importo: 22 },
 ];
 
-async function loadProfitData() {
+// Evita di rifare tutte le chiamate (iscritti + aste + FantaListone) ogni
+// volta che si riapre il tab Profit andando avanti e indietro — entro questa
+// finestra i dati già in memoria bastano.
+let profitCache = null; // { data, ts }
+const PROFIT_CACHE_TTL_MS = 45 * 1000;
+
+async function loadProfitData(force) {
   const box = document.getElementById('profitContent');
   if (!box) return;
 
   const secret = getPublishSecret();
   if (!secret) {
     box.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:24px 0;text-align:center;">Inserisci la password di pubblicazione per vedere il conto economico.</div>';
+    return;
+  }
+
+  if (!force && profitCache && (Date.now() - profitCache.ts) < PROFIT_CACHE_TTL_MS) {
+    renderProfitContent(profitCache.data);
     return;
   }
 
@@ -100,7 +111,7 @@ async function loadProfitData() {
     const incassoComplessivo = incassoIscrizioniTotale + incassoAsteTotale + incassoFantalistone;
     const saldoPaypal = incassoComplessivo - totaleCostiSostenuti;
 
-    renderProfitContent({
+    const d = {
       ricavoIscrizioni, numIscrizioni: iscrizioniStagione.length,
       ricavoAste,
       ricavoTotale,
@@ -111,7 +122,9 @@ async function loadProfitData() {
       incassoFantalistone, fantalistoneCount, fantalistonePaganti,
       incassoComplessivo,
       saldoPaypal,
-    });
+    };
+    profitCache = { data: d, ts: Date.now() };
+    renderProfitContent(d);
   } catch (e) {
     // Errori di rete transitori (es. "Load failed") capitano — un pulsante per
     // riprovare sul colpo è meglio che dover cambiare tab e tornare indietro.
@@ -119,7 +132,7 @@ async function loadProfitData() {
       <div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:24px 0;text-align:center;">
         Impossibile caricare il conto economico: ${e.message}
         <div style="margin-top:12px;">
-          <button onclick="loadProfitData()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg-elev-2);border:1px solid var(--line-strong);border-radius:6px;color:var(--ink);font-size:12px;font-family:var(--font-body);cursor:pointer;">
+          <button onclick="loadProfitData(true)" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg-elev-2);border:1px solid var(--line-strong);border-radius:6px;color:var(--ink);font-size:12px;font-family:var(--font-body);cursor:pointer;">
             <span class="material-symbols-rounded" style="font-size:15px;">refresh</span> Riprova
           </button>
         </div>

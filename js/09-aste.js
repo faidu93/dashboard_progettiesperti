@@ -3,7 +3,11 @@
 // Dipendenze: 01-api.js (BACKEND_BASE), 02-instagram-publish.js (getPublishSecret)
 // ============================================================================
 
-let asteCache = { tabs: [], selectedGid: null, summary: null };
+let asteCache = { tabs: [], selectedGid: null, summary: null, summaryTs: 0 };
+// Evita di rifare tutte le chiamate (CSV Google Sheet + notifica Telegram) ogni
+// volta che si riapre il tab Aste andando avanti e indietro — entro questa
+// finestra il riepilogo già in memoria basta.
+const ASTE_SUMMARY_TTL_MS = 45 * 1000;
 
 // Barra di caricamento in cima alla tab Aste — finché non si vede la barra
 // completarsi non è chiaro se i dati sono ancora in arrivo o già aggiornati.
@@ -70,7 +74,7 @@ async function refreshAsteQuietly() {
   try { secret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch (e) {}
   if (!secret || asteCache.tabs.length === 0) return;
   try {
-    await loadAsteSummary();
+    await loadAsteSummary(true);
     if (asteCache.selectedGid) await loadAsteData(asteCache.selectedGid);
   } catch (e) {
     console.warn('Aggiornamento aste fallito:', e.message);
@@ -131,13 +135,18 @@ function selectAstaFromSummary(gid) {
   document.getElementById('asteContent')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-async function loadAsteSummary() {
+async function loadAsteSummary(force) {
   const box = document.getElementById('asteSummary');
   if (!box) return;
 
   const secret = getPublishSecret();
   if (!secret) {
     box.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:16px 0;text-align:center;">Inserisci la password di pubblicazione per vedere il riepilogo.</div>';
+    return;
+  }
+
+  if (!force && asteCache.summary && (Date.now() - asteCache.summaryTs) < ASTE_SUMMARY_TTL_MS) {
+    renderAsteSummary(asteCache.summary);
     return;
   }
 
@@ -152,6 +161,7 @@ async function loadAsteSummary() {
       throw new Error(j.error || `HTTP ${res.status}`);
     }
     asteCache.summary = Array.isArray(j.aste) ? j.aste : [];
+    asteCache.summaryTs = Date.now();
     renderAsteSummary(asteCache.summary);
   } catch (e) {
     box.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:16px 0;text-align:center;">Impossibile caricare il riepilogo: ${e.message}</div>`;
