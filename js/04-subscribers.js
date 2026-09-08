@@ -59,7 +59,7 @@ async function unlockSubscribers() {
   if (btn) { btn.textContent = 'Verifica in corso...'; btn.disabled = true; }
   
   try {
-    const res = await fetch(`${BACKEND_BASE}/api/subscribers`, {
+    const res = await fetchWithRetry(`${BACKEND_BASE}/api/subscribers`, {
       headers: { 'X-Publish-Secret': pw }
     });
     if (res.ok) {
@@ -417,7 +417,7 @@ async function onSubscribersRefresh() {
   if (typeof refreshAsteQuietly === 'function') refreshAsteQuietly();
 
   try {
-    const subRes = await fetch(`${BACKEND_BASE}/api/subscribers`, {
+    const subRes = await fetchWithRetry(`${BACKEND_BASE}/api/subscribers`, {
       headers: { 'X-Publish-Secret': savedSecret }
     });
     if (subRes.ok) {

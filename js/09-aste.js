@@ -98,7 +98,7 @@ async function loadAsteTabs() {
   if (asteCache.tabs.length === 0) {
     sel.innerHTML = '<option value="">Caricamento…</option>';
     try {
-      const res = await fetch(`${BACKEND_BASE}/api/aste?action=list`, { headers: { 'X-Publish-Secret': secret } });
+      const res = await fetchWithRetry(`${BACKEND_BASE}/api/aste?action=list`, { headers: { 'X-Publish-Secret': secret } });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || j.error) {
         if (res.status === 401) clearPublishSecret();
@@ -107,7 +107,10 @@ async function loadAsteTabs() {
       asteCache.tabs = Array.isArray(j.aste) ? j.aste : [];
     } catch (e) {
       sel.innerHTML = '<option value="">Errore caricamento</option>';
-      content.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:24px 0;text-align:center;">Impossibile caricare l'elenco aste: ${e.message}</div>`;
+      content.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:24px 0;text-align:center;">
+        Impossibile caricare l'elenco aste: ${e.message}
+        <div style="margin-top:12px;"><button onclick="loadAsteTabs()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg-elev-2);border:1px solid var(--line-strong);border-radius:6px;color:var(--ink);font-size:12px;font-family:var(--font-body);cursor:pointer;"><span class="material-symbols-rounded" style="font-size:15px;">refresh</span> Riprova</button></div>
+      </div>`;
       return;
     }
   }
@@ -154,7 +157,7 @@ async function loadAsteSummary(force) {
 
   asteProgressStart();
   try {
-    const res = await fetch(`${BACKEND_BASE}/api/aste?action=summary`, { headers: { 'X-Publish-Secret': secret } });
+    const res = await fetchWithRetry(`${BACKEND_BASE}/api/aste?action=summary`, { headers: { 'X-Publish-Secret': secret } });
     const j = await res.json().catch(() => ({}));
     if (!res.ok || j.error) {
       if (res.status === 401) clearPublishSecret();
@@ -164,7 +167,10 @@ async function loadAsteSummary(force) {
     asteCache.summaryTs = Date.now();
     renderAsteSummary(asteCache.summary);
   } catch (e) {
-    box.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:16px 0;text-align:center;">Impossibile caricare il riepilogo: ${e.message}</div>`;
+    box.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:16px 0;text-align:center;">
+      Impossibile caricare il riepilogo: ${e.message}
+      <div style="margin-top:12px;"><button onclick="loadAsteSummary(true)" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg-elev-2);border:1px solid var(--line-strong);border-radius:6px;color:var(--ink);font-size:12px;font-family:var(--font-body);cursor:pointer;"><span class="material-symbols-rounded" style="font-size:15px;">refresh</span> Riprova</button></div>
+    </div>`;
   } finally {
     asteProgressDone();
   }
@@ -274,7 +280,7 @@ async function loadAsteData(gid) {
 
   asteProgressStart();
   try {
-    const res = await fetch(`${BACKEND_BASE}/api/aste?action=data&gid=${encodeURIComponent(gid)}${nameParam}`, { headers: { 'X-Publish-Secret': secret } });
+    const res = await fetchWithRetry(`${BACKEND_BASE}/api/aste?action=data&gid=${encodeURIComponent(gid)}${nameParam}`, { headers: { 'X-Publish-Secret': secret } });
     const j = await res.json().catch(() => ({}));
     if (!res.ok || j.error) {
       if (res.status === 401) clearPublishSecret();
@@ -282,7 +288,10 @@ async function loadAsteData(gid) {
     }
     renderAsteContent(j);
   } catch (e) {
-    content.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:24px 0;text-align:center;">Errore caricamento dati: ${e.message}</div>`;
+    content.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:24px 0;text-align:center;">
+      Errore caricamento dati: ${e.message}
+      <div style="margin-top:12px;"><button onclick="loadAsteData('${gid}')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg-elev-2);border:1px solid var(--line-strong);border-radius:6px;color:var(--ink);font-size:12px;font-family:var(--font-body);cursor:pointer;"><span class="material-symbols-rounded" style="font-size:15px;">refresh</span> Riprova</button></div>
+    </div>`;
   } finally {
     asteProgressDone();
   }

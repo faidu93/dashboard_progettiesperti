@@ -18,10 +18,26 @@ const BACKEND_BASE = (() => {
   catch(e) { return 'https://dashboard-esperti-backend.vercel.app'; }
 })();
 
+// Wrapper attorno a fetch() con retry automatico e backoff — pensato per
+// connessioni mobile ballerine (4G in giro, wifi che cade un attimo): un
+// singolo blip di rete non deve più costringere l'utente a premere "Riprova"
+// a mano. Riprova solo su errori di rete/timeout, MAI su risposte HTTP valide
+// (401/404/500 non sono blip, sono errori reali da mostrare subito).
+async function fetchWithRetry(url, opts = {}, retries = 2, delayMs = 700) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fetch(url, opts);
+    } catch (e) {
+      if (attempt >= retries) throw e;
+      await new Promise(r => setTimeout(r, delayMs * (attempt + 1)));
+    }
+  }
+}
+
 // Chiama un endpoint del backend Vercel e restituisce il JSON.
 async function fetchBackend(path) {
   const url = `${BACKEND_BASE}${path}`;
-  const res = await fetch(url);
+  const res = await fetchWithRetry(url);
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error(`HTTP ${res.status} — ${body.slice(0, 200)}`);

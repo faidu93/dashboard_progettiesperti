@@ -47,7 +47,7 @@ async function init() {
       });
 
     const subPromise = savedSecret
-      ? fetch(`${BACKEND_BASE}/api/subscribers`, { headers: { 'X-Publish-Secret': savedSecret } })
+      ? fetchWithRetry(`${BACKEND_BASE}/api/subscribers`, { headers: { 'X-Publish-Secret': savedSecret } })
           .then(res => res.ok ? res.json() : (res.status === 401 ? { unauthorized: true } : { error: true }))
           .catch(e => ({ error: true }))
       : Promise.resolve({ unauthorized: true });
