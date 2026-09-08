@@ -139,12 +139,12 @@ function resetSubscribersHTML() {
       <!-- Economics & Andamento -->
       <div class="panel" style="display:flex; flex-direction:column; gap:16px;">
         <div>
-          <div class="panel-title" style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="panel-title" style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px;">
             <span style="display:flex; align-items:center; gap:8px;">
               <span class="material-symbols-rounded" style="color:var(--accent);">insights</span>
               Economics & Andamento
             </span>
-            <select id="subPeriodType" onchange="onSubscribersPeriodChange()" style="padding:6px 10px; background:var(--bg-elev-2); border:1px solid var(--line-strong); border-radius:5px; color:var(--ink-soft); font-size:12px; font-family:var(--font-body); cursor:pointer;">
+            <select id="subPeriodType" onchange="onSubscribersPeriodChange()" style="padding:6px 10px; background:var(--bg-elev-2); border:1px solid var(--line-strong); border-radius:5px; color:var(--ink-soft); font-size:12px; font-family:var(--font-body); cursor:pointer; max-width:100%;">
               <option value="daily">Distribuzione Giornaliera</option>
               <option value="weekly">Distribuzione Settimanale</option>
               <option value="monthly">Distribuzione Mensile</option>
@@ -178,7 +178,7 @@ function resetSubscribersHTML() {
       <!-- Anagrafica & Ricerca -->
       <div class="panel" style="display:flex; flex-direction:column; gap:16px;">
         <div>
-          <div class="panel-title" style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="panel-title" style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px;">
             <span style="display:flex; align-items:center; gap:8px;">
               <span class="material-symbols-rounded" style="color:var(--info);">search</span>
               Anagrafica Iscritti
@@ -202,9 +202,9 @@ function resetSubscribersHTML() {
           <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left;">
             <thead>
               <tr style="border-bottom:1px solid var(--line); color:var(--ink-soft); font-family:var(--font-mono); font-size:10px; text-transform:uppercase;">
-                <th style="padding:8px 0; font-weight:600;">Data</th>
-                <th style="padding:8px 0; font-weight:600;">Nome & Cognome</th>
-                <th style="padding:8px 0; font-weight:600; text-align:center;">Donazione</th>
+                <th style="padding:8px 8px 8px 0; font-weight:600;">Data</th>
+                <th style="padding:8px 8px 8px 0; font-weight:600;">Nome & Cognome</th>
+                <th style="padding:8px 8px 8px 0; font-weight:600; text-align:center;">Donazione</th>
                 <th style="padding:8px 0; font-weight:600; text-align:right;">Telegram</th>
               </tr>
             </thead>
@@ -335,9 +335,9 @@ function renderSubscribersTablePage() {
     const amountVal = s.amount !== undefined ? `${s.amount.toLocaleString('it-IT')} €` : '15 €';
     return `
       <tr style="border-bottom:1px solid var(--line); transition:background 0.15s;">
-        <td style="padding:11px 0;color:var(--ink-soft);font-family:var(--font-mono);font-size:11.5px;">${dateStr}</td>
-        <td style="padding:11px 0;color:var(--ink);font-weight:500;">${s.name}</td>
-        <td style="padding:11px 0;text-align:center;color:var(--ink);font-family:var(--font-mono);">${amountVal}</td>
+        <td style="padding:11px 8px 11px 0;color:var(--ink-soft);font-family:var(--font-mono);font-size:11.5px;">${dateStr}</td>
+        <td style="padding:11px 8px 11px 0;color:var(--ink);font-weight:500;">${s.name}</td>
+        <td style="padding:11px 8px 11px 0;text-align:center;color:var(--ink);font-family:var(--font-mono);">${amountVal}</td>
         <td style="padding:11px 0;text-align:right;font-family:var(--font-mono);font-size:12px;">${tgUsername}</td>
       </tr>
     `;
