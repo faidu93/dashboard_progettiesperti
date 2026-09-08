@@ -243,21 +243,15 @@ async function gcalInit() {
   }
   // gapi è caricato ma gapi.client potrebbe non esistere ancora — lo carico
   if (!gapi.client) {
-    console.log('[gcalInit] caricando gapi.client...');
-    gapi.load('client', () => {
-      console.log('[gcalInit] gapi.client caricato, riprendo init');
-      gcalInit();
-    });
+    gapi.load('client', () => gcalInit());
     return;
   }
-  console.log('[gcalInit] gapi.client pronto, init in corso');
   // Init GAPI con Calendar API (gapi.client è già pronto a questo punto)
   if (!gapi.client.calendar) {
     try {
       await gapi.client.init({
         discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
       });
-      console.log('[gcalInit] gapi.client.calendar inizializzato');
     } catch(e) {
       console.error('[gcalInit] GAPI init error:', e);
       return;
@@ -269,10 +263,8 @@ async function gcalInit() {
       client_id: GCAL_CLIENT_ID,
       scope: GCAL_SCOPES,
       callback: async (resp) => {
-        console.log('[token callback] response:', resp.error || 'success');
         if (resp.error) {
           if (resp.error === 'interaction_required' || resp.error === 'login_required' || resp.error === 'consent_required') {
-            console.log('[token callback] richiede interazione utente:', resp.error);
             gcalUpdateUI();
             return;
           }
@@ -303,7 +295,6 @@ async function gcalInit() {
             await gapi.client.init({
               discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
             });
-            console.log('[token callback] gapi.client.calendar inizializzato');
           } catch(e) {
             console.error('[token callback] gapi.client.init error:', e);
             alert('Errore inizializzazione Calendar API: ' + (e.message || 'sconosciuto'));
@@ -327,14 +318,11 @@ async function gcalInit() {
     // così a ogni refresh NON ripropongo il login se il token è ancora buono.
     const stillValid = savedToken && (Date.now() < expires - 2*60*1000);
 
-    console.log('[gcalInit] token cached:', !!savedToken, 'valid:', stillValid, 'expires in (s):', Math.round((expires - Date.now())/1000));
-
     if (stillValid) {
       // IMPORTANTE: setto il token in gapi PRIMA di marcare signed-in
       // Altrimenti gapi.client.calendar.X() chiamerebbe senza autenticazione
       gapi.client.setToken({ access_token: savedToken });
       gcalSignedIn = true;
-      console.log('[gcalInit] token ripristinato, signed in');
       gcalUpdateUI();
       gcalLoadEvents();
       if (!window.gcalRefreshInterval) {
@@ -342,12 +330,10 @@ async function gcalInit() {
       }
       gcalScheduleSilentRefresh(expires);
     } else if (localStorage.getItem('gcal_was_signed_in') === '1') {
-      console.log('[gcalInit] token scaduto/assente ma flag was_signed_in c’è, tento silent refresh');
       // L'utente si era loggato — tenta silent auth (no popup)
       gcalUpdateUI();
       setTimeout(() => gcalSilentRefresh(), 500);
     } else {
-      console.log('[gcalInit] primo accesso, mostro banner login');
       gcalUpdateUI();
     }
   } catch(e) { console.error('Token client init error:', e); gcalUpdateUI(); }
@@ -372,10 +358,7 @@ function gcalScheduleSilentRefresh(expiresAt) {
   if (window.gcalSilentRefreshTimer) clearTimeout(window.gcalSilentRefreshTimer);
   const msUntilRefresh = expiresAt - Date.now() - 60 * 1000; // 1 min prima
   if (msUntilRefresh > 0) {
-    window.gcalSilentRefreshTimer = setTimeout(() => {
-      console.log('Silent refresh del token Google...');
-      gcalSilentRefresh();
-    }, msUntilRefresh);
+    window.gcalSilentRefreshTimer = setTimeout(gcalSilentRefresh, msUntilRefresh);
   }
 }
 
@@ -406,18 +389,14 @@ function gcalLogout() {
 }
 
 async function gcalLoadEvents() {
-  if (!gcalSignedIn) { console.log('[gcalLoadEvents] skipped: not signed in'); return; }
-  if (typeof gapi === 'undefined' || !gapi.client || !gapi.client.calendar) {
-    console.log('[gcalLoadEvents] skipped: gapi not ready');
-    return;
-  }
+  if (!gcalSignedIn) return;
+  if (typeof gapi === 'undefined' || !gapi.client || !gapi.client.calendar) return;
   if (!gcalEnsureToken()) {
     console.warn('[gcalLoadEvents] token non disponibile');
     gcalSignedIn = false;
     gcalUpdateUI();
     return;
   }
-  console.log('[gcalLoadEvents] loading from', GCAL_CALENDAR_ID);
   try {
     const timeMin = new Date(Date.now() - 60*24*3600*1000).toISOString();
     const timeMax = new Date(Date.now() + 180*24*3600*1000).toISOString();
@@ -429,7 +408,6 @@ async function gcalLoadEvents() {
       orderBy: 'startTime'
     });
     gcalEvents = resp.result.items || [];
-    console.log('[gcalLoadEvents] loaded', gcalEvents.length, 'events');
     const countEl = document.getElementById('gcalEvtCount');
     if (countEl) countEl.textContent = gcalEvents.length;
     calRender(); ytRender();
@@ -437,7 +415,6 @@ async function gcalLoadEvents() {
     console.error('gcalLoadEvents error:', e);
     if (e?.status === 401 || e?.result?.error?.code === 401) {
       // Token scaduto → tento silent refresh PRIMA di sloggare l'utente
-      console.log('Token scaduto, tento silent refresh...');
       gcalSilentRefresh();
     }
   }
@@ -459,15 +436,12 @@ function gcalEnsureToken() {
   }
   const current = gapi.client.getToken();
   if (!current || current.access_token !== savedToken) {
-    console.log('[gcalEnsureToken] re-setto token in gapi');
     gapi.client.setToken({ access_token: savedToken });
   }
   return true;
 }
 
 async function gcalCreateEvent(platform, date, time, type, title, notes, host, queuePostId) {
-  console.log('[gcalCreateEvent] start', { platform, date, time, type, title, host });
-
   // Diagnostica preliminare
   if (typeof gapi === 'undefined' || !gapi.client) {
     const msg = 'Google API non caricata. Ricarica la pagina e riprova.';
@@ -510,14 +484,11 @@ async function gcalCreateEvent(platform, date, time, type, title, notes, host, q
     extendedProperties: { private: { platform, type, title, notes: notes||'', host: host||'', queuePostId: queuePostId||'' } }
   };
 
-  console.log('[gcalCreateEvent] sending', { calendarId: GCAL_CALENDAR_ID, resource });
-
   try {
     const resp = await gapi.client.calendar.events.insert({
       calendarId: GCAL_CALENDAR_ID,
       resource
     });
-    console.log('[gcalCreateEvent] success', resp.result);
     await gcalLoadEvents();
     return resp.result;
   } catch(e) {
@@ -543,7 +514,6 @@ async function gcalCreateEvent(platform, date, time, type, title, notes, host, q
 }
 
 async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes, host, queuePostId) {
-  console.log('[gcalUpdateEvent] start', { eventId, platform, date, time, type, host });
   if (typeof gapi === 'undefined' || !gapi.client || !gapi.client.calendar) {
     alert('Google API non caricata. Ricarica la pagina.'); return false;
   }
@@ -575,7 +545,6 @@ async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes
         extendedProperties: { private: { platform, type, title, notes: notes||'', host: host||'', queuePostId: queuePostId||'' } }
       }
     });
-    console.log('[gcalUpdateEvent] success');
     await gcalLoadEvents();
     return true;
   } catch(e) {
@@ -597,7 +566,6 @@ async function gcalUpdateEvent(eventId, platform, date, time, type, title, notes
 }
 
 async function gcalDeleteEvent(eventId) {
-  console.log('[gcalDeleteEvent] start', { eventId });
   if (typeof gapi === 'undefined' || !gapi.client || !gapi.client.calendar) {
     alert('Google API non caricata. Ricarica la pagina.'); return false;
   }
@@ -611,7 +579,6 @@ async function gcalDeleteEvent(eventId) {
   }
   try {
     await gapi.client.calendar.events.delete({ calendarId: GCAL_CALENDAR_ID, eventId });
-    console.log('[gcalDeleteEvent] success');
     await gcalLoadEvents();
     return true;
   } catch(e) {
