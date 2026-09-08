@@ -484,6 +484,7 @@ body {
 /* ──────────────────────────────────────────
    RESPONSIVE — tablet (≤1100px)
 ────────────────────────────────────────── */
+/* ---- Responsive: KPI band e funnel a 3 colonne poi impilati ---- */
 @media (max-width: 1100px) {
   .kpi-band { grid-template-columns: repeat(3, 1fr); }
   .funnel-bar { grid-template-columns: 1fr; }
@@ -605,6 +606,7 @@ body {
 /* ──────────────────────────────────────────
    RESPONSIVE — mobile piccolo (≤480px)
 ────────────────────────────────────────── */
+/* ---- Responsive: nav/container compattati, brand testuale nascosto ---- */
 @media (max-width: 480px) {
   .container { padding: 14px 10px 32px; }
   .nav-inner { padding: 10px 12px; }
@@ -668,6 +670,7 @@ body {
 /* ──────────────────────────────────────────
    RESPONSIVE — mobile minuscolo (≤360px)
 ────────────────────────────────────────── */
+/* ---- Responsive: schermi molto piccoli (iPhone SE) — kpi e tab compattati ---- */
 @media (max-width: 360px) {
   .container { padding: 10px 8px 28px; }
   .kpi-value { font-size: 28px; }
@@ -980,6 +983,7 @@ body {
   .cal-detail-caption { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; max-height: 100px; overflow-y: auto; }
   .cal-detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
+  /* ---- Responsive: calendario, celle giorno più basse ---- */
   @media (max-width: 768px) {
     .cal-day { min-height: 60px; padding: 5px; }
     .cal-post { font-size: 8.5px; }
@@ -1013,6 +1017,7 @@ body {
   section[data-tab] { display: none; }
   section[data-tab].tab-active { display: block; }
   /* Daily action e glossari non hanno data-tab, sempre visibili */
+  /* ---- Responsive: tab nav, solo icone senza etichetta testuale ---- */
   @media (max-width: 640px) {
     .tab-btn span.tab-label { display: none; }
     .tab-btn { padding: 10px; }
@@ -1206,6 +1211,7 @@ body {
   .trend-tag.format { background: rgba(54,201,118,0.15); color: var(--pos); }
   .trend-body { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
   .trend-body strong { color: var(--ink); font-weight: 600; }
+  /* ---- Responsive: trends grid a colonna singola ---- */
   @media (max-width: 768px) { .trends-grid { grid-template-columns: 1fr; } }
 
 
@@ -1233,6 +1239,7 @@ body {
 
   /* ============ ONBOARDING BANNER ============ */
   #onboardingBanner code { color: var(--ink); }
+  /* ---- Responsive: onboarding banner a colonna singola ---- */
   @media (max-width: 640px) {
     #onboardingBanner { padding: 16px 14px; }
     #onboardingBanner > div:last-child {
@@ -1248,6 +1255,7 @@ body {
      MOBILE OVERRIDES — fix completo per uso da telefono
      Touch target ≥44px, no zoom iOS, modal scrollabili, no overflow
      ============================================================ */
+  /* ---- Responsive: touch target >=44px su tutti i bottoni interattivi ---- */
   @media (max-width: 768px) {
     /* === TOUCH TARGETS: tutti i bottoni interattivi ≥44px === */
     .cal-btn, .nav-btn, .btn-primary, .tab-btn, .cal-filter,
@@ -1381,6 +1389,7 @@ body {
     .container { max-width: 100% !important; }
   }
   
+  /* ---- Responsive: onboarding banner XS ---- */
   @media (max-width: 480px) {
     /* Versione XS */
     #step1Card, #step2Card { padding: 12px !important; }
@@ -1431,6 +1440,7 @@ body {
     .cal-tone-btn { font-size: 11px !important; padding: 5px 8px !important; }
   }
   
+  /* ---- Responsive: iPhone SE / schermi molto piccoli — hero compatto ---- */
   @media (max-width: 360px) {
     /* iPhone SE / molto piccoli */
     .container { padding: 16px 10px !important; }
@@ -1443,6 +1453,7 @@ body {
 
 
   /* === HERO HEADER MOBILE === */
+  /* ---- Responsive: hero a layout colonna ---- */
   @media (max-width: 768px) {
     .hero {
       flex-direction: column !important;
@@ -1488,6 +1499,7 @@ body {
       word-break: break-word;
     }
   }
+  /* ---- Responsive: hero XS, font ridotti ---- */
   @media (max-width: 480px) {
     .hero-title { font-size: 16px !important; }
     .hero-eyebrow { font-size: 9.5px !important; letter-spacing: 0.05em !important; }
@@ -1495,6 +1507,7 @@ body {
 
 
   /* === NAVBAR & HERO MOBILE === */
+  /* ---- Responsive: nav bar, padding ridotto ---- */
   @media (max-width: 768px) {
     .nav { padding: 0 !important; }
     .nav-inner {
@@ -1538,6 +1551,7 @@ body {
     .hero-meta span { gap: 6px !important; }
     #navPeriodContainer { display: none !important; }
   }
+  /* ---- Responsive: nav XS, brand-tag nascosto ---- */
   @media (max-width: 480px) {
     /* Su iPhone piccolo, nascondo il brand-tag */
     .brand-tag { display: none !important; }
@@ -1834,18 +1848,22 @@ body {
 .conv-bar { height: 100%; border-radius: 4px; transition: width 0.4s; }
 .conv-eff { font-family: var(--font-mono); font-size: 13px; font-weight: 700; text-align: right; }
 .conv-detail { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute); white-space: nowrap; }
+/* ---- Responsive: conversione reach->follower, colonne ridotte ---- */
 @media (max-width: 640px) {
   .conv-kpis { grid-template-columns: 1fr; }
   .conv-row { grid-template-columns: 48px 1fr 44px; }
   .conv-npost, .conv-detail { display: none; }
 }
 
+/* ---- Responsive: nav status nascosto sotto 1200px ---- */
 @media (max-width: 1200px) {
   #navStatus { display: none !important; }
 }
+/* ---- Responsive: selettore periodo nav nascosto sotto 992px ---- */
 @media (max-width: 992px) {
   #navPeriodContainer { display: none !important; }
 }
+/* ---- Responsive: indicatore freshness e bottoni refresh compattati ---- */
 @media (max-width: 768px) {
   #freshnessText { display: none !important; }
   #freshness { padding: 8px !important; border-radius: 50% !important; width: 28px; height: 28px; justify-content: center; }
@@ -1876,6 +1894,7 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ---- Responsive: nav e calendario, layout mobile generale ---- */
 @media (max-width: 768px) {
   .nav-inner { flex-direction: column; padding: 12px 16px; gap: 12px; }
   .nav-cluster { width: 100%; justify-content: space-between; }
@@ -2372,6 +2391,7 @@ body {
     width: 95% !important;
   }
 }
+/* ---- Responsive: modal calendario come bottom sheet su mobile ---- */
 @media (max-width: 768px) {
   .cal-modal-bg {
     padding: 10px !important;
@@ -2619,6 +2639,7 @@ body {
 }
 
 /* Responsive Overrides */
+/* ---- Responsive: slide generator, layout a colonna singola ---- */
 @media (max-width: 900px) {
   .slide-gen-layout {
     grid-template-columns: 1fr;
