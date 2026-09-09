@@ -184,7 +184,7 @@ function renderProfitContent(d) {
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start;">
+      <div class="panel-grid equal" style="align-items:start;">
         <div>
           <div class="mini-section-label" style="color:var(--pos);">Ricavi</div>
           <table class="mini-table">
