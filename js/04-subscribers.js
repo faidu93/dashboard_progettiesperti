@@ -703,7 +703,7 @@ function renderTopPostsByFormat(posts) {
     { key: 'REELS', label: 'Top Reel' }
   ];
   types.forEach(({key, label}) => {
-    const items = byType[key].sort((a,b) => (b.media_reach||0) - (a.media_reach||0)).slice(0, 5);
+    const items = byType[key].sort((a,b) => (b.media_views||0) - (a.media_views||0)).slice(0, 5);
     const col = document.createElement('div');
     col.className = 'top-col';
     let html = `
@@ -724,8 +724,8 @@ function renderTopPostsByFormat(posts) {
           <div class="top-item">
             <div class="top-item-head">
               <div class="top-item-title"><a href="${p.media_permalink}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${titleFromCaption(p.media_caption, 60)}</a></div>
-              <div class="top-item-reach" title="Reach">${numIt(reach)}<span style="font-size:10px;color:var(--ink-mute);font-weight:400;"> reach</span></div>
               <div class="top-item-reach" title="Visualizzazioni" style="color:var(--accent);">${numIt(views)}<span style="font-size:10px;color:var(--ink-mute);font-weight:400;"> visual</span></div>
+              <div class="top-item-reach" title="Reach">${numIt(reach)}<span style="font-size:10px;color:var(--ink-mute);font-weight:400;"> reach</span></div>
             </div>
             <div class="top-item-foot">
               <span class="top-item-date">${fmtDate(d)}</span>

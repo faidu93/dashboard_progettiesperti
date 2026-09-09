@@ -17,7 +17,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="index.css?v=20260909_views">
+  <link rel="stylesheet" href="index.css?v=20260909_noslidegen">
 </head>
 <body>
 
@@ -1311,182 +1311,13 @@
   <script src="js/01-api.js?v=20260909_retry" defer></script>
   <script src="js/02-instagram-publish.js?v=20260909_pwmodal" defer></script>
   <script src="js/03-kpi.js?v=20260909_views" defer></script>
-  <script src="js/04-subscribers.js?v=20260909_views" defer></script>
+  <script src="js/04-subscribers.js?v=20260909_topviews" defer></script>
   <script src="js/05-insights.js?v=20260909_views" defer></script>
-  <script src="js/06-calendar.js?v=20260909_views" defer></script>
+  <script src="js/06-calendar.js?v=20260909_noslidegen" defer></script>
   <script src="js/07-analytics.js?v=20260909_nostrategia" defer></script>
   <script src="js/08-main.js?v=20260909_views" defer></script>
   <script src="js/09-aste.js?v=20260909_astesimplify" defer></script>
   <script src="js/10-profit.js?v=20260909_pwmodal" defer></script>
-  <!-- OVERLAY: Generatore Slide Carosello Stile Bynor -->
-  <div class="slide-gen-overlay" id="slideGeneratorOverlay" style="display:none;">
-    <div class="slide-gen-container">
-      
-      <!-- Testata Generatore -->
-      <div class="slide-gen-header">
-        <div class="sg-title-group">
-          <span class="material-symbols-rounded text-accent" style="font-size:22px; color:var(--accent);">layers</span>
-          <div>
-            <h2 class="sg-main-title" style="font-family:var(--font-display); font-size:17px; font-weight:800; color:var(--ink); margin:0;">Generatore Slide AI</h2>
-            <p class="sg-sub-title" style="font-size:11px; color:var(--ink-mute); margin:2px 0 0 0;">Crea visual e caroselli per Progetto Esperti</p>
-          </div>
-        </div>
-        <div style="display:flex; gap:10px; align-items:center;">
-          <button class="cal-btn" onclick="addNewSlide()" style="background:var(--bg-elev-2); border-color:var(--line); color:var(--ink); font-size:11px; font-weight:600; padding:6px 12px; height:auto; display:inline-flex; align-items:center; gap:6px;">
-            <span class="material-symbols-rounded" style="font-size:15px;">add</span>Nuova Slide
-          </button>
-          <button class="cal-btn" onclick="generateSlidesFromScriptText()" style="background:rgba(255,107,0,0.1); border-color:var(--accent); color:var(--accent); font-size:11px; font-weight:600; padding:6px 12px; height:auto; display:inline-flex; align-items:center; gap:6px;">
-            <span class="material-symbols-rounded" style="font-size:15px;">auto_awesome</span>Genera da Script
-          </button>
-          <button class="cal-btn" onclick="closeSlideGenerator()" style="border-radius:50%; width:32px; height:32px; padding:0; display:grid; place-items:center; background:var(--bg-elev-2); border-color:var(--line); color:var(--ink-soft);">
-            <span class="material-symbols-rounded" style="font-size:18px;">close</span>
-          </button>
-        </div>
-      </div>
-      
-      <!-- Layout a Griglia -->
-      <div class="slide-gen-layout">
-        
-        <!-- SIDEBAR SINISTRA: Lista Slide & Editor Form -->
-        <div class="slide-gen-sidebar">
-          
-          <!-- Lista delle slide (miniature/card) -->
-          <div class="sg-sidebar-section">
-            <div class="sg-section-title" style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">Le tue slide</div>
-            <div class="sg-slide-list" id="sgSlideList" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:8px;">
-              <!-- Renderizzato dinamicamente in JS -->
-            </div>
-          </div>
-          
-          <!-- Editor Form per la slide selezionata -->
-          <div class="sg-sidebar-section" style="flex:1; border-top:1px solid var(--line); padding-top:14px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; -webkit-overflow-scrolling:touch;">
-            <div class="sg-section-title" id="sgSelectedSlideTitle" style="font-family:var(--font-mono); font-size:11px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">Modifica Slide 1</div>
-            
-            <div class="cal-field">
-              <label>Layout / Template</label>
-              <div class="cal-btn-group" style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-                <button type="button" class="cal-btn-option active" id="sgBtnLayoutCover" onclick="setSlideLayout('cover')">Cover (Copertina)</button>
-                <button type="button" class="cal-btn-option" id="sgBtnLayoutPoints" onclick="setSlideLayout('points')">Punti Elenco</button>
-                <button type="button" class="cal-btn-option" id="sgBtnLayoutCompare" onclick="setSlideLayout('compare')">Confronto Box</button>
-                <button type="button" class="cal-btn-option" id="sgBtnLayoutCta" onclick="setSlideLayout('cta')">CTA (Chiusura)</button>
-              </div>
-            </div>
-            
-            <div class="cal-field">
-              <label>Logo da visualizzare</label>
-              <select id="sgSlideLogo" onchange="updateSlideDataFromForm()">
-                <option value="logo.png">Cerchio Esperti (Bianco)</option>
-                <option value="asta-logo.png">Logo "C'è Asta Per Te"</option>
-                <option value="none">Nessun Logo</option>
-              </select>
-            </div>
-            
-            <div class="cal-field">
-              <label>Pattern Sfondo</label>
-              <select id="sgSlidePattern" onchange="updateSlideDataFromForm()">
-                <option value="glow">Bagliori Aurora (Default)</option>
-                <option value="grid">Griglia Geometrica</option>
-                <option value="glow_grid">Griglia + Bagliori</option>
-                <option value="solid">Nero Opaco Solido</option>
-              </select>
-            </div>
-            
-            <div class="cal-field">
-              <label>Cornice / Accento</label>
-              <select id="sgSlideAccent" onchange="updateSlideDataFromForm()">
-                <option value="none">Nessuno (Default)</option>
-                <option value="border">Bordo Arancione Inscatolato</option>
-                <option value="top_line">Linea Superiore Arancione</option>
-              </select>
-            </div>
-            
-            <div class="cal-field">
-              <label>Watermark di Sfondo</label>
-              <select id="sgSlideWatermark" onchange="updateSlideDataFromForm()">
-                <option value="none">Nessuno (Default)</option>
-                <option value="logo">Logo Gigante Sfumato</option>
-              </select>
-            </div>
-            
-            <div class="cal-field">
-              <label>Titolo Slide</label>
-              <input type="text" id="sgSlideTitle" oninput="updateSlideDataFromForm()" placeholder="Es: FAZZINI AL CAGLIARI 👀">
-            </div>
-            
-            <div class="cal-field" id="sgFieldContent">
-              <label>Testo o Punti Elenco (uno per riga)</label>
-              <textarea id="sgSlideContent" rows="4" oninput="updateSlideDataFromForm()" placeholder="Es:
-- 3 Gol e 2 Assist
-- low cost strategico
-- dubbio titolarità"></textarea>
-            </div>
-            
-            <div class="cal-field" id="sgFieldPlayer" style="display:none;">
-              <label>Nome Giocatore (evidenziato sotto il titolo)</label>
-              <input type="text" id="sgSlidePlayer" oninput="updateSlideDataFromForm()" placeholder="Es: Kenneth Taylor">
-            </div>
-            
-            <div class="cal-field">
-              <label>Parole da evidenziare in Arancione (separate da virgola)</label>
-              <input type="text" id="sgSlideHighlights" oninput="updateSlideDataFromForm()" placeholder="Es: low cost, dubbio, asta">
-            </div>
-
-            <!-- ChatGPT / DALL-E 3 Visual Image Tools -->
-            <div class="cal-field" style="margin-top:14px; padding-top:12px; border-top:1px dashed var(--line);">
-              <label style="color:var(--accent); display:flex; align-items:center; gap:6px; font-weight:700;">
-                <span class="material-symbols-rounded" style="font-size:16px;">photo_spark</span>Immagine Sfondo AI (ChatGPT / DALL-E 3)
-              </label>
-              <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
-                <button type="button" class="cal-btn" onclick="copyDallePromptForCurrentSlide()" style="font-size:11px; padding:6px 10px; background:rgba(255,107,0,0.08); border-color:var(--accent); color:var(--accent); font-weight:600;">
-                  <span class="material-symbols-rounded" style="font-size:14px;">content_copy</span>📋 Copia Prompt per ChatGPT
-                </button>
-                <button type="button" class="cal-btn primary" onclick="generateDalleImageForCurrentSlide()" style="font-size:11px; padding:6px 10px; background:var(--accent); border-color:var(--accent); color:var(--bg); font-weight:700;">
-                  <span class="material-symbols-rounded" style="font-size:14px;">auto_awesome</span>✨ Genera DALL-E 3
-                </button>
-              </div>
-              <div id="sgDalleStatus" style="font-family:var(--font-mono); font-size:10.5px; color:var(--ink-mute); margin-top:4px;"></div>
-            </div>
-            
-            <button class="cal-btn" onclick="deleteCurrentSlide()" style="color:var(--neg); border-color:rgba(255,80,80,0.2); background:rgba(255,80,80,0.03); margin-top:12px; font-size:11px; font-weight:600; padding:8px 12px; display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;">
-              <span class="material-symbols-rounded" style="font-size:14px;">delete</span>Elimina questa Slide
-            </button>
-            
-          </div>
-          
-        </div>
-        
-        <!-- PREVIEW CENTRALE: Visualizzazione Slide in Canvas -->
-        <div class="slide-gen-preview-area">
-          <div class="sg-canvas-wrap">
-            <canvas id="sgCanvas" width="1080" height="1080"></canvas>
-          </div>
-          
-          <!-- Indicatori paginazione -->
-          <div class="sg-pagination" id="sgPaginationDots" style="display:flex; gap:6px; justify-content:center; margin-top:12px;">
-            <!-- Renderizzati in JS -->
-          </div>
-        </div>
-        
-      </div>
-      
-      <!-- Barra Azioni Bottom -->
-      <div class="slide-gen-footer">
-        <div style="font-size:11px; color:var(--ink-mute); font-family:var(--font-mono);">
-          Dimensioni: 1080x1080 px (Instagram Quadrato)
-        </div>
-        <div style="display:flex; gap:10px; align-items:center;">
-          <button class="cal-btn" onclick="downloadSlidesAsJpegs()" style="background:var(--bg-elev-2); border-color:var(--line); color:var(--ink); font-weight:600; font-size:12px; padding:8px 16px; display:inline-flex; align-items:center; gap:6px;">
-            <span class="material-symbols-rounded" style="font-size:16px;">download</span>Scarica JPEGs
-          </button>
-          <button class="cal-btn primary" id="sgSaveToPostBtn" onclick="exportSlidesToPost()" style="font-weight:600; font-size:12px; padding:8px 20px; display:inline-flex; align-items:center; gap:6px;">
-            <span class="material-symbols-rounded" style="font-size:16px;">cloud_upload</span>Carica nel Post
-          </button>
-        </div>
-      </div>
-      
-    </div>
-  </div>
-
 </body>
 <!-- build trigger: 38 -->
 </html>
