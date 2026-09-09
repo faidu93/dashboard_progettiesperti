@@ -13,7 +13,7 @@
 // alla rete, il Service Worker non le tocca.
 // ============================================================================
 
-const CACHE_NAME = 'pep-dashboard-v1';
+const CACHE_NAME = 'pep-dashboard-v2';
 const NETWORK_FIRST = ['/dashboard_progettiesperti/', '/dashboard_progettiesperti/index.html', '/dashboard_progettiesperti/manifest.json'];
 
 self.addEventListener('install', (event) => {
@@ -39,8 +39,12 @@ self.addEventListener('fetch', (event) => {
 
   if (isShell) {
     // Network-first: prova la rete, cache solo come fallback offline.
+    // cache:'no-store' è essenziale qui — senza, fetch() può comunque
+    // restituire una risposta dalla cache HTTP del browser (se il server
+    // manda header di cache permissivi), rendendo 'network-first' finto:
+    // sembra andare in rete ma in realtà pesca comunque roba vecchia.
     event.respondWith(
-      fetch(req).then((res) => {
+      fetch(req, { cache: 'no-store' }).then((res) => {
         const clone = res.clone();
         caches.open(CACHE_NAME).then((c) => c.put(req, clone));
         return res;

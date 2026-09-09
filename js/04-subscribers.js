@@ -807,9 +807,9 @@ function renderEngagementMix(posts) {
     const inline = p >= 15 ? `${s.label} ${p}%` : '';
     return `<div class="lab-mix-bar" style="width:${p}%; background:${s.color};" title="${s.label} ${p}%">${inline}</div>`;
   }).join('');
-  document.getElementById('mixLegend').innerHTML = segments.map(s =>
-    `<span><i style="background:${s.color};"></i>${s.label} ${pct(s.val)}%</span>`
-  ).join('');
+  // Legenda già esistente (numeri assoluti) — la tengo, complementare alle
+  // percentuali della barra, invece di duplicarla con una seconda scrittura
+  // che la sovrascriverebbe subito dopo senza motivo.
   document.getElementById('mixLegend').innerHTML = `
     <span><i style="background:#ff8c1e"></i>${numIt(tl)} like</span>
     <span><i style="background:#5aaef0"></i>${numIt(th)} share</span>
