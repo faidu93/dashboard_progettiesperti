@@ -6,7 +6,12 @@
 <title>Dashboard · Progetto Esperti Profeta</title>
 <link rel="icon" type="image/png" href="favicon.png?v=1">
 <link rel="shortcut icon" href="favicon.ico?v=1">
-<link rel="apple-touch-icon" href="favicon.png?v=1">
+<link rel="apple-touch-icon" href="icons/icon-192.png?v=1">
+<link rel="manifest" href="manifest.json?v=1">
+<meta name="theme-color" content="#0a0c12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PEP Dashboard">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -1318,6 +1323,15 @@
   <script src="js/08-main.js?v=20260909_views" defer></script>
   <script src="js/09-aste.js?v=20260909_astesimplify" defer></script>
   <script src="js/10-profit.js?v=20260909_pwmodal" defer></script>
+  <script>
+    // Registrazione PWA: se il browser non la supporta, l'app funziona lo
+    // stesso come sempre — 'Add to Home Screen' è un bonus, non un requisito.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW non registrato:', e.message));
+      });
+    }
+  </script>
 </body>
 <!-- build trigger: 38 -->
 </html>
