@@ -793,11 +793,23 @@ function renderEngagementMix(posts) {
   if (tot === 0) return;
   const pct = v => (v/tot*100).toFixed(1);
   document.getElementById('mixSub').textContent = `Come si distribuiscono le ${numIt(tot)} interazioni`;
-  document.getElementById('mixBar').innerHTML = `
-    <div class="lab-mix-bar" style="width:${pct(tl)}%; background:#ff8c1e;">Like ${pct(tl)}%</div>
-    <div class="lab-mix-bar" style="width:${pct(th)}%; background:#5aaef0;">Share ${pct(th)}%</div>
-    <div class="lab-mix-bar" style="width:${pct(tc)}%; background:#36c976;">Comm ${pct(tc)}%</div>
-    <div class="lab-mix-bar" style="width:${pct(ts)}%; background:#a0a0a8;">Save ${pct(ts)}%</div>`;
+  // Sui segmenti stretti (sotto ~15%) l'etichetta interna non ci sta e viene
+  // tagliata ai due lati, illeggibile — sotto quella soglia mostro solo il
+  // colore nella barra e affido il numero esatto alla legenda qui sotto.
+  const segments = [
+    { label: 'Like', val: tl, color: '#ff8c1e' },
+    { label: 'Share', val: th, color: '#5aaef0' },
+    { label: 'Comm', val: tc, color: '#36c976' },
+    { label: 'Save', val: ts, color: '#a0a0a8' },
+  ];
+  document.getElementById('mixBar').innerHTML = segments.map(s => {
+    const p = pct(s.val);
+    const inline = p >= 15 ? `${s.label} ${p}%` : '';
+    return `<div class="lab-mix-bar" style="width:${p}%; background:${s.color};" title="${s.label} ${p}%">${inline}</div>`;
+  }).join('');
+  document.getElementById('mixLegend').innerHTML = segments.map(s =>
+    `<span><i style="background:${s.color};"></i>${s.label} ${pct(s.val)}%</span>`
+  ).join('');
   document.getElementById('mixLegend').innerHTML = `
     <span><i style="background:#ff8c1e"></i>${numIt(tl)} like</span>
     <span><i style="background:#5aaef0"></i>${numIt(th)} share</span>
