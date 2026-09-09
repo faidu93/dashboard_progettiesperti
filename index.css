@@ -444,23 +444,6 @@ body {
 
 /* ============ ACTIONABLE ============ */
 
-/* ============ INSIGHTS ============ */
-.insight { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; margin-bottom: 10px; border-left: 2px solid var(--accent); }
-.insight.pos { border-left-color: var(--pos); }
-.insight.neg { border-left-color: var(--neg); }
-.insight.opp { border-left-color: var(--info); }
-.insight-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.insight-head .material-symbols-rounded { font-size: 18px; }
-.insight.pos .insight-head .material-symbols-rounded { color: var(--pos); }
-.insight.neg .insight-head .material-symbols-rounded { color: var(--neg); }
-.insight.opp .insight-head .material-symbols-rounded { color: var(--info); }
-.insight-title { font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--ink); }
-.insight-body { font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); }
-.insight-list { margin-top: 8px; padding-left: 0; list-style: none; }
-.insight-list li { padding: 4px 0; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink); }
-.insight-list li::before { content: '→ '; color: var(--info); }
-.pillar-col-title { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-mute); margin-bottom: 12px; font-weight: 500; }
-
 /* ============ MODAL & FOOTER ============ */
 .footer { margin-top: 60px; padding: 28px 0 0; border-top: 1px solid var(--line-strong); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-mute); letter-spacing: 0.04em; }
 .footer-brand { display: flex; align-items: center; gap: 10px; }
@@ -572,15 +555,6 @@ body {
   .heatmap-cell { height: 26px; font-size: 9px; }
   .heatmap-cell .hc-pi { font-size: 9px; }
 
-  /* Mappa nicchia */
-  .map-row { grid-template-columns: 110px 1fr 50px; gap: 8px; font-size: 11.5px; }
-  .map-name { font-size: 11.5px; }
-  .map-followers { font-size: 11px; }
-  .map-tier-pill { font-size: 10.5px; padding: 4px 8px; }
-
-  /* Pillar strategia */
-  .pillars-grid { grid-template-columns: 1fr; }
-
   /* Idee contenuto */
   .ideas-grid { grid-template-columns: 1fr; }
   .idea-card { padding: 13px 14px; }
@@ -641,11 +615,6 @@ body {
   .heatmap-cell { height: 22px; font-size: 8px; }
   .heatmap-cell .hc-pi { font-size: 8px; }
 
-  /* Mappa nicchia: semplifico */
-  .map-row { grid-template-columns: 95px 1fr 44px; gap: 6px; font-size: 11px; }
-  .map-name { font-size: 11px; }
-  .map-bar-wrap { height: 6px; }
-
   /* Calendario: celle più piccole */
   .cal-day { min-height: 46px; padding: 4px 3px; }
   .cal-day-num { font-size: 9.5px; }
@@ -676,37 +645,8 @@ body {
   .kpi-value { font-size: 28px; }
   .tab-btn .material-symbols-rounded { font-size: 15px; }
   .heatmap { grid-template-columns: 32px repeat(5, 1fr); }
-  .map-row { grid-template-columns: 80px 1fr 40px; }
-  .map-bar-wrap { display: none; } /* nascondo le barre su schermi <360 */
 }
 
-  /* ============ MAPPA NICCHIA ============ */
-  .map-tiers { display: flex; flex-direction: column; gap: 18px; }
-  .map-tier { padding: 14px 0; border-bottom: 1px dashed var(--line); }
-  .map-tier:last-child { border-bottom: none; }
-  .map-tier-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-  .map-tier-pill { font-size: 11.5px; padding: 5px 10px; border-radius: 4px; font-weight: 700; letter-spacing: 0.04em; }
-  .map-tier-pill.tier-1 { background: rgba(239,90,90,0.15); color: #ef5a5a; }
-  .map-tier-pill.tier-2 { background: rgba(255,140,30,0.15); color: var(--accent); }
-  .map-tier-pill.tier-3 { background: rgba(255,200,80,0.15); color: #ffc850; }
-  .map-tier-pill.tier-4 { background: rgba(90,174,240,0.15); color: var(--info); }
-  .map-tier-pill.tier-5 { background: rgba(54,201,118,0.15); color: var(--pos); }
-  .map-tier-range { font-size: 12px; color: var(--ink-mute); margin-left: auto; font-family: var(--font-mono); }
-  .map-rows { display: flex; flex-direction: column; gap: 6px; }
-  .map-row { display: grid; grid-template-columns: 200px 1fr 70px; gap: 14px; align-items: center; padding: 6px 0; font-size: 13.5px; }
-  .map-name { color: var(--ink-soft); font-size: 13.5px; }
-  .map-bar-wrap { height: 8px; background: var(--bg-elev-2); border-radius: 100px; overflow: hidden; }
-  .map-bar { height: 100%; border-radius: 100px; }
-  .map-bar.tier-1 { background: #ef5a5a; }
-  .map-bar.tier-2 { background: var(--accent); }
-  .map-bar.tier-3 { background: #ffc850; }
-  .map-bar.tier-4 { background: var(--info); }
-  .map-bar.tier-5 { background: var(--pos); }
-  .map-bar.tier-you { background: linear-gradient(90deg, var(--accent), var(--accent-bright)); box-shadow: 0 0 12px rgba(255,140,30,0.5); }
-  .map-followers { text-align: right; font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
-  .map-row.you-row { background: var(--accent-soft); padding: 10px 12px; margin: 6px -12px; border-radius: 8px; border: 1px solid rgba(255,140,30,0.3); }
-  .map-row.you-row .map-name { color: var(--accent-bright); font-weight: 700; font-size: 14px; }
-  .map-row.you-row .map-followers { color: var(--accent); }
   .section-note { margin-top: 16px; padding: 12px 14px; background: var(--bg-elev-2); border-left: 2px solid var(--info); border-radius: 0 6px 6px 0; font-size: 12.5px; color: var(--ink-soft); line-height: 1.55; }
   .section-note strong { color: var(--ink); }
 
@@ -1323,13 +1263,6 @@ body {
     #gcalStatus { text-align: left; font-size: 12.5px !important; line-height: 1.5; }
     #gcalLoginBtn, #gcalLogoutBtn { width: 100% !important; justify-content: center !important; }
     
-    /* === MAPPA NICCHIA: grid responsive === */
-    .map-row {
-      grid-template-columns: 110px 1fr 50px !important;
-      gap: 8px !important;
-      font-size: 11.5px !important;
-    }
-    
     /* === HEATMAP: scroll touch === */
     .heatmap-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .heatmap { min-width: 380px; }
@@ -1408,12 +1341,6 @@ body {
     /* Tab nav: testo nascosto */
     .tab-label { display: none !important; }
     .tab-btn { min-width: 44px; padding: 11px 12px !important; }
-    
-    /* Mappa nicchia ulteriore riduzione */
-    .map-row { 
-      grid-template-columns: 90px 1fr 44px !important;
-      font-size: 11px !important;
-    }
     
     /* Modal: full screen su mobile ≤480px */
     .modal-bg, .cal-modal-bg, .cal-detail-bg {

@@ -15,7 +15,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="index.css?v=20260909_organized">
+  <link rel="stylesheet" href="index.css?v=20260909_nostrategia">
 </head>
 <body>
 
@@ -126,10 +126,6 @@
     <button class="tab-btn" data-tab="contentlab" onclick="tabSwitch(this)" role="tab">
       <span class="material-symbols-rounded">science</span>
       <span class="tab-label">Content Lab</span>
-    </button>
-    <button class="tab-btn" data-tab="strategia" onclick="tabSwitch(this)" role="tab">
-      <span class="material-symbols-rounded">map</span>
-      <span class="tab-label">Strategia</span>
     </button>
     <button class="tab-btn" data-tab="intelligence" onclick="tabSwitch(this)" role="tab">
       <span class="material-symbols-rounded">manage_search</span>
@@ -548,152 +544,6 @@
         <dt>🧪 Slot da testare</dt><dd> = giorni+fasce orarie mai sperimentate. Prioritizzati su base benchmark esterno (mattine feriali, martedì/giovedì pomeriggio).</dd>
         <dt>🔥/❄️ Indicatori formato</dt><dd> = best (verde) e weak (grigio) per la metrica nella tabella per formato.</dd>
       </dl>
-    </div>
-  </section>
-
-  <!-- MAPPA NICCHIA RIDISEGNATA -->
-  <section class="section" data-tab="strategia">
-    <div class="section-head">
-      <div><div class="section-eyebrow">🗺️ Mercato</div><div class="section-title">Mappa nicchia fantacalcio</div></div>
-      <div class="section-meta">11 profili · 5 livelli · giu 2026</div>
-    </div>
-    <div class="panel">
-      <div class="panel-title"><span class="material-symbols-rounded">groups_2</span>Dove ti posizioni nella nicchia</div>
-      <div class="panel-sub">★ il tuo profilo · barre proporzionali ai follower (scala log)</div>
-      <div class="map-tiers">
-
-        <div class="map-tier">
-          <div class="map-tier-head">
-            <span class="map-tier-pill tier-1">L1 · Media istituzionali</span>
-            <span class="map-tier-range">200k+</span>
-          </div>
-          <div class="map-rows">
-            <div class="map-row"><span class="map-name">fantacalcio.it</span><div class="map-bar-wrap"><div class="map-bar tier-1" style="width:100%"></div></div><span class="map-followers">673k</span></div>
-            <div class="map-row"><span class="map-name">sosfantacalcio</span><div class="map-bar-wrap"><div class="map-bar tier-1" style="width:88%"></div></div><span class="map-followers">322k</span></div>
-          </div>
-        </div>
-
-        <div class="map-tier">
-          <div class="map-tier-head">
-            <span class="map-tier-pill tier-2">L2 · Creator / podcast leader</span>
-            <span class="map-tier-range">100k–200k</span>
-          </div>
-          <div class="map-rows">
-            <div class="map-row"><span class="map-name">micheledanese</span><div class="map-bar-wrap"><div class="map-bar tier-2" style="width:78%"></div></div><span class="map-followers">~190k</span></div>
-            <div class="map-row"><span class="map-name">zonafanta (Gazzetta)</span><div class="map-bar-wrap"><div class="map-bar tier-2" style="width:74%"></div></div><span class="map-followers">~175k</span></div>
-            <div class="map-row"><span class="map-name">samumand</span><div class="map-bar-wrap"><div class="map-bar tier-2" style="width:70%"></div></div><span class="map-followers">~150k</span></div>
-          </div>
-        </div>
-
-        <div class="map-tier">
-          <div class="map-tier-head">
-            <span class="map-tier-pill tier-3">L3 · Profili verticali</span>
-            <span class="map-tier-range">50k–100k</span>
-          </div>
-          <div class="map-rows">
-            <div class="map-row"><span class="map-name">mondodelfantacalcio</span><div class="map-bar-wrap"><div class="map-bar tier-3" style="width:60%"></div></div><span class="map-followers">85k</span></div>
-            <div class="map-row"><span class="map-name">fantarete</span><div class="map-bar-wrap"><div class="map-bar tier-3" style="width:52%"></div></div><span class="map-followers">56k</span></div>
-          </div>
-        </div>
-
-        <div class="map-tier">
-          <div class="map-tier-head">
-            <span class="map-tier-pill tier-4">L4 · Specialisti emergenti</span>
-            <span class="map-tier-range">10k–40k</span>
-          </div>
-          <div class="map-rows">
-            <div class="map-row"><span class="map-name">fantamagazine</span><div class="map-bar-wrap"><div class="map-bar tier-4" style="width:48%"></div></div><span class="map-followers">35k</span></div>
-            <div class="map-row"><span class="map-name">seriousornot.fantacalcio</span><div class="map-bar-wrap"><div class="map-bar tier-4" style="width:47%"></div></div><span class="map-followers">33k</span></div>
-            <div class="map-row"><span class="map-name">fantagoal (Vitiello)</span><div class="map-bar-wrap"><div class="map-bar tier-4" style="width:41%"></div></div><span class="map-followers">12k</span></div>
-          </div>
-        </div>
-
-        <div class="map-tier">
-          <div class="map-tier-head">
-            <span class="map-tier-pill tier-5">L5 · Micro-specialisti</span>
-            <span class="map-tier-range">1k–10k</span>
-          </div>
-          <div class="map-rows">
-            <div class="map-row you-row"><span class="map-name">★ esperti_profeta_fantacalcio</span><div class="map-bar-wrap"><div class="map-bar tier-you" id="mapYouBar" style="width:22%"></div></div><span class="map-followers" id="compYou">—</span></div>
-          </div>
-        </div>
-      </div>
-      <div class="section-note">
-        💡 <strong>Come leggere</strong> — Sei nel <strong>L5 (micro-specialisti)</strong>, ~2.2k follower. I competitor diretti del L4 (fantagoal a 12k, seriousornot a 33k) hanno 5–15× i tuoi follower ma pattern editoriali replicabili: vivono di reel quotidiani e formati seriali. <strong>Obiettivo realistico 12 mesi</strong>: superare i 10k e affacciarti al L4. Dati follower verificati a giugno 2026 (fonti pubbliche Instagram).
-      </div>
-    </div>
-  </section>
-
-  <!-- INSIGHTS (Modifica #7: niente SOS Fanta, partnership con pagine piccole) -->
-  <section class="section" data-tab="strategia">
-    <div class="section-head">
-      <div><div class="section-eyebrow">🧭 Diagnosi strategica</div><div class="section-title">Insight in tre pilastri</div></div>
-      <div class="section-meta">Da rivedere ogni 30 giorni</div>
-    </div>
-    <div class="panel-grid three-col">
-      <div>
-        <div class="pillar-col-title">Cosa funziona</div>
-        <div class="insight pos"><div class="insight-head"><span class="material-symbols-rounded">trending_up</span><span class="insight-title">TOP-LIST tecnica</span></div><div class="insight-body">Pattern "classifica + dato tecnico + esegesi numerica" è l'asset replicabile del profilo.</div></div>
-        <div class="insight pos"><div class="insight-head"><span class="material-symbols-rounded">groups</span><span class="insight-title">Audience iper-qualificata</span></div><div class="insight-body" id="insightAudience">95% maschi sui categorizzati · 73% fascia 25-44 · italiani città Serie A. Profilo perfetto del fantallenatore.</div></div>
-      </div>
-      <div>
-        <div class="pillar-col-title">Cosa limita</div>
-        <div class="insight neg"><div class="insight-head"><span class="material-symbols-rounded">timer</span><span class="insight-title">Frequenza discontinua</span></div><div class="insight-body">Senza output costante l'algoritmo non costruisce velocità.</div></div>
-        <div class="insight neg"><div class="insight-head"><span class="material-symbols-rounded">trending_down</span><span class="insight-title">Conversione bassa</span></div><div class="insight-body">Reach→follower sotto target 1,2%. Top post autoconclusivi: manca bridge "perché seguire".</div></div>
-      </div>
-      <div>
-        <div class="pillar-col-title">Opportunità</div>
-        <div class="insight opp"><div class="insight-head"><span class="material-symbols-rounded">stars</span><span class="insight-title">Cast di 20 Esperti</span></div><div class="insight-body">Differenziante unico vs ogni competitor. Dichiarato in bio ma non vissuto nei contenuti.</div></div>
-        <div class="insight opp"><div class="insight-head"><span class="material-symbols-rounded">event</span><span class="insight-title">Picco asta agosto</span></div><div class="insight-body">Momento di massima ricerca dell'anno. Serie 4 settimane = ROI più alto della stagione.</div></div>
-        <div class="insight opp">
-          <div class="insight-head"><span class="material-symbols-rounded">forward_to_inbox</span><span class="insight-title">Partnership con pagine 5-50k</span></div>
-          <div class="insight-body">Realisticamente contattabili. Stessa nicchia, audience simile, ognuna può portare 100-300 follower qualificati. Profili verificati a giugno 2026:</div>
-          <ul class="insight-list">
-            <li>fantarete · 56k · "consigli non scontati", dirette live</li>
-            <li>seriousornot.fantacalcio · 33k · analisi giocatori</li>
-            <li>fantagoal_fantacalcio · 12k · multi-piattaforma (TikTok 42k)</li>
-            <li>fantamagazine · 35k · schede squadra e partita</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- PIANO DI CRESCITA 90 GIORNI -->
-    <div class="panel" style="margin-top:20px;">
-      <div class="panel-title"><span class="material-symbols-rounded">rocket_launch</span>Piano di crescita · 90 giorni verso il L4</div>
-      <div class="panel-sub">Strategia operativa basata sul posizionamento reale nella nicchia · giugno 2026</div>
-
-      <div class="section-note" style="margin-bottom:18px;">
-        🎯 <strong>La tesi di fondo</strong> — La nicchia fantacalcio è satura di profili che danno gli <em>stessi</em> consigli con lo stesso tono ("ti aiuto a vincere il fanta"). La stampa di settore parla apertamente di "fantaguru" intercambiabili. Il tuo unico vero differenziale è il <strong>cast di esperti, uno per club</strong>: nessun competitor del tuo tier ce l'ha. La strategia non è "fare più post", ma <strong>rendere visibile quel cast</strong> trasformandolo nel formato riconoscibile del profilo.
-      </div>
-
-      <div class="map-tier">
-        <div class="map-tier-head">
-          <span class="map-tier-pill tier-2">Fase 1 · Giorni 1-30 — Ritmo</span>
-        </div>
-        <div class="insight pos"><div class="insight-head"><span class="material-symbols-rounded">calendar_month</span><span class="insight-title">Cadenza fissa = velocità algoritmo</span></div><div class="insight-body">Il limite #1 oggi è la frequenza discontinua. Fissa 4-5 uscite/settimana negli slot prime-time già validati (mar/gio 10-13 e 15-18). Usa la pubblicazione programmata della dashboard per non saltare giorni: è esattamente il problema che risolve.</div></div>
-        <div class="insight pos"><div class="insight-head"><span class="material-symbols-rounded">repeat</span><span class="insight-title">Format seriale "L'esperto del club"</span></div><div class="insight-body">Un appuntamento ricorrente fisso: ogni settimana un esperto del cast analizza la sua squadra in chiave fanta. Stesso template grafico, volto riconoscibile. È il formato che nessun competitor può copiare perché non ha il cast.</div></div>
-      </div>
-
-      <div class="map-tier" style="margin-top:14px;">
-        <div class="map-tier-head">
-          <span class="map-tier-pill tier-3">Fase 2 · Giorni 31-60 — Conversione</span>
-        </div>
-        <div class="insight opp"><div class="insight-head"><span class="material-symbols-rounded">link</span><span class="insight-title">Bridge "perché seguire" su ogni top post</span></div><div class="insight-body">I tuoi post migliori (TOP-LIST) sono autoconclusivi: l'utente li salva e se ne va. Aggiungi in chiusura un gancio esplicito al cast ("ogni squadra ha il suo esperto qui") + condivisione nelle storie nelle 24h. Alza la conversione reach→follower, oggi sotto l'1,2%.</div></div>
-        <div class="insight opp"><div class="insight-head"><span class="material-symbols-rounded">handshake</span><span class="insight-title">3-4 collab con pari-tier</span></div><div class="insight-body">Contatta i profili 12-56k della tua nicchia (fantarete, seriousornot, fantagoal). Scambio di contenuti o dirette congiunte: ognuna può portare 100-300 follower qualificati senza budget. Non puntare ai 300k+ (non rispondono al tuo tier).</div></div>
-      </div>
-
-      <div class="map-tier" style="margin-top:14px;">
-        <div class="map-tier-head">
-          <span class="map-tier-pill tier-1">Fase 3 · Giorni 61-90 — Picco asta</span>
-        </div>
-        <div class="insight pos"><div class="insight-head"><span class="material-symbols-rounded">local_fire_department</span><span class="insight-title">Serie "Guida all'asta" del cast</span></div><div class="insight-body">Agosto è il momento di massima ricerca dell'anno sul fantacalcio. Prepara una serie di 4 settimane in cui ogni esperto dà i suoi consigli d'asta per il proprio club. È il ROI più alto della stagione: massima domanda + il tuo formato differenziante nel momento giusto.</div></div>
-        <div class="insight pos"><div class="insight-head"><span class="material-symbols-rounded">target</span><span class="insight-title">Obiettivo misurabile</span></div><div class="insight-body">Target 90 giorni: +1 punto di conversione reach→follower e raddoppio della cadenza settimanale. Se l'asta di agosto è coperta bene, il salto verso i 10k (L4) diventa raggiungibile entro la stagione.</div></div>
-      </div>
-
-      <div class="section-note" style="margin-top:18px;">
-        ⚙️ <strong>Una metrica alla volta</strong> — Non inseguire i follower in assoluto: monitora la <strong>conversione reach→follower</strong> (nel funnel in alto) e la <strong>cadenza settimanale</strong> (card WK). Sono le due leve che, ai tuoi numeri, muovono davvero la crescita. I follower sono la conseguenza, non l'obiettivo da fissare.
-      </div>
     </div>
   </section>
 
@@ -1460,8 +1310,8 @@
   <script src="js/04-subscribers.js?v=20260909_retry" defer></script>
   <script src="js/05-insights.js?v=20260909_astesimplify" defer></script>
   <script src="js/06-calendar.js?v=20260909_pwmodal" defer></script>
-  <script src="js/07-analytics.js?v=20260909_clean" defer></script>
-  <script src="js/08-main.js?v=20260909_retry" defer></script>
+  <script src="js/07-analytics.js?v=20260909_nostrategia" defer></script>
+  <script src="js/08-main.js?v=20260909_nostrategia" defer></script>
   <script src="js/09-aste.js?v=20260909_astesimplify" defer></script>
   <script src="js/10-profit.js?v=20260909_pwmodal" defer></script>
   <!-- OVERLAY: Generatore Slide Carosello Stile Bynor -->

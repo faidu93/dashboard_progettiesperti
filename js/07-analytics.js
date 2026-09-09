@@ -49,15 +49,6 @@ function renderDemographics(demo) {
 
   content.innerHTML = html;
   if (sub) sub.textContent = numIt(totCategorizzati) + ' follower categorizzati · dati Meta';
-
-  // Aggiorno l'insight "Audience iper-qualificata" nella Strategia con numeri reali
-  const insight = document.getElementById('insightAudience');
-  if (insight && totGenderDich > 0 && totAge > 0) {
-    const pctM = Math.round((M/totGenderDich)*100);
-    const core = ((age['25-34']||0) + (age['35-44']||0));
-    const pctCore = Math.round((core/totAge)*100);
-    insight.textContent = `${pctM}% maschi sui categorizzati · ${pctCore}% fascia 25-44 · italiani città Serie A. Profilo perfetto del fantallenatore.`;
-  }
 }
 
 function demoRow(label, pctVal, barWidth) {

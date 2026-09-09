@@ -131,7 +131,6 @@ async function init() {
     renderSlots(validPosts);
     setupWowToggle(validPosts);
     renderDailyActions(daily, validPosts, profile);
-    document.getElementById('compYou').textContent = numIt(profile.followers_count);
     loadingDone('render', `KPI e grafici pronti · ${validPosts.length} post analizzati`);
     loadingProgress(75);
 
@@ -189,13 +188,6 @@ async function init() {
     }
     loadingProgress(98);
 
-    // Aggiorno barra mappa: scala log su max 100k (L4 medio)
-    const mapBar = document.getElementById('mapYouBar');
-    if (mapBar) {
-      const f = profile.followers_count;
-      const pct = f > 0 ? Math.min(40, Math.max(8, (Math.log10(f) / 5) * 40)) : 8;
-      mapBar.style.width = pct + '%';
-    }
     const now = new Date();
     document.getElementById('footTime').textContent = now.toLocaleString('it-IT');
     if (window.IS_USING_MOCK_IG) {
