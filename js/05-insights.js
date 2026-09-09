@@ -181,7 +181,8 @@ function renderPiList(posts) {
         <div class="lab-pi-bar"><div class="lab-pi-bar-fill ${cls}" style="width:${barW}%"></div></div>
       </div>
       <span class="lab-pi-val ${cls}">${pi.toFixed(2)}×</span>
-      <span class="post-metric-cell">${numIt(reach)}</span>`;
+      <span class="post-metric-cell" title="Reach">${numIt(reach)}</span>
+      <span class="post-metric-cell" title="Visualizzazioni" style="color:var(--accent);">${numIt(p.media_views||0)}</span>`;
     piList.appendChild(row);
   });
   // ER avg profilo (sempre su tutti i post)
@@ -319,6 +320,7 @@ function renderFormatTableWow(posts) {
     return {
       n,
       reach: items.reduce((s,p)=>s+(p.media_reach||0),0)/n,
+      views: items.reduce((s,p)=>s+(p.media_views||0),0)/n,
       er: (() => { const vals = items.map(p=>{const r=p.media_reach||0; return r>0?(p.media_engagement||0)/r*100:null;}).filter(v=>v!==null); return vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : 0; })(),
       save: items.reduce((s,p)=>s+(p.media_saved||0),0)/n,
       share: items.reduce((s,p)=>s+(p.media_shares||0),0)/n,
@@ -356,6 +358,7 @@ function renderFormatTableWow(posts) {
         <td><span class="lab-fmt-badge ${t}">${t.toLowerCase()}</span></td>
         <td class="num">${sC.n}${sP ? ' <span class="wow-delta">vs '+sP.n+'</span>' : ''}</td>
         <td class="num">${numIt(sC.reach)}${sP ? deltaWow(sC.reach, sP.reach) : ''}</td>
+        <td class="num">${numIt(sC.views)}${sP ? deltaWow(sC.views, sP.views) : ''}</td>
         <td class="num">${pct1(sC.er)}${sP ? deltaWow(sC.er, sP.er) : ''}</td>
         <td class="num">${sC.save.toFixed(1)}${sP ? deltaWow(sC.save, sP.save) : ''}</td>
         <td class="num">${sC.share.toFixed(1)}${sP ? deltaWow(sC.share, sP.share) : ''}</td>
@@ -364,14 +367,14 @@ function renderFormatTableWow(posts) {
       // Categoria che esisteva prima ma non questa settimana
       tr.innerHTML = `
         <td><span class="lab-fmt-badge ${t}">${t.toLowerCase()}</span></td>
-        <td class="num weak" colspan="6">0 post questa settimana (prec: ${sP.n})</td>`;
+        <td class="num weak" colspan="7">0 post questa settimana (prec: ${sP.n})</td>`;
     }
     tbody.appendChild(tr);
   });
 
   if (WOW_MODE === 'wow' && tbody.children.length === 0) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td colspan="7" class="num weak" style="text-align:center;padding:20px;">Nessun post nelle ultime 2 settimane</td>`;
+    tr.innerHTML = `<td colspan="8" class="num weak" style="text-align:center;padding:20px;">Nessun post nelle ultime 2 settimane</td>`;
     tbody.appendChild(tr);
   }
 }

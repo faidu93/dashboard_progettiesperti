@@ -666,6 +666,7 @@ function renderLatest(posts) {
         <a class="latest-link" href="${p.media_permalink}" target="_blank" rel="noopener"><svg class="brand-ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Apri su Instagram</a>
       </div>
       <div class="latest-stats">
+        <div class="latest-stat"><span class="latest-stat-label">Visual</span><span class="latest-stat-val">${numIt(p.media_views||0)}</span></div>
         <div class="latest-stat"><span class="latest-stat-label">Reach</span><span class="latest-stat-val${pi>=1.5?' accent':''}">${numIt(reach)}</span></div>
         <div class="latest-stat"><span class="latest-stat-label">Eng</span><span class="latest-stat-val">${numIt(eng)}</span></div>
         <div class="latest-stat"><span class="latest-stat-label">ER</span><span class="latest-stat-val">${pct1(er)}</span></div>
@@ -716,13 +717,15 @@ function renderTopPostsByFormat(posts) {
       items.forEach(p => {
         const d = new Date(p.timestamp);
         const reach = p.media_reach || 0;
+        const views = p.media_views || 0;
         const pi = findPi(reach, median);
         const isCollab = collabSet.has(p.media_id);
         html += `
           <div class="top-item">
             <div class="top-item-head">
               <div class="top-item-title"><a href="${p.media_permalink}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${titleFromCaption(p.media_caption, 60)}</a></div>
-              <div class="top-item-reach">${numIt(reach)}</div>
+              <div class="top-item-reach" title="Reach">${numIt(reach)}<span style="font-size:10px;color:var(--ink-mute);font-weight:400;"> reach</span></div>
+              <div class="top-item-reach" title="Visualizzazioni" style="color:var(--accent);">${numIt(views)}<span style="font-size:10px;color:var(--ink-mute);font-weight:400;"> visual</span></div>
             </div>
             <div class="top-item-foot">
               <span class="top-item-date">${fmtDate(d)}</span>
@@ -754,6 +757,7 @@ function renderFormatTable(posts) {
     return {
       t, n,
       reach: items.reduce((s,p)=>s+(p.media_reach||0),0)/n,
+      views: items.reduce((s,p)=>s+(p.media_views||0),0)/n,
       er: (() => { const vals = items.map(p=>{const r=p.media_reach||0; return r>0?(p.media_engagement||0)/r*100:null;}).filter(v=>v!==null); return vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : 0; })(),
       save: items.reduce((s,p)=>s+(p.media_saved||0),0)/n,
       share: items.reduce((s,p)=>s+(p.media_shares||0),0)/n,
@@ -761,7 +765,7 @@ function renderFormatTable(posts) {
     };
   }).filter(Boolean);
   if (stats.length === 0) return;
-  const fields = ['reach','er','save','share','comm'];
+  const fields = ['reach','views','er','save','share','comm'];
   const maxV = {}, minV = {};
   fields.forEach(f => { maxV[f] = Math.max(...stats.map(s=>s[f])); minV[f] = Math.min(...stats.map(s=>s[f])); });
   stats.forEach(s => {
@@ -771,6 +775,7 @@ function renderFormatTable(posts) {
       <td><span class="lab-fmt-badge ${s.t}">${s.t.toLowerCase()}</span></td>
       <td class="num">${s.n}</td>
       <td class="num ${cls(s.reach,'reach')}">${numIt(s.reach)}</td>
+      <td class="num ${cls(s.views,'views')}">${numIt(s.views)}</td>
       <td class="num ${cls(s.er,'er')}">${pct1(s.er)}</td>
       <td class="num ${cls(s.save,'save')}">${s.save.toFixed(1)}</td>
       <td class="num ${cls(s.share,'share')}">${s.share.toFixed(1)}</td>

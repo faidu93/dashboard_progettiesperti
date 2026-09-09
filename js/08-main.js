@@ -115,7 +115,7 @@ async function init() {
       (p.media_engagement != null && p.media_engagement > 0) ||
       (p.media_like_count != null && p.media_like_count > 0)
     );
-    const ctx = renderKPIs(daily, profile, validPosts);
+    const ctx = renderKPIs(daily, profile, validPosts, ig.views_total_30d || 0);
     if (ctx) {
       CACHED.period = ctx.period;
       renderWeeks(ctx.period, validPosts);

@@ -391,11 +391,12 @@ function calRender() {
     let posts = '';
     igPub.forEach(p => {
       const t = calShortTitle(p.media_caption).replace(/"/g, '&quot;');
-      const reach = p.media_reach ? ' · ' + numIt(p.media_reach) : '';
+      const reach = p.media_views ? ' · ' + numIt(p.media_views) + ' visual' : (p.media_reach ? ' · ' + numIt(p.media_reach) + ' reach' : '');
       const encoded = encodeURIComponent(JSON.stringify({
         type: p.media_type,
         caption: (p.media_caption||'').slice(0,300),
         reach: p.media_reach,
+        views: p.media_views,
         ts: p.timestamp,
         url: p.media_permalink||''
       })).replace(/'/g, '%27');
@@ -510,7 +511,10 @@ function calShowDetail(e, encoded) {
   badge.style.color = '';
   document.getElementById('cdTitle').textContent = calShortTitle(d.caption) || 'Post';
   document.getElementById('cdDate').textContent = dateLabel + ' · ' + timeLabel;
-  document.getElementById('cdReach').textContent = d.reach ? 'Reach: ' + numIt(d.reach) : '';
+  document.getElementById('cdReach').textContent = [
+    d.views ? 'Visual: ' + numIt(d.views) : '',
+    d.reach ? 'Reach: ' + numIt(d.reach) : '',
+  ].filter(Boolean).join(' · ');
   document.getElementById('cdCaption').textContent = d.caption || '—';
   // Reset link: torna a "Apri su Instagram" e ricostruisce contenuto originale
   const linkEl = document.getElementById("cdLink");

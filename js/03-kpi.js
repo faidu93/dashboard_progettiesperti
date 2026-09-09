@@ -6,7 +6,7 @@
 // ============================================================================
 // MAIN RENDER
 // ============================================================================
-function renderKPIs(daily, profile, posts) {
+function renderKPIs(daily, profile, posts, viewsTotal30d) {
   // Filtra periodo "ripresa attiva": dal 27 aprile in poi (data dichiarata di ripresa pubblicazioni)
   const RESUME_DATE = '2026-04-27';
   let startIdx = 0;
@@ -121,6 +121,11 @@ function renderKPIs(daily, profile, posts) {
     el.className = 'kpi-target ' + cls;
     el.textContent = `🎯 ${label}: ${format(target)}`;
   }
+
+  // Visualizzazioni: l'API le dà solo come totale sul periodo (nessuna serie
+  // giornaliera per questa metrica), quindi qui è un numero fisso non un trend.
+  const viewsEl = document.getElementById('k-reach-views');
+  if (viewsEl) viewsEl.textContent = viewsTotal30d > 0 ? `👁️ ${numIt(viewsTotal30d)} visual (30gg)` : '';
 
   setTarget('k-followers-target', 'wk', last7.foll, targets.follow, v => '+'+v);
   setTarget('k-reach-target', 'wk', last7.reach, targets.reach, numIt);
