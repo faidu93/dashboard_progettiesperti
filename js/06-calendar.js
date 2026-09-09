@@ -546,7 +546,7 @@ async function calEditPlanned(e, id, platform) {
   let queuePost = null;
   if (platform === 'ig' && item.queuePostId) {
     try {
-      const secret = getPublishSecret();
+      const secret = await getPublishSecret();
       if (secret) {
         const res = await fetch(`${BACKEND_BASE}/api/schedule?action=list`, { headers: { 'X-Publish-Secret': secret } });
         const j = await res.json().catch(() => ({}));
@@ -824,7 +824,7 @@ function calSetupEvents() {
             });
           } else {
             if (typeof renderProgressBar === 'function') renderProgressBar('calUploadStatus', 75, 'Invio a Instagram Graph API…');
-            const secret = getPublishSecret();
+            const secret = await getPublishSecret();
             if (secret && typeof BACKEND_BASE !== 'undefined') {
               const qp = scheduledPostId ? `&postId=${encodeURIComponent(scheduledPostId)}` : '';
               const pubRes = await fetch(`${BACKEND_BASE}/api/cron-publish?immediate=1${qp}`, {
@@ -928,7 +928,7 @@ function calSetupEvents() {
     // quella riga: altrimenti resterebbe lì e verrebbe pubblicata comunque.
     if (queuePostId) {
       try {
-        const secret = getPublishSecret();
+        const secret = await getPublishSecret();
         if (secret) {
           await fetch(`${BACKEND_BASE}/api/schedule?action=delete&id=${encodeURIComponent(queuePostId)}`, {
             method: 'POST',

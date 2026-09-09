@@ -44,7 +44,7 @@ async function loadProfitData(force) {
   const box = document.getElementById('profitContent');
   if (!box) return;
 
-  const secret = getPublishSecret();
+  const secret = await getPublishSecret();
   if (!secret) {
     box.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:24px 0;text-align:center;">Inserisci la password di pubblicazione per vedere il conto economico.</div>';
     return;

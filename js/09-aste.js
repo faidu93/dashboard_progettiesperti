@@ -88,7 +88,7 @@ async function loadAsteTabs() {
 
   loadAsteSummary();
 
-  const secret = getPublishSecret();
+  const secret = await getPublishSecret();
   if (!secret) {
     sel.innerHTML = '<option value="">Password richiesta</option>';
     content.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:24px 0;text-align:center;">Inserisci la password di pubblicazione per vedere i dati delle aste.</div>';
@@ -142,7 +142,7 @@ async function loadAsteSummary(force) {
   const box = document.getElementById('asteSummary');
   if (!box) return;
 
-  const secret = getPublishSecret();
+  const secret = await getPublishSecret();
   if (!secret) {
     box.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:16px 0;text-align:center;">Inserisci la password di pubblicazione per vedere il riepilogo.</div>';
     return;
@@ -272,7 +272,7 @@ async function loadAsteData(gid) {
 
   content.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:24px 0;text-align:center;"><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;animation:spin 1s linear infinite;">progress_activity</span> Caricamento…</div>';
 
-  const secret = getPublishSecret();
+  const secret = await getPublishSecret();
   if (!secret) return;
 
   const tab = asteCache.tabs.find(t => t.gid === gid);

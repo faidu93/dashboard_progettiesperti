@@ -6,12 +6,59 @@
 // ============================================================================
 // PUBBLICAZIONE INSTAGRAM (upload media + coda programmata)
 // ============================================================================
-// PUBLISH SECRET: chiesto una volta e tenuto solo per la sessione corrente
-function getPublishSecret() {
+// PUBLISH SECRET: chiesto una volta e tenuto solo per la sessione corrente.
+// Modal in-pagina invece del prompt() nativo del browser — un prompt() stona
+// (e in una PWA a schermo intero può comportarsi in modo inconsistente).
+function publishSecretModalEl() {
+  let el = document.getElementById('publishSecretModal');
+  if (el) return el;
+  el = document.createElement('div');
+  el.id = 'publishSecretModal';
+  el.className = 'cal-modal-bg';
+  el.innerHTML = `
+    <div class="cal-modal" style="max-width:380px;">
+      <h3>🔒 Password richiesta</h3>
+      <div class="cal-field">
+        <label>Password di pubblicazione</label>
+        <input type="password" id="publishSecretInput" autocomplete="current-password" placeholder="Inserisci la password…">
+      </div>
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button type="button" class="cal-btn" id="publishSecretCancel">Annulla</button>
+        <button type="button" class="cal-btn primary" id="publishSecretSubmit">Sblocca</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  return el;
+}
+
+// Mostra il modal e risolve con la password inserita ('' se annullato).
+function askPublishSecret() {
+  return new Promise(resolve => {
+    const el = publishSecretModalEl();
+    const input = el.querySelector('#publishSecretInput');
+    const submitBtn = el.querySelector('#publishSecretSubmit');
+    const cancelBtn = el.querySelector('#publishSecretCancel');
+
+    const done = (value) => {
+      el.classList.remove('show');
+      submitBtn.onclick = null; cancelBtn.onclick = null; input.onkeydown = null;
+      resolve(value);
+    };
+    submitBtn.onclick = () => done(input.value.trim());
+    cancelBtn.onclick = () => done('');
+    input.onkeydown = (e) => { if (e.key === 'Enter') done(input.value.trim()); if (e.key === 'Escape') done(''); };
+
+    input.value = '';
+    el.classList.add('show');
+    setTimeout(() => input.focus(), 50);
+  });
+}
+
+async function getPublishSecret() {
   let s = '';
   try { s = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
   if (!s) {
-    s = (prompt('Inserisci la password di pubblicazione (PUBLISH_SECRET):') || '').trim();
+    s = await askPublishSecret();
     if (s) {
       try { sessionStorage.setItem('publish_secret', s); } catch(e) {}
       try { localStorage.setItem('publish_secret', s); } catch(e) {}
@@ -153,7 +200,7 @@ function cloudinarySetupPrompt() {
 // Per file >45MB usa automaticamente Cloudinary.
 // Flusso Supabase: 1) backend genera URL firmato → 2) PUT diretto al bucket
 async function uploadMediaToSupabase(file, onProgress) {
-  const secret = getPublishSecret();
+  const secret = await getPublishSecret();
   if (!secret) throw new Error('Password di pubblicazione mancante.');
 
   const isVideo = (file.type || '').startsWith('video') || /\.(mp4|mov|m4v|webm|mkv)$/i.test(file.name || '');
@@ -215,7 +262,7 @@ async function uploadMediaToSupabase(file, onProgress) {
 // Se una singola chiamata fallisce per un errore di rete, il post resta comunque
 // salvato in coda lato server: si continua a ripollare invece di far fallire subito.
 async function pollReelPublish(postId, { onProgress, maxWaitMs = 180000, intervalMs = 4000 } = {}) {
-  const secret = getPublishSecret();
+  const secret = await getPublishSecret();
   if (!secret) throw new Error('Password di pubblicazione mancante.');
   const startedAt = Date.now();
   let attempt = 0;
@@ -251,7 +298,7 @@ async function pollReelPublish(postId, { onProgress, maxWaitMs = 180000, interva
 // L'update è usato quando si modifica un post già programmato dal calendario: senza,
 // ogni modifica creerebbe un secondo post duplicato invece di correggere quello esistente.
 async function schedulePublish({ mediaUrl, mediaKind, caption, scheduledAtIso, existingQueueId }) {
-  const secret = getPublishSecret();
+  const secret = await getPublishSecret();
   if (!secret) throw new Error('Password di pubblicazione mancante.');
 
   // Normalizza gli URL (es: conversione automatica di Google Drive / Dropbox in link diretti)
@@ -295,7 +342,7 @@ async function loadPublishQueue() {
   const box = document.getElementById('queueList');
   if (!box) return;
   box.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:16px 0;text-align:center;">Carico la coda…</div>';
-  const secret = getPublishSecret();
+  const secret = await getPublishSecret();
   if (!secret) {
     box.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:16px 0;text-align:center;">Inserisci la password di pubblicazione (programma un post) per vedere la coda.</div>';
     return;
@@ -365,7 +412,7 @@ function renderPublishQueue(queue) {
 
 // Riprova la pubblicazione di un post in errore
 async function retryPublishQueue(id) {
-  const secret = getPublishSecret();
+  const secret = await getPublishSecret();
   if (!secret) { alert('Password di pubblicazione mancante.'); return; }
 
   // Ripristina stato a pending prima del retry
@@ -400,7 +447,7 @@ async function retryPublishQueue(id) {
 
 async function deleteFromQueue(id) {
   if (!confirm('Rimuovere questo post dalla coda di pubblicazione?')) return;
-  const secret = getPublishSecret();
+  const secret = await getPublishSecret();
   if (!secret) { alert('Password di pubblicazione mancante.'); return; }
   try {
     const res = await fetch(`${BACKEND_BASE}/api/schedule?action=delete&id=${encodeURIComponent(id)}`, {
@@ -430,7 +477,7 @@ async function deleteFromQueue(id) {
 
 async function clearPublishedQueue() {
   if (!confirm('Rimuovere definitivamente dalla lista tutti i post già pubblicati con successo?')) return;
-  const secret = getPublishSecret();
+  const secret = await getPublishSecret();
   if (!secret) { alert('Password di pubblicazione mancante.'); return; }
   
   const btn = document.getElementById('queueCleanBtn');
