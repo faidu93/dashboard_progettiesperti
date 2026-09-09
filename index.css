@@ -960,8 +960,12 @@ body {
   /* ---- Responsive: tab nav, solo icone senza etichetta testuale ---- */
   @media (max-width: 640px) {
     .tab-btn span.tab-label { display: none; }
-    .tab-btn { padding: 10px; }
-    .tab-nav { top: 48px; }
+    /* Padding orizzontale ridotto rispetto al 10px uniforme di prima: con 8 tab
+       icon-only in fila, 10px per lato non ci stava (~26px di overflow reale,
+       costringeva la barra a scorrere lateralmente). L'altezza del tocco resta
+       comunque ≥44px per via della regola touch-target qui sotto. */
+    .tab-btn { padding: 10px 6px; }
+    .tab-nav { top: 48px; gap: 3px; }
   }
 
   /* ============ CALENDARIO MENSILE ============ */
@@ -1341,6 +1345,12 @@ body {
     /* Tab nav: testo nascosto */
     .tab-label { display: none !important; }
     .tab-btn { min-width: 44px; padding: 11px 12px !important; }
+    /* 8 tab da 44px min-width (target di tocco) non entrano tutte in una riga
+       sotto i 480px: passo a una griglia 4×2 invece di farle scorrere
+       lateralmente (era .tab-nav overflow-x:auto — unico punto rimasto con
+       scroll orizzontale). Grid invece di flex-wrap: righe regolari, nessuna
+       tab superstite che si allarga a coprire l'intera riga. */
+    .tab-nav { display: grid; grid-template-columns: repeat(4, 1fr); overflow-x: visible; }
     
     /* Modal: full screen su mobile ≤480px */
     .modal-bg, .cal-modal-bg, .cal-detail-bg {
@@ -1826,25 +1836,25 @@ body {
   .nav-inner { flex-direction: column; padding: 12px 16px; gap: 12px; }
   .nav-cluster { width: 100%; justify-content: space-between; }
   .container { padding: 20px 16px 40px; }
-  .cal-grid { min-width: 640px; } /* Mantiene il calendario leggibile a 7 colonne su mobile */
   .cal-nav { flex-direction: column; align-items: stretch; gap: 10px; }
   .cal-nav-btns { justify-content: space-between; width: 100%; }
-  .cal-filter-bar { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+  /* Niente più scroll orizzontale sui filtri: vanno a capo (era overflow-x:auto). */
+  .cal-filter-bar { flex-wrap: wrap; padding-bottom: 0; }
   .top-cols { grid-template-columns: minmax(0, 1fr); }
   .panel-grid.two-col, .panel-grid.equal, .panel-grid.three-col { grid-template-columns: minmax(0, 1fr); }
   .layout-header-actions { flex-wrap: wrap; gap: 8px; }
   .layout-header-actions button { flex: 1; text-align: center; justify-content: center; }
-  .cal-filters { flex-wrap: wrap; }
   .cal-filter { flex: 1; justify-content: center; }
-  .tabs { flex-wrap: wrap; overflow-x: auto; white-space: nowrap; justify-content: flex-start; }
-}
-@media (max-width: 600px) {
+
   .queue-row { flex-wrap: wrap; gap: 8px; padding: 12px; }
   .queue-main { width: 100%; }
 
-  /* Calendario editoriale su telefono: la griglia 7 colonne (min-width 640px,
-     vedi regola sopra) costringerebbe a scrollare in orizzontale in continuo —
-     qui la trasformiamo in un'agenda verticale, una riga per giorno. */
+  /* Calendario editoriale sotto tablet: la griglia a 7 colonne costringerebbe
+     a scorrere in orizzontale in continuo — qui la trasformiamo in un'agenda
+     verticale, una riga per giorno, così l'unico scorrimento resta quello
+     verticale della pagina. Soglia allineata alle altre regole mobile (768px):
+     prima si fermava a 600px, lasciando una fascia di schermi (600-767px)
+     che ricadeva ancora nella griglia larga 640px e scrollava lateralmente. */
   .cal-scroll-container { overflow-x: visible; }
   .cal-grid { min-width: 0; grid-template-columns: 1fr; gap: 8px; }
   .cal-dow { display: none; } /* la settimana ora è ripetuta per riga, vedi .cal-day-dow */
