@@ -13,7 +13,7 @@
 // alla rete, il Service Worker non le tocca.
 // ============================================================================
 
-const CACHE_NAME = 'pep-dashboard-v2';
+const CACHE_NAME = 'pep-dashboard-v3';
 const NETWORK_FIRST = ['/dashboard_progettiesperti/', '/dashboard_progettiesperti/index.html', '/dashboard_progettiesperti/manifest.json'];
 
 self.addEventListener('install', (event) => {
@@ -35,16 +35,21 @@ self.addEventListener('fetch', (event) => {
   // Solo richieste GET sulla stessa origin (niente API backend, niente CDN esterni)
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;
 
-  const isShell = NETWORK_FIRST.some((p) => url.pathname === p || url.pathname.endsWith('/dashboard_progettiesperti/'));
+  // req.mode === 'navigate' copre QUALSIASI caricamento di pagina (barra indirizzi,
+  // link, reload) — più robusto del solo confronto sul path, che si è rivelato
+  // insufficiente (una navigazione reale non passava dal ramo network-first).
+  const isShell = req.mode === 'navigate' ||
+    NETWORK_FIRST.some((p) => url.pathname === p || url.pathname.endsWith('/dashboard_progettiesperti/'));
 
   if (isShell) {
     // Network-first: prova la rete, cache solo come fallback offline.
-    // cache:'no-store' è essenziale qui — senza, fetch() può comunque
-    // restituire una risposta dalla cache HTTP del browser (se il server
-    // manda header di cache permissivi), rendendo 'network-first' finto:
-    // sembra andare in rete ma in realtà pesca comunque roba vecchia.
+    // cache:'no-store' è essenziale — senza, fetch() può comunque restituire
+    // una risposta dalla cache HTTP del browser, rendendo 'network-first' finto.
+    // Uso req.url (stringa) invece dell'oggetto Request originale: un Request
+    // in modalità 'navigate' non si può ri-fetchare in modo affidabile con
+    // opzioni modificate in tutti i browser.
     event.respondWith(
-      fetch(req, { cache: 'no-store' }).then((res) => {
+      fetch(req.url, { cache: 'no-store' }).then((res) => {
         const clone = res.clone();
         caches.open(CACHE_NAME).then((c) => c.put(req, clone));
         return res;
