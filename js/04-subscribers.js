@@ -183,10 +183,16 @@ function resetSubscribersHTML() {
               <span class="material-symbols-rounded" style="color:var(--info);">search</span>
               Anagrafica Iscritti
             </span>
-            <button id="subRefreshBtn" onclick="onSubscribersRefresh()" style="display:flex; align-items:center; gap:6px; padding:6px 10px; background:var(--bg-elev-2); border:1px solid var(--line-strong); border-radius:5px; color:var(--ink-soft); font-size:11.5px; font-family:var(--font-body); cursor:pointer; transition:all 0.15s; font-weight:500;">
-              <span class="material-symbols-rounded" style="font-size:15px; transition: transform 0.5s ease;" id="subRefreshIcon">sync</span>
-              <span>Aggiorna Dati</span>
-            </button>
+            <span style="display:flex; align-items:center; gap:8px;">
+              <a href="https://docs.google.com/spreadsheets/d/1ru8Kvxgt9tSi44OO_ZyDpBG-BbPOMutmwc8GVT3c2gE/edit" target="_blank" rel="noopener" style="display:flex; align-items:center; gap:6px; padding:6px 10px; background:var(--bg-elev-2); border:1px solid var(--line-strong); border-radius:5px; color:var(--ink-soft); font-size:11.5px; font-family:var(--font-body); text-decoration:none; font-weight:500;">
+                <span class="material-symbols-rounded" style="font-size:15px;">table_view</span>
+                <span>Apri foglio Google</span>
+              </a>
+              <button id="subRefreshBtn" onclick="onSubscribersRefresh()" style="display:flex; align-items:center; gap:6px; padding:6px 10px; background:var(--bg-elev-2); border:1px solid var(--line-strong); border-radius:5px; color:var(--ink-soft); font-size:11.5px; font-family:var(--font-body); cursor:pointer; transition:all 0.15s; font-weight:500;">
+                <span class="material-symbols-rounded" style="font-size:15px; transition: transform 0.5s ease;" id="subRefreshIcon">sync</span>
+                <span>Aggiorna Dati</span>
+              </button>
+            </span>
           </div>
           <div class="panel-sub">Elenco completo e ricerca degli iscritti al progetto</div>
         </div>
