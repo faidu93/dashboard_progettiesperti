@@ -753,6 +753,36 @@ function calResetUpload() {
   updateCalPreviewMedia(null);
 }
 
+// Recupera il file condiviso da un'altra app (es. ChatGPT) tramite la Web
+// Share Target API — il Service Worker lo ha già salvato in una cache
+// temporanea (sw.js: handleShareTarget) prima di rimandare qui con ?shared=1.
+// Va chiamata a modal già aperto: simula la selezione del file come se
+// l'utente l'avesse scelto lui dall'input, così passa dallo stesso identico
+// percorso (anteprima, upload, tipo IMAGE/CAROUSEL/REELS) di sempre.
+async function loadSharedFileIntoModal() {
+  try {
+    const cache = await caches.open('pep-share-target');
+    const fileRes = await cache.match('/shared-file');
+    if (!fileRes) return; // niente condiviso, o già consumato
+    const metaRes = await cache.match('/shared-meta');
+    const meta = metaRes ? await metaRes.json() : {};
+    const blob = await fileRes.blob();
+    const file = new File([blob], meta.name || 'condiviso', { type: blob.type });
+
+    await calHandleFiles([file]);
+
+    const notes = document.getElementById('calNotes');
+    if (notes && !notes.value) notes.value = [meta.title, meta.text].filter(Boolean).join('\n\n');
+
+    // Consumo: un file condiviso una volta sola, non deve ricomparire in un
+    // modal aperto manualmente in seguito.
+    await cache.delete('/shared-file');
+    await cache.delete('/shared-meta');
+  } catch (e) {
+    console.warn('Recupero file condiviso fallito:', e.message);
+  }
+}
+
 async function calHandleFiles(files) {
   if (!files || !files.length) return;
   const platform = document.getElementById('calPlatform').value;

@@ -15,6 +15,27 @@ async function init() {
   // CRITICAL: setup eventi PRIMA del fetch — così i bottoni funzionano anche se il backend fallisce
   calSetupEvents();
   calRender();
+
+  // Scorciatoie dall'icona PWA (manifest.json "shortcuts"): ?shortcut=pianifica
+  // apre subito il modal nuovo post, ?shortcut=aste salta dritto alla tab Aste.
+  // Solo azioni DOM, nessuna dipendenza dal fetch dati che segue.
+  const params = new URLSearchParams(location.search);
+  const shortcut = params.get('shortcut');
+  const isSharedFile = params.get('shared') === '1';
+  if (shortcut === 'pianifica') {
+    setTimeout(() => {
+      calOpenModal(null, null);
+      if (isSharedFile) loadSharedFileIntoModal();
+    }, 50);
+  } else if (shortcut === 'aste') {
+    const asteTabBtn = document.querySelector('.tab-btn[data-tab="aste"]');
+    if (asteTabBtn) tabSwitch(asteTabBtn);
+  }
+  // Ripulisco l'URL: senza questo, un refresh della pagina riaprirebbe sempre
+  // lo stesso file condiviso.
+  if (shortcut || isSharedFile) {
+    history.replaceState(null, '', location.pathname);
+  }
   let savedSecret = '';
   try { savedSecret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
   if (savedSecret) {

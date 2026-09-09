@@ -28,5 +28,36 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Pianifica post",
+      "short_name": "Pianifica",
+      "description": "Apri subito il modal per pianificare un nuovo post",
+      "url": "./index.html?shortcut=pianifica",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Aste",
+      "short_name": "Aste",
+      "description": "Vai al riepilogo delle aste",
+      "url": "./index.html?shortcut=aste",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "files": [
+        {
+          "name": "media",
+          "accept": ["image/*", "video/*"]
+        }
+      ]
+    }
+  }
 }

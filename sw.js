@@ -28,9 +28,32 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Condivisione da altre app (es. un'immagine generata con ChatGPT) verso la
+// dashboard: il manifest dichiara index.html come share_target via POST, ma
+// GitHub Pages è statico e non sa gestire un POST — il file viene quindi
+// intercettato QUI, salvato in una cache temporanea, e l'utente rediretto a
+// una GET normale con ?shared=1 perché la pagina lo recuperi al caricamento.
+async function handleShareTarget(event) {
+  const formData = await event.request.formData();
+  const file = formData.get('media');
+  const title = formData.get('title') || '';
+  const text = formData.get('text') || '';
+  const cache = await caches.open('pep-share-target');
+  if (file && typeof file === 'object' && file.size > 0) {
+    await cache.put('/shared-file', new Response(file, { headers: { 'Content-Type': file.type || 'application/octet-stream' } }));
+    await cache.put('/shared-meta', new Response(JSON.stringify({ title, text, name: file.name || 'condiviso' })));
+  }
+  return Response.redirect('./index.html?shortcut=pianifica&shared=1', 303);
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
+
+  if (req.method === 'POST' && url.origin === self.location.origin && url.pathname.endsWith('/index.html')) {
+    event.respondWith(handleShareTarget(event));
+    return;
+  }
 
   // Solo richieste GET sulla stessa origin (niente API backend, niente CDN esterni)
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;
