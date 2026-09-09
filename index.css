@@ -49,7 +49,12 @@ body {
 .brand-text { display: flex; flex-direction: column; gap: 1px; }
 .brand-name { font-family: var(--font-display); font-weight: 600; font-size: 15px; letter-spacing: -0.01em; line-height: 1.2; }
 .brand-tag { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-mute); letter-spacing: 0.04em; text-transform: uppercase; }
-.nav-cluster { display: flex; align-items: center; gap: 14px; }
+.nav-cluster { display: flex; align-items: center; gap: 10px; }
+/* Sotto-gruppi della barra in alto: raggruppano gli elementi per funzione
+   (stato dati / azioni di aggiornamento) invece di allinearli tutti allo
+   stesso livello — riorganizzazione per rendere la barra più leggibile. */
+.nav-group { display: flex; align-items: center; gap: 8px; }
+.nav-divider { width: 1px; align-self: stretch; min-height: 20px; background: var(--line); }
 .nav-status {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 6px 11px; background: rgba(255,140,30,0.08);

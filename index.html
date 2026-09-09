@@ -22,7 +22,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="index.css?v=20260910_noscrollx">
+  <link rel="stylesheet" href="index.css?v=20260910_navreorg">
 </head>
 <body>
 
@@ -36,37 +36,38 @@
       </div>
     </div>
     <div class="nav-cluster">
-      <span class="nav-status" id="navStatus"><span class="nav-dot"></span><span id="navStatusText">Caricamento…</span></span>
-      
-      <!-- Periodo dei Dati -->
-      <div id="navPeriodContainer" class="nav-period">
-        <span class="material-symbols-rounded" style="font-size:14px; color:var(--ink-mute);">calendar_month</span>
-        <span id="metaPeriod">—</span>
+      <!-- Gruppo stato: quando si sono aggiornati i dati -->
+      <div class="nav-group">
+        <span class="nav-status" id="navStatus"><span class="nav-dot"></span><span id="navStatusText">Caricamento…</span></span>
+
+        <!-- Periodo dei Dati -->
+        <div id="navPeriodContainer" class="nav-period">
+          <span class="material-symbols-rounded" style="font-size:14px; color:var(--ink-mute);">calendar_month</span>
+          <span id="metaPeriod">—</span>
+        </div>
+
+        <!-- Freschezza Dati (Meta) -->
+        <div class="nav-status live" id="freshness" title="Ultimo allineamento dati da Meta">
+          <span class="nav-dot"></span>
+          <span id="freshnessText">Verifica freschezza...</span>
+        </div>
       </div>
 
-      <!-- Freschezza Dati (Meta) -->
-      <div class="nav-status live" id="freshness" title="Ultimo allineamento dati da Meta">
-        <span class="nav-dot"></span>
-        <span id="freshnessText">Verifica freschezza...</span>
+      <span class="nav-divider"></span>
+
+      <!-- Gruppo azioni: aggiornamento dati (Cloudinary si configura da "Configura") -->
+      <div class="nav-group">
+        <button class="nav-btn" id="subRefreshBtnTop" onclick="onSubscribersRefresh()" title="Aggiorna solo iscritti ed entrate (veloce)">
+          <span class="material-symbols-rounded" style="transition: transform 0.5s ease;" id="subRefreshIconTop">sync</span>
+          <span>Iscritti</span>
+        </button>
+        <button class="nav-btn" id="btnForceRefreshAllTop" onclick="forceRefreshAllAnalytics(event)" title="Aggiorna tutti i dati (Instagram, YouTube, demografia)">
+          <span class="material-symbols-rounded" style="transition: transform 0.5s ease;" id="iconForceRefreshAllTop">refresh</span>
+          <span>Dati</span>
+        </button>
       </div>
 
-      <!-- Pulsante Aggiorna Iscritti -->
-      <button class="nav-btn" id="subRefreshBtnTop" onclick="onSubscribersRefresh()">
-        <span class="material-symbols-rounded" style="transition: transform 0.5s ease;" id="subRefreshIconTop">sync</span>
-        <span>Iscritti</span>
-      </button>
-
-      <!-- Badge Stato Cloudinary (Video >45MB) -->
-      <button type="button" class="nav-btn" onclick="calOpenCloudinarySettings()" id="cloudinaryNavBadge" title="Configura Cloudinary per Video >45MB" style="gap:5px;">
-        <span class="material-symbols-rounded" style="font-size:15px; color:var(--accent);" id="cloudinaryNavIcon">cloud_upload</span>
-        <span id="cloudinaryNavText">Cloud: ...</span>
-      </button>
-
-      <!-- Pulsante Aggiorna Tutto -->
-      <button class="nav-btn" id="btnForceRefreshAllTop" onclick="forceRefreshAllAnalytics(event)">
-        <span class="material-symbols-rounded" style="transition: transform 0.5s ease;" id="iconForceRefreshAllTop">refresh</span>
-        <span>Dati</span>
-      </button>
+      <span class="nav-divider"></span>
 
       <button class="nav-btn" id="btnConfig"><span class="material-symbols-rounded">settings</span>Configura</button>
     </div>
@@ -1306,6 +1307,11 @@
         <span class="material-symbols-rounded" style="font-size:16px;color:var(--pos);">check_circle</span>
         <span id="stDemo">Demografia · verifica…</span>
       </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);">
+        <span class="material-symbols-rounded" style="font-size:16px;" id="stCloudIcon">cloud_upload</span>
+        <span id="stCloud" style="flex:1;">Cloudinary (video &gt;45MB) · verifica…</span>
+        <button type="button" onclick="calOpenCloudinarySettings()" style="background:none;border:1px solid var(--line-strong);color:var(--ink-soft);border-radius:6px;padding:3px 9px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Configura</button>
+      </div>
     </div>
     <label for="apiKey" style="font-size:11px;color:var(--ink-mute);">URL backend (avanzato — di norma non si tocca)</label>
     <input type="text" id="apiKey" placeholder="https://dashboard-esperti-backend.vercel.app" autocomplete="off">
@@ -1326,13 +1332,13 @@
 </div>
 
   <script src="js/01-api.js?v=20260909_retry" defer></script>
-  <script src="js/02-instagram-publish.js?v=20260909_sharetarget" defer></script>
+  <script src="js/02-instagram-publish.js?v=20260910_navreorg" defer></script>
   <script src="js/03-kpi.js?v=20260909_views" defer></script>
   <script src="js/04-subscribers.js?v=20260909_sheetlink" defer></script>
   <script src="js/05-insights.js?v=20260909_views" defer></script>
   <script src="js/06-calendar.js?v=20260909_noslidegen" defer></script>
   <script src="js/07-analytics.js?v=20260910_gcalfix" defer></script>
-  <script src="js/08-main.js?v=20260909_shortcuts" defer></script>
+  <script src="js/08-main.js?v=20260910_navreorg" defer></script>
   <script src="js/09-aste.js?v=20260909_astesimplify" defer></script>
   <script src="js/10-profit.js?v=20260910_mobilegrid" defer></script>
   <script>

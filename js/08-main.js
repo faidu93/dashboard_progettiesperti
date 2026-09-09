@@ -246,6 +246,10 @@ document.getElementById('btnConfig').addEventListener('click', () => {
     ? `YouTube · attivo (${window.ytPublishedVideos.length} video)` : 'YouTube · nessun dato';
   if (stDemo) stDemo.textContent = (window.CACHED_DEMO && window.CACHED_DEMO.available)
     ? 'Demografia · attiva' : 'Demografia · in attesa di Meta';
+
+  // Stato Cloudinary (era un badge fisso in barra, ora vive solo qui)
+  if (typeof updateNavCloudinaryBadge === 'function') updateNavCloudinaryBadge();
+
   document.getElementById('modal').classList.add('show');
 });
 document.getElementById('btnCancel').addEventListener('click', () => document.getElementById('modal').classList.remove('show'));

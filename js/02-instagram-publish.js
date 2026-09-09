@@ -502,19 +502,20 @@ async function clearPublishedQueue() {
   }
 }
 
-// Aggiorna il badge nella barra di navigazione in alto
+// Aggiorna la riga di stato Cloudinary nel modal "Configura" (era un badge
+// fisso nella barra in alto, spostato qui per liberare spazio in nav).
 function updateNavCloudinaryBadge() {
-  const badgeText = document.getElementById('cloudinaryNavText');
-  const badgeIcon = document.getElementById('cloudinaryNavIcon');
-  if (!badgeText) return;
+  const badgeText = document.getElementById('stCloud');
+  const badgeIcon = document.getElementById('stCloudIcon');
+  if (!badgeText) return; // il modal "Configura" non è aperto, niente da aggiornare
 
   if (isCloudinaryConfigured()) {
     const { cloudName } = getCloudinaryConfig();
-    badgeText.textContent = `Cloud: ${cloudName}`;
+    badgeText.textContent = `Cloudinary (video >45MB) · attivo (${cloudName})`;
     if (badgeIcon) { badgeIcon.style.color = 'var(--pos)'; badgeIcon.textContent = 'cloud_done'; }
   } else {
-    badgeText.textContent = 'Cloud: configura';
-    if (badgeIcon) { badgeIcon.style.color = 'var(--accent)'; badgeIcon.textContent = 'cloud_upload'; }
+    badgeText.textContent = 'Cloudinary (video >45MB) · da configurare';
+    if (badgeIcon) { badgeIcon.style.color = 'var(--ink-mute)'; badgeIcon.textContent = 'cloud_upload'; }
   }
 }
 
