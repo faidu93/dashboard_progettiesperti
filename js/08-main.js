@@ -273,3 +273,64 @@ document.getElementById('btnShareClose').addEventListener('click', () => documen
 document.getElementById('modalShare').addEventListener('click', (e) => { if (e.target.id === 'modalShare') document.getElementById('modalShare').classList.remove('show'); });
 
 document.addEventListener('DOMContentLoaded', () => { init(); });
+
+// ============================================================================
+// PULL-TO-REFRESH (PWA mobile) — trascina verso il basso dalla cima per
+// ricaricare. Su desktop / senza touch non si attiva.
+// ============================================================================
+(function () {
+  if (!('ontouchstart' in window) && !navigator.maxTouchPoints) return;
+
+  const THRESHOLD = 68;   // px di trascinamento per far scattare il refresh
+  const MAX_PULL  = 100;  // px oltre cui non scende più
+
+  const ind = document.createElement('div');
+  ind.id = 'ptr-indicator';
+  ind.innerHTML = '<span class="material-symbols-rounded">arrow_downward</span>';
+  document.addEventListener('DOMContentLoaded', () => document.body.appendChild(ind));
+  if (document.body) document.body.appendChild(ind);
+
+  let startY = 0, pulling = false, dist = 0, triggered = false;
+  const atTop = () => (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+
+  window.addEventListener('touchstart', (e) => {
+    if (triggered || e.touches.length !== 1 || !atTop()) { pulling = false; return; }
+    // non partire se il tocco è dentro un elemento scrollabile in orizzontale/verticale proprio
+    startY = e.touches[0].clientY;
+    pulling = true; dist = 0;
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    if (!pulling || triggered) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy <= 0 || !atTop()) {
+      pulling = false;
+      ind.style.transform = '';
+      ind.classList.remove('ptr-visible', 'ptr-ready');
+      return;
+    }
+    dist = Math.min(MAX_PULL, dy * 0.5);
+    ind.classList.add('ptr-visible');
+    ind.classList.toggle('ptr-ready', dist >= THRESHOLD);
+    ind.style.transform = `translateX(-50%) translateY(${dist}px)`;
+    if (dy > 8) e.preventDefault(); // blocca il bounce nativo mentre si tira
+  }, { passive: false });
+
+  const end = () => {
+    if (!pulling || triggered) return;
+    pulling = false;
+    if (dist >= THRESHOLD) {
+      triggered = true;
+      ind.classList.add('ptr-spinning');
+      ind.classList.remove('ptr-ready');
+      ind.querySelector('.material-symbols-rounded').textContent = 'refresh';
+      ind.style.transform = 'translateX(-50%) translateY(52px)';
+      setTimeout(() => location.reload(), 180);
+    } else {
+      ind.classList.remove('ptr-visible', 'ptr-ready');
+      ind.style.transform = '';
+    }
+  };
+  window.addEventListener('touchend', end, { passive: true });
+  window.addEventListener('touchcancel', end, { passive: true });
+})();

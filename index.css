@@ -1771,6 +1771,24 @@ body {
   animation: spin 1.2s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============ PULL-TO-REFRESH (PWA mobile) ============ */
+#ptr-indicator {
+  position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) - 44px);
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--bg-elev); border: 1px solid var(--line-strong);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-mute); box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  transform: translateX(-50%);
+  opacity: 0; pointer-events: none; z-index: 200;
+  transition: opacity 0.18s ease;
+}
+#ptr-indicator.ptr-visible { opacity: 1; }
+#ptr-indicator.ptr-ready { color: var(--accent); border-color: var(--accent); }
+#ptr-indicator .material-symbols-rounded { font-size: 19px; transition: transform 0.15s ease; }
+#ptr-indicator.ptr-ready .material-symbols-rounded { transform: rotate(180deg); }
+#ptr-indicator.ptr-spinning { color: var(--accent); border-color: var(--accent); opacity: 1; }
+#ptr-indicator.ptr-spinning .material-symbols-rounded { animation: spin 0.7s linear infinite; transform: none; }
 #loadingTitle {
   font-size: 16px; font-weight: 700; color: var(--ink);
   font-family: var(--font-display);
