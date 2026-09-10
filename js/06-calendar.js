@@ -895,13 +895,17 @@ function calSetupEvents() {
 
       document.getElementById('calModal').classList.remove('show');
 
+      if (navigator.vibrate) navigator.vibrate(12);
       if (isImmediate) {
         // Ricarica la coda pubblicazione per mostrare il nuovo stato
         if (typeof loadPublishQueue === 'function') setTimeout(loadPublishQueue, 1000);
-        alert('⚡ Reel/Post pubblicato con successo su Instagram!');
+        if (typeof toast === 'function') toast('Reel/Post pubblicato su Instagram', 'ok', 3500);
+        else alert('⚡ Reel/Post pubblicato con successo su Instagram!');
       } else {
-        // Programma contenuto: mostra toast o messaggio silenzioso
-        setStatus && setStatus('ok', '✅ Post programmato con successo!');
+        // Programma contenuto: feedback via toast (prima era un setStatus non
+        // visibile su mobile — l'utente non sapeva se era andato a buon fine).
+        if (typeof toast === 'function') toast('Post programmato nel calendario', 'ok', 3200);
+        else if (setStatus) setStatus('ok', 'Post programmato con successo');
       }
 
     } catch(e) {

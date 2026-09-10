@@ -686,24 +686,19 @@ function updateOnboarding() {
   // solo a guidare la connessione di Google Calendar.
   banner.style.display = hasGoogle ? 'none' : 'block';
 
-  // Step 1: Google
+  // Step 1: Google (nella strip compatta lo status inline è solo rumore —
+  // il bottone "Accedi" dice già tutto; quando è connesso la strip è nascosta).
   const step1Card = document.getElementById('step1Card');
   const step1Status = document.getElementById('step1Status');
   const loginBtn = document.getElementById('onboardingLoginBtn');
-  if (hasGoogle) {
-    step1Card.style.opacity = '0.6';
-    step1Card.style.borderLeftColor = 'var(--pos)';
-    step1Status.innerHTML = '<span style="color:var(--pos);">✓ Completato</span>';
-    if (loginBtn) {
+  if (step1Status) step1Status.textContent = '';
+  if (step1Card) step1Card.style.opacity = '1';
+  if (loginBtn) {
+    if (hasGoogle) {
       loginBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;">check_circle</span>Connesso';
       loginBtn.style.background = 'var(--pos)';
       loginBtn.disabled = true;
-    }
-  } else {
-    step1Card.style.opacity = '1';
-    step1Card.style.borderLeftColor = 'var(--accent)';
-    step1Status.textContent = 'da fare';
-    if (loginBtn) {
+    } else {
       loginBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px;">login</span>Accedi a Google';
       loginBtn.style.background = 'var(--accent)';
       loginBtn.disabled = false;

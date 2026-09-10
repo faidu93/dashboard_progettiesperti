@@ -571,12 +571,31 @@ function renderFreshness(daily) {
 // ============================================================================
 // TAB NAVIGATOR
 // ============================================================================
+// Accessibilità: etichetta ogni tab (l'icona da sola non ha testo per lo
+// screen reader, e su mobile la label visibile è display:none) e tiene
+// aggiornato aria-selected. Chiamata una volta al caricamento.
+function setupTabA11y() {
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    const name = b.querySelector('.tab-label')?.textContent?.trim() || b.dataset.tab;
+    if (!b.getAttribute('aria-label')) b.setAttribute('aria-label', name);
+    b.setAttribute('aria-selected', b.classList.contains('active') ? 'true' : 'false');
+    b.setAttribute('tabindex', b.classList.contains('active') ? '0' : '-1');
+  });
+}
+
 function tabSwitch(btn) {
   const tabId = btn.dataset.tab;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+    b.setAttribute('tabindex', '-1');
+  });
   document.querySelectorAll('section[data-tab]').forEach(s => s.classList.remove('tab-active'));
   btn.classList.add('active');
+  btn.setAttribute('aria-selected', 'true');
+  btn.setAttribute('tabindex', '0');
   document.querySelectorAll(`section[data-tab="${tabId}"]`).forEach(s => s.classList.add('tab-active'));
+  if (typeof updateFreshnessLabels === 'function') updateFreshnessLabels();
   if (tabId === 'performance' && CACHED && CACHED.period) {
     renderReachChart(CACHED.period);
   }

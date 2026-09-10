@@ -44,6 +44,7 @@ async function init(opts) {
   // il backend fallisce. In silent NON va rifatto (raddoppierebbe i listener).
   if (!silent) {
     calSetupEvents();
+    if (typeof setupTabA11y === 'function') setupTabA11y();
   }
   calRender();
 
@@ -253,6 +254,7 @@ async function init(opts) {
     } else {
       setStatus('live', 'Live · ' + now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}));
     }
+    if (typeof updateFreshnessLabels === 'function') updateFreshnessLabels();
     if (silent) { flashDataUpdated(); } else { loadingFinish(true); }
   } catch(e) {
     console.error('Backend error:', e);
@@ -261,6 +263,24 @@ async function init(opts) {
       loadingStep('error', 'Errore connessione backend: ' + e.message.slice(0, 60), 'error');
       loadingFinish(false);
     }
+  }
+}
+
+// Aggiunge "· agg. Xfa" al badge di ogni tab in base a quando i suoi dati
+// sono stati scaricati l'ultima volta (timestamp di cache di fetchCachedBackend).
+const _FRESH_MAP = {
+  performance: 'cache_ig_insights',
+  contentlab: 'cache_ig_insights',
+};
+function updateFreshnessLabels() {
+  for (const [tab, key] of Object.entries(_FRESH_MAP)) {
+    // solo il PRIMO badge "Live" della tab (le sottosezioni ne hanno diversi)
+    const el = document.querySelector(`section[data-tab="${tab}"] .section-meta.live`);
+    if (!el) continue;
+    if (!el.dataset.base) el.dataset.base = el.textContent.trim().replace(/ · agg\. .*$/, '');
+    const age = (typeof cacheAge === 'function') ? cacheAge(key) : null;
+    const rel = age ? (typeof relTime === 'function' ? relTime(age) : '') : '';
+    el.textContent = rel ? `${el.dataset.base} · agg. ${rel}` : el.dataset.base;
   }
 }
 
@@ -363,6 +383,9 @@ document.getElementById('modalShare').addEventListener('click', (e) => { if (e.t
 
 document.addEventListener('DOMContentLoaded', () => { init(); });
 
+// Tiene aggiornato il "· agg. Xfa" dei badge di sezione mentre la app resta aperta.
+setInterval(() => { if (typeof updateFreshnessLabels === 'function') updateFreshnessLabels(); }, 30000);
+
 // ============================================================================
 // PULL-TO-REFRESH (PWA mobile) — trascina verso il basso dalla cima per
 // ricaricare. Su desktop / senza touch non si attiva.
@@ -410,6 +433,7 @@ document.addEventListener('DOMContentLoaded', () => { init(); });
     pulling = false;
     if (dist >= THRESHOLD) {
       triggered = true;
+      if (navigator.vibrate) navigator.vibrate(12); // micro-feedback tattile
       ind.classList.add('ptr-spinning');
       ind.classList.remove('ptr-ready');
       ind.querySelector('.material-symbols-rounded').textContent = 'refresh';

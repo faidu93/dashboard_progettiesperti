@@ -1743,6 +1743,12 @@ body {
 .toast-warn  { border-color: rgba(255,165,60,0.4); }
 .toast-warn  .material-symbols-rounded { color: var(--accent-bright); }
 .toast-info  .material-symbols-rounded { color: var(--info); }
+/* toast con azione al tap (es. "ricarica"): bordo accento + affordance */
+.toast-action { border-color: var(--accent); cursor: pointer; }
+.toast-action::after {
+  content: 'chevron_right'; font-family: 'Material Symbols Rounded';
+  font-size: 18px; color: var(--accent); margin-left: auto; flex-shrink: 0;
+}
 
 /* lampo tenue sul badge stato quando un refresh in background aggiorna i dati */
 @keyframes dataFlash {

@@ -23,7 +23,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="index.css?v=20260911_polish">
+  <link rel="stylesheet" href="index.css?v=20260911_v2">
 </head>
 <body>
 
@@ -58,11 +58,11 @@
 
       <!-- Gruppo azioni: aggiornamento dati (Cloudinary si configura da "Configura") -->
       <div class="nav-group">
-        <button class="nav-btn" id="subRefreshBtnTop" onclick="onSubscribersRefresh()" title="Aggiorna solo iscritti ed entrate (veloce)">
+        <button class="nav-btn" id="subRefreshBtnTop" onclick="onSubscribersRefresh()" aria-label="Aggiorna iscritti ed entrate" title="Aggiorna solo iscritti ed entrate (veloce)">
           <span class="material-symbols-rounded" style="transition: transform 0.5s ease;" id="subRefreshIconTop">sync</span>
           <span>Iscritti</span>
         </button>
-        <button class="nav-btn" id="btnForceRefreshAllTop" onclick="forceRefreshAllAnalytics(event)" title="Aggiorna tutti i dati (Instagram, YouTube, demografia)">
+        <button class="nav-btn" id="btnForceRefreshAllTop" onclick="forceRefreshAllAnalytics(event)" aria-label="Aggiorna tutti i dati" title="Aggiorna tutti i dati (Instagram, YouTube, demografia)">
           <span class="material-symbols-rounded" style="transition: transform 0.5s ease;" id="iconForceRefreshAllTop">refresh</span>
           <span>Dati</span>
         </button>
@@ -77,44 +77,24 @@
 
 <div class="container">
 
-  <!-- Banner onboarding 2-step -->
-  <div id="onboardingBanner" style="position:relative; display:none; padding:18px 20px;
-    background:linear-gradient(135deg,rgba(255,140,30,0.10),rgba(90,174,240,0.06));
-    border:1px solid rgba(255,140,30,0.35); border-radius:12px; margin-bottom:22px;">
-    <button onclick="dismissOnboardingBanner()" style="position:absolute; right:12px; top:12px; background:transparent; border:none; color:var(--ink-mute); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:4px; border-radius:50%; transition:all 0.15s;" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--ink-mute)'" title="Nascondi permanentemente">
-      <span class="material-symbols-rounded" style="font-size:18px;">close</span>
+  <!-- Banner onboarding — strip compatta: serve solo a connettere Google
+       Calendar (i dati IG/YT arrivano già dal backend). Si nasconde da solo
+       quando Google è connesso (vedi updateOnboarding). -->
+  <div id="onboardingBanner" style="position:relative; display:none; padding:12px 16px;
+    background:linear-gradient(135deg,rgba(255,140,30,0.09),rgba(90,174,240,0.05));
+    border:1px solid rgba(255,140,30,0.28); border-radius:10px; margin-bottom:16px;">
+    <button onclick="dismissOnboardingBanner()" style="position:absolute; right:8px; top:8px; background:transparent; border:none; color:var(--ink-mute); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:4px; border-radius:50%;" title="Nascondi permanentemente" aria-label="Nascondi avviso">
+      <span class="material-symbols-rounded" style="font-size:17px;">close</span>
     </button>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-right:30px;">
-      <span class="material-symbols-rounded" style="color:var(--accent);font-size:24px;flex-shrink:0;">rocket_launch</span>
-      <strong style="font-size:15px;color:var(--ink);">Benvenuto · Configura la dashboard in 2 step</strong>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-      <div id="step1Card" style="background:var(--bg-elev-2);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="background:var(--accent);color:var(--bg);width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:13px;font-weight:700;">1</span>
-          <strong style="font-size:13.5px;color:var(--ink);">Accedi a Google</strong>
-          <span id="step1Status" style="margin-left:auto;font-size:11px;font-family:var(--font-mono);color:var(--ink-mute);"></span>
-        </div>
-        <div style="font-size:12.5px;color:var(--ink-soft);line-height:1.5;">
-          Usa l’account Google del progetto (<code style="background:var(--bg-elev);padding:2px 6px;border-radius:3px;font-size:11.5px;">progettoespertiprofeta@gmail.com</code>) per sincronizzare il calendario con il team.
-        </div>
-        <button id="onboardingLoginBtn" onclick="gcalLogin()" style="background:var(--accent);border:none;color:var(--bg);padding:9px 14px;border-radius:6px;cursor:pointer;font-family:var(--font-mono);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;touch-action:manipulation;min-height:38px;">
-          <span class="material-symbols-rounded" style="font-size:16px;">login</span>Accedi a Google
-        </button>
-      </div>
-      <div id="step2Card" style="background:var(--bg-elev-2);border:1px solid var(--line);border-left:3px solid var(--info);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;opacity:0.6;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="background:var(--info);color:var(--bg);width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:13px;font-weight:700;">2</span>
-          <strong style="font-size:13.5px;color:var(--ink);">Dati Instagram &amp; YouTube</strong>
-          <span id="step2Status" style="margin-left:auto;font-size:11px;font-family:var(--font-mono);color:var(--ink-mute);"></span>
-        </div>
-        <div style="font-size:12.5px;color:var(--ink-soft);line-height:1.5;">
-          I dati di Instagram e YouTube arrivano automaticamente dal backend. Nessuna configurazione necessaria.
-        </div>
-        <button id="onboardingKeyBtn" disabled style="background:var(--pos);border:none;color:var(--bg);padding:9px 14px;border-radius:6px;cursor:default;font-family:var(--font-mono);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;touch-action:manipulation;min-height:38px;">
-          <span class="material-symbols-rounded" style="font-size:16px;">check_circle</span>Connesso
-        </button>
-      </div>
+    <div id="step1Card" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding-right:26px;">
+      <span class="material-symbols-rounded" style="color:var(--accent);font-size:20px;flex-shrink:0;">calendar_month</span>
+      <span style="font-size:12.5px;color:var(--ink-soft);line-height:1.45;flex:1;min-width:160px;">
+        Connetti <strong style="color:var(--ink);">Google Calendar</strong> per sincronizzare il calendario col team.
+        <span id="step1Status" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);"></span>
+      </span>
+      <button id="onboardingLoginBtn" onclick="gcalLogin()" style="background:var(--accent);border:none;color:var(--bg);padding:8px 14px;border-radius:6px;cursor:pointer;font-family:var(--font-mono);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;touch-action:manipulation;min-height:38px;flex-shrink:0;">
+        <span class="material-symbols-rounded" style="font-size:16px;">login</span>Accedi a Google
+      </button>
     </div>
   </div>
 
@@ -1332,14 +1312,14 @@
   </div>
 </div>
 
-  <script src="js/01-api.js?v=20260910_swr2" defer></script>
+  <script src="js/01-api.js?v=20260911_v2" defer></script>
   <script src="js/02-instagram-publish.js?v=20260910_navreorg" defer></script>
   <script src="js/03-kpi.js?v=20260909_views" defer></script>
   <script src="js/04-subscribers.js?v=20260909_sheetlink" defer></script>
-  <script src="js/05-insights.js?v=20260910_lazygoog" defer></script>
-  <script src="js/06-calendar.js?v=20260909_noslidegen" defer></script>
-  <script src="js/07-analytics.js?v=20260910_gcalfix" defer></script>
-  <script src="js/08-main.js?v=20260910_lazygoog" defer></script>
+  <script src="js/05-insights.js?v=20260911_v2" defer></script>
+  <script src="js/06-calendar.js?v=20260911_v2" defer></script>
+  <script src="js/07-analytics.js?v=20260911_v2" defer></script>
+  <script src="js/08-main.js?v=20260911_v2" defer></script>
   <script src="js/09-aste.js?v=20260909_astesimplify" defer></script>
   <script src="js/10-profit.js?v=20260910_mobilegrid" defer></script>
   <script>
@@ -1347,7 +1327,22 @@
     // stesso come sempre — 'Add to Home Screen' è un bonus, non un requisito.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW non registrato:', e.message));
+        navigator.serviceWorker.register('sw.js').then((reg) => {
+          // Quando arriva una versione nuova: avviso non bloccante che ricarica.
+          reg.addEventListener('updatefound', () => {
+            const nw = reg.installing;
+            if (!nw) return;
+            nw.addEventListener('statechange', () => {
+              if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                if (typeof toast === 'function') {
+                  toast('Nuova versione disponibile · tocca per aggiornare', 'info', 600000, () => location.reload());
+                }
+              }
+            });
+          });
+          // Controlla gli aggiornamenti ogni ora (PWA che resta aperta a lungo).
+          setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
+        }).catch((e) => console.warn('SW non registrato:', e.message));
       });
     }
   </script>

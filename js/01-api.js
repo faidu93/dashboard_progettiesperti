@@ -10,7 +10,7 @@ let calPublishedPosts = [];
 // ============================================================================
 // TOAST — notifiche non bloccanti (sostituiscono i popup alert() di sistema)
 // ============================================================================
-function toast(message, type = 'info', duration = 3800) {
+function toast(message, type = 'info', duration = 3800, onClick = null) {
   let host = document.getElementById('toast-host');
   if (!host) {
     host = document.createElement('div');
@@ -18,7 +18,7 @@ function toast(message, type = 'info', duration = 3800) {
     (document.body || document.documentElement).appendChild(host);
   }
   const el = document.createElement('div');
-  el.className = 'toast toast-' + type;
+  el.className = 'toast toast-' + type + (onClick ? ' toast-action' : '');
   el.setAttribute('role', 'status');
   const icons = { ok: 'check_circle', error: 'error', warn: 'warning', info: 'info' };
   const ico = document.createElement('span');
@@ -30,7 +30,33 @@ function toast(message, type = 'info', duration = 3800) {
   host.appendChild(el); // l'animazione d'ingresso parte da sola (CSS)
   const close = () => { el.classList.add('toast-out'); setTimeout(() => el.remove(), 240); };
   const t = setTimeout(close, duration);
-  el.addEventListener('click', () => { clearTimeout(t); close(); });
+  el.addEventListener('click', () => {
+    clearTimeout(t);
+    if (typeof onClick === 'function') { try { onClick(); } catch (e) {} }
+    close();
+  });
+}
+
+// Tempo relativo compatto in italiano ("adesso", "5 min fa", "2h fa", "ieri").
+function relTime(ts) {
+  if (!ts) return '';
+  const s = Math.max(0, (Date.now() - ts) / 1000);
+  if (s < 45) return 'adesso';
+  if (s < 90) return '1 min fa';
+  const m = Math.round(s / 60);
+  if (m < 60) return m + ' min fa';
+  const h = Math.round(m / 60);
+  if (h < 24) return h + 'h fa';
+  const d = Math.round(h / 24);
+  return d === 1 ? 'ieri' : d + ' giorni fa';
+}
+
+// Legge il timestamp salvato da fetchCachedBackend per una cacheKey.
+function cacheAge(cacheKey) {
+  try {
+    const c = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+    return c && c.timestamp ? c.timestamp : null;
+  } catch (e) { return null; }
 }
 
 // Reindirizza i vecchi alert() bloccanti sui toast, con tipo dedotto dal testo.
