@@ -38,6 +38,11 @@ body {
 .nav {
   border-bottom: 1px solid var(--line); background: rgba(10,12,18,0.85);
   position: sticky; top: 0; z-index: 50; backdrop-filter: blur(12px);
+  /* PWA installata (status bar iOS "black-translucent"): il contenuto va sotto
+     l'orologio/batteria di sistema. Questo padding spinge la barra sotto la
+     status bar, e lo sfondo del nav ci si estende dietro. Su browser normale
+     env(safe-area-inset-top) è 0, quindi nessun effetto. */
+  padding-top: env(safe-area-inset-top, 0px);
 }
 .nav-inner {
   max-width: 1320px; margin: 0 auto; padding: 18px 28px;
@@ -503,8 +508,8 @@ body {
   .panel { padding: 16px 14px; }
   .section-title { font-size: 20px; }
 
-  /* Tab nav */
-  .tab-nav { top: 48px; padding: 4px; gap: 3px; border-radius: 10px; margin-bottom: 24px; }
+  /* Tab nav — l'offset sticky tiene conto della safe area (PWA installata) */
+  .tab-nav { top: calc(48px + env(safe-area-inset-top, 0px)); padding: 4px; gap: 3px; border-radius: 10px; margin-bottom: 24px; }
   .tab-btn { padding: 9px 6px; font-size: 10px; gap: 4px; border-radius: 7px; }
   .tab-btn .material-symbols-rounded { font-size: 17px; }
 
@@ -995,7 +1000,7 @@ body {
        costringeva la barra a scorrere lateralmente). L'altezza del tocco resta
        comunque ≥44px per via della regola touch-target qui sotto. */
     .tab-btn { padding: 10px 6px; }
-    .tab-nav { top: 48px; gap: 3px; }
+    .tab-nav { top: calc(48px + env(safe-area-inset-top, 0px)); gap: 3px; }
   }
 
   /* ============ CALENDARIO MENSILE ============ */
@@ -1870,7 +1875,17 @@ body {
   .nav-cluster { width: auto; justify-content: flex-end; flex-wrap: nowrap; gap: 6px; flex-shrink: 0; }
   .nav-group { gap: 6px; }
   .nav-divider { display: none; }
-  .container { padding: 20px 16px 40px; }
+  /* Safe area: sotto (home indicator) e ai lati (notch in orizzontale) quando
+     la PWA è installata; su browser normale gli env() valgono 0. */
+  .container {
+    padding: 20px calc(16px + env(safe-area-inset-right, 0px))
+             calc(40px + env(safe-area-inset-bottom, 0px))
+             calc(16px + env(safe-area-inset-left, 0px));
+  }
+  .nav-inner {
+    padding-left: calc(14px + env(safe-area-inset-left, 0px));
+    padding-right: calc(14px + env(safe-area-inset-right, 0px));
+  }
   /* Intestazione di sezione: su mobile i tre blocchi (titolo · pulsante ·
      "LIVE") sulla stessa riga si accavallavano — li impilo. */
   .section-head { flex-direction: column; align-items: stretch; gap: 12px; }
