@@ -1789,6 +1789,43 @@ body {
 #ptr-indicator.ptr-ready .material-symbols-rounded { transform: rotate(180deg); }
 #ptr-indicator.ptr-spinning { color: var(--accent); border-color: var(--accent); opacity: 1; }
 #ptr-indicator.ptr-spinning .material-symbols-rounded { animation: spin 0.7s linear infinite; transform: none; }
+
+/* ============ TOAST (notifiche non bloccanti) ============ */
+#toast-host {
+  position: fixed; left: 0; right: 0;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 3000; display: flex; flex-direction: column; align-items: center;
+  gap: 8px; padding: 0 14px; pointer-events: none;
+}
+.toast {
+  pointer-events: auto; max-width: 460px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 15px; border-radius: 10px;
+  background: var(--bg-elev); border: 1px solid var(--line-strong);
+  color: var(--ink); font-size: 13px; font-family: var(--font-body); line-height: 1.35;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  /* animazione all'inserimento: non dipende da requestAnimationFrame (che è
+     in pausa quando la tab non è in primo piano) */
+  animation: toastIn 0.24s ease both;
+}
+@keyframes toastIn { from { transform: translateY(18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.toast.toast-out { animation: toastOut 0.22s ease forwards; }
+@keyframes toastOut { to { transform: translateY(12px); opacity: 0; } }
+.toast .material-symbols-rounded { font-size: 19px; flex-shrink: 0; }
+.toast-ok    { border-color: rgba(54,201,118,0.4); }
+.toast-ok    .material-symbols-rounded { color: var(--pos); }
+.toast-error { border-color: rgba(239,90,90,0.45); }
+.toast-error .material-symbols-rounded { color: var(--neg); }
+.toast-warn  { border-color: rgba(255,165,60,0.4); }
+.toast-warn  .material-symbols-rounded { color: var(--accent-bright); }
+.toast-info  .material-symbols-rounded { color: var(--info); }
+
+/* lampo tenue sul badge stato quando un refresh in background aggiorna i dati */
+@keyframes dataFlash {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(54,201,118,0); }
+  30%      { box-shadow: 0 0 0 4px rgba(54,201,118,0.35); }
+}
+.data-flash { animation: dataFlash 1.4s ease; }
 #loadingTitle {
   font-size: 16px; font-weight: 700; color: var(--ink);
   font-family: var(--font-display);

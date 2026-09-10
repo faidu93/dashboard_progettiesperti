@@ -7,6 +7,47 @@
 let CACHED = { daily: null, posts: null, profile: null };
 let calPublishedPosts = [];
 
+// ============================================================================
+// TOAST — notifiche non bloccanti (sostituiscono i popup alert() di sistema)
+// ============================================================================
+function toast(message, type = 'info', duration = 3800) {
+  let host = document.getElementById('toast-host');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'toast-host';
+    (document.body || document.documentElement).appendChild(host);
+  }
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.setAttribute('role', 'status');
+  const icons = { ok: 'check_circle', error: 'error', warn: 'warning', info: 'info' };
+  const ico = document.createElement('span');
+  ico.className = 'material-symbols-rounded';
+  ico.textContent = icons[type] || icons.info;
+  const txt = document.createElement('span');
+  txt.textContent = String(message);
+  el.appendChild(ico); el.appendChild(txt);
+  host.appendChild(el); // l'animazione d'ingresso parte da sola (CSS)
+  const close = () => { el.classList.add('toast-out'); setTimeout(() => el.remove(), 240); };
+  const t = setTimeout(close, duration);
+  el.addEventListener('click', () => { clearTimeout(t); close(); });
+}
+
+// Reindirizza i vecchi alert() bloccanti sui toast, con tipo dedotto dal testo.
+(function () {
+  const nativeAlert = window.alert ? window.alert.bind(window) : function () {};
+  window.alert = function (msg) {
+    try {
+      const s = String(msg);
+      let type = 'info';
+      if (/success|✅|⚡.*(pubblicat|complet)|programmat/i.test(s)) type = 'ok';
+      else if (/errore|fallit|non valid|mancante|scadut|non riuscit|non disponibil|non sei conness|non ancora/i.test(s)) type = 'error';
+      else if (/⚠️|attenzione|riprova/i.test(s)) type = 'warn';
+      toast(s, type, type === 'error' ? 5200 : 3800);
+    } catch (e) { nativeAlert(msg); }
+  };
+})();
+
 
 
 
@@ -47,38 +88,51 @@ async function fetchBackend(path) {
   return j;
 }
 
-// Caching helper iper-veloce (Stale-While-Revalidate) per rendering istantaneo 0ms
-async function fetchCachedBackend(endpoint, cacheKey, ttlMs = 3600 * 1000) {
+// Caching helper Stale-While-Revalidate: rende SUBITO l'ultima copia locale
+// (0ms) e, se è più vecchia di `revalidateMs`, rifà la chiamata in background.
+// Quando i dati freschi sono DIVERSI da quelli in cache, aggiorna localStorage
+// e avvisa la app via window.__onDataRevalidated(cacheKey) così può ri-disegnare
+// la sezione senza che l'utente debba premere "Aggiorna".
+//   ttlMs        = oltre questo la cache è "scaduta" (comunque mostrata, ma il
+//                  refetch parte sempre)
+//   revalidateMs = entro questo la cache è "abbastanza fresca": nessun refetch,
+//                  per non martellare il backend a ogni cambio tab
+async function fetchCachedBackend(endpoint, cacheKey, ttlMs = 3600 * 1000, revalidateMs = 90 * 1000) {
   const now = Date.now();
   let cachedData = null;
+  let cachedRaw = null;
+  let age = Infinity;
 
   try {
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       const parsed = JSON.parse(cached);
       cachedData = parsed.data;
-      // Se la cache è valida dentro il TTL, la usiamo subito senza rifare la fetch
-      if (now - parsed.timestamp < ttlMs) {
-        return cachedData;
-      }
+      cachedRaw = JSON.stringify(parsed.data);
+      age = now - parsed.timestamp;
     }
   } catch(e) {
     console.warn(`Errore lettura cache per ${endpoint}:`, e);
   }
 
-  // Se abbiamo una cache (anche se scaduta), la restituiamo subito per un rendering ISTANTANEO (0ms)
-  // ed eseguiamo il re-fetch in background senza bloccare la UI dell'utente.
   if (cachedData) {
-    fetchBackend(endpoint).then(freshData => {
-      try {
-        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: freshData }));
-      } catch(e) {}
-    }).catch(e => console.warn(`Re-fetch background fallito per ${endpoint}:`, e));
-
-    return cachedData;
+    // Refetch in background solo se la copia locale non è già fresca fresca.
+    if (age >= revalidateMs) {
+      fetchBackend(endpoint).then(freshData => {
+        let changed = true;
+        try {
+          changed = JSON.stringify(freshData) !== cachedRaw;
+          localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: freshData }));
+        } catch(e) {}
+        if (changed && typeof window.__onDataRevalidated === 'function') {
+          try { window.__onDataRevalidated(cacheKey); } catch(e) {}
+        }
+      }).catch(e => console.warn(`Re-fetch background fallito per ${endpoint}:`, e));
+    }
+    return cachedData; // rendering ISTANTANEO con l'ultima copia
   }
 
-  // Se è la prima volta assoluta (nessuna cache), facciamo la fetch sincrona
+  // Prima volta assoluta (nessuna cache): fetch sincrona.
   const freshData = await fetchBackend(endpoint);
   try {
     localStorage.setItem(cacheKey, JSON.stringify({ timestamp: now, data: freshData }));

@@ -3,25 +3,36 @@
 // Dipendenze: tutti i file precedenti (01-07).
 // ============================================================================
 
-async function init() {
-  // Avvio overlay di caricamento
-  loadingStart();
-  loadingStep('setup', 'Configurazione interfaccia…');
+async function init(opts) {
+  // silent = true → ricarica in background (stale-while-revalidate): niente
+  // overlay di caricamento, niente ri-setup degli eventi, solo ri-rendering
+  // con i dati freschi arrivati nel frattempo.
+  const silent = !!(opts && opts.silent);
+
+  if (silent) {
+    try { document.getElementById('loadingLog').innerHTML = ''; } catch(e) {}
+  } else {
+    loadingStart();
+    loadingStep('setup', 'Configurazione interfaccia…');
+  }
 
   // Attiva tab calendario subito
   document.querySelectorAll('section[data-tab="calendario"]').forEach(s => s.classList.add('tab-active'));
   updateOnboarding();
-  setStatus('', 'Caricamento dati…');
-  // CRITICAL: setup eventi PRIMA del fetch — così i bottoni funzionano anche se il backend fallisce
-  calSetupEvents();
+  if (!silent) setStatus('', 'Caricamento dati…');
+  // CRITICAL: setup eventi PRIMA del fetch — così i bottoni funzionano anche se
+  // il backend fallisce. In silent NON va rifatto (raddoppierebbe i listener).
+  if (!silent) {
+    calSetupEvents();
+  }
   calRender();
 
   // Scorciatoie dall'icona PWA (manifest.json "shortcuts"): ?shortcut=pianifica
   // apre subito il modal nuovo post, ?shortcut=aste salta dritto alla tab Aste.
   // Solo azioni DOM, nessuna dipendenza dal fetch dati che segue.
   const params = new URLSearchParams(location.search);
-  const shortcut = params.get('shortcut');
-  const isSharedFile = params.get('shared') === '1';
+  const shortcut = silent ? null : params.get('shortcut');
+  const isSharedFile = silent ? false : params.get('shared') === '1';
   if (shortcut === 'pianifica') {
     setTimeout(() => {
       calOpenModal(null, null);
@@ -38,14 +49,14 @@ async function init() {
   }
   let savedSecret = '';
   try { savedSecret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
-  if (savedSecret) {
-    loadPublishQueue();
+  if (!silent) {
+    if (savedSecret) loadPublishQueue();
+    gcalInit(); // Google Calendar init (una volta sola)
+    intelRestoreFields(); // ripristina API key e preferenze Intelligence
+    if (typeof updateNavCloudinaryBadge === 'function') updateNavCloudinaryBadge();
+    loadingDone('setup', 'Interfaccia pronta');
+    loadingProgress(10);
   }
-  gcalInit(); // Google Calendar init sempre
-  intelRestoreFields(); // ripristina API key e preferenze Intelligence
-  if (typeof updateNavCloudinaryBadge === 'function') updateNavCloudinaryBadge();
-  loadingDone('setup', 'Interfaccia pronta');
-  loadingProgress(10);
 
   try {
     // 1. Avvio dei fetch in parallelo (concorrenza per caricamento veloce)
@@ -216,14 +227,38 @@ async function init() {
     } else {
       setStatus('live', 'Live · ' + now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}));
     }
-    loadingFinish(true);
+    if (silent) { flashDataUpdated(); } else { loadingFinish(true); }
   } catch(e) {
     console.error('Backend error:', e);
-    setStatus('error', 'Errore: ' + e.message.slice(0,60));
-    loadingStep('error', 'Errore connessione backend: ' + e.message.slice(0, 60), 'error');
-    loadingFinish(false);
+    if (!silent) {
+      setStatus('error', 'Errore: ' + e.message.slice(0,60));
+      loadingStep('error', 'Errore connessione backend: ' + e.message.slice(0, 60), 'error');
+      loadingFinish(false);
+    }
   }
 }
+
+// Piccolo segnale visivo quando un aggiornamento in background ha ridisegnato
+// la dashboard: un lampo tenue sul badge "Live" + toast se disponibile.
+function flashDataUpdated() {
+  const el = document.getElementById('freshness') || document.getElementById('navStatus');
+  if (el) {
+    el.classList.add('data-flash');
+    setTimeout(() => el.classList.remove('data-flash'), 1400);
+  }
+  if (typeof toast === 'function') toast('Dati aggiornati', 'ok', 2200);
+}
+
+// Stale-while-revalidate: quando fetchCachedBackend scopre dati nuovi in
+// background, ricarica in silenzio (debounce per aspettare che TUTTe le
+// revalidation in corso finiscano prima di ridisegnare una volta sola).
+let _swrTimer = null;
+window.__onDataRevalidated = function (cacheKey) {
+  clearTimeout(_swrTimer);
+  _swrTimer = setTimeout(() => {
+    init({ silent: true }).catch(e => console.warn('Aggiornamento silenzioso fallito:', e));
+  }, 900);
+};
 
 document.getElementById('btnConfig').addEventListener('click', () => {
   // Mostro l'URL backend corrente (vuoto = default) e verifico lo stato
