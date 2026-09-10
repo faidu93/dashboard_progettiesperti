@@ -17,8 +17,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="https://apis.google.com/js/api.js" async defer></script>
+<!-- Gli script Google (GIS + GAPI) NON sono più qui: pesano e servono solo per
+     Google Calendar. Li carica loadGoogleApis() in 08-main.js quando si apre la
+     tab Calendario, o dopo che la dashboard ha finito di renderizzare (idle). -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1335,10 +1336,10 @@
   <script src="js/02-instagram-publish.js?v=20260910_navreorg" defer></script>
   <script src="js/03-kpi.js?v=20260909_views" defer></script>
   <script src="js/04-subscribers.js?v=20260909_sheetlink" defer></script>
-  <script src="js/05-insights.js?v=20260909_views" defer></script>
+  <script src="js/05-insights.js?v=20260910_lazygoog" defer></script>
   <script src="js/06-calendar.js?v=20260909_noslidegen" defer></script>
   <script src="js/07-analytics.js?v=20260910_gcalfix" defer></script>
-  <script src="js/08-main.js?v=20260910_offline" defer></script>
+  <script src="js/08-main.js?v=20260910_lazygoog" defer></script>
   <script src="js/09-aste.js?v=20260909_astesimplify" defer></script>
   <script src="js/10-profit.js?v=20260910_mobilegrid" defer></script>
   <script>

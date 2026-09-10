@@ -3,6 +3,26 @@
 // Dipendenze: tutti i file precedenti (01-07).
 // ============================================================================
 
+// Carica on-demand gli script Google (GIS + GAPI) — tolti dall'<head> perché
+// pesano e servono solo a Google Calendar. Idempotente.
+let _googleApisRequested = false;
+function loadGoogleApis() {
+  if (_googleApisRequested) return;
+  _googleApisRequested = true;
+  const add = (src) => new Promise((resolve) => {
+    const s = document.createElement('script');
+    s.src = src; s.async = true;
+    s.onload = resolve;
+    s.onerror = () => { console.warn('Script Google non caricato:', src); resolve(); };
+    document.head.appendChild(s);
+  });
+  Promise.all([
+    add('https://accounts.google.com/gsi/client'),
+    add('https://apis.google.com/js/api.js'),
+  ]).then(() => { if (typeof gcalInit === 'function') gcalInit(); });
+}
+window.loadGoogleApis = loadGoogleApis;
+
 async function init(opts) {
   // silent = true → ricarica in background (stale-while-revalidate): niente
   // overlay di caricamento, niente ri-setup degli eventi, solo ri-rendering
@@ -51,11 +71,17 @@ async function init(opts) {
   try { savedSecret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
   if (!silent) {
     if (savedSecret) loadPublishQueue();
-    gcalInit(); // Google Calendar init (una volta sola)
     intelRestoreFields(); // ripristina API key e preferenze Intelligence
     if (typeof updateNavCloudinaryBadge === 'function') updateNavCloudinaryBadge();
     loadingDone('setup', 'Interfaccia pronta');
     loadingProgress(10);
+    // Google Calendar: carica gli script Google DOPO che la dashboard ha
+    // renderizzato (idle) — oppure prima se l'utente apre la tab Calendario.
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => loadGoogleApis(), { timeout: 3500 });
+    } else {
+      setTimeout(loadGoogleApis, 2500);
+    }
   }
 
   try {

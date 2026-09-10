@@ -581,6 +581,7 @@ function tabSwitch(btn) {
     renderReachChart(CACHED.period);
   }
   if (tabId === 'calendario') {
+    if (typeof loadGoogleApis === 'function') loadGoogleApis(); // carica subito gli script Google se non già fatto
     calRender();
     ytRender();
     let savedSecret = '';
