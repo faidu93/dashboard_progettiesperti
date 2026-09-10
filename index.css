@@ -23,6 +23,19 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { background: var(--bg); overflow-x: hidden; }
 * { box-sizing: border-box; }
+
+/* --safe-top = spazio da lasciare in cima per la status bar di sistema.
+   In un browser normale vale 0. Nella PWA installata (display-mode: standalone)
+   garantiamo un minimo di 44px anche se env(safe-area-inset-top) non risponde
+   (succede se la PWA è stata installata prima di viewport-fit=cover, o su
+   alcuni iPhone): max() prende il valore reale del notch quando c'è. */
+:root { --safe-top: env(safe-area-inset-top, 0px); }
+@media (display-mode: standalone) {
+  :root { --safe-top: max(env(safe-area-inset-top, 0px), 44px); }
+}
+@media (display-mode: standalone) and (min-width: 768px) {
+  :root { --safe-top: env(safe-area-inset-top, 0px); } /* su desktop/tablet niente minimo forzato */
+}
 html { -webkit-text-size-adjust: 100%; }
 body {
   font-family: var(--font-body);
@@ -42,7 +55,7 @@ body {
      l'orologio/batteria di sistema. Questo padding spinge la barra sotto la
      status bar, e lo sfondo del nav ci si estende dietro. Su browser normale
      env(safe-area-inset-top) è 0, quindi nessun effetto. */
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: var(--safe-top);
 }
 .nav-inner {
   max-width: 1320px; margin: 0 auto; padding: 18px 28px;
@@ -489,7 +502,7 @@ body {
   .section-title { font-size: 20px; }
 
   /* Tab nav — l'offset sticky tiene conto della safe area (PWA installata) */
-  .tab-nav { top: calc(48px + env(safe-area-inset-top, 0px)); padding: 4px; gap: 3px; border-radius: 10px; margin-bottom: 24px; }
+  .tab-nav { top: calc(58px + var(--safe-top)); padding: 4px; gap: 3px; border-radius: 10px; margin-bottom: 24px; }
   .tab-btn { padding: 9px 6px; font-size: 10px; gap: 4px; border-radius: 7px; }
   .tab-btn .material-symbols-rounded { font-size: 17px; }
 
@@ -971,7 +984,7 @@ body {
        costringeva la barra a scorrere lateralmente). L'altezza del tocco resta
        comunque ≥44px per via della regola touch-target qui sotto. */
     .tab-btn { padding: 10px 6px; }
-    .tab-nav { top: calc(48px + env(safe-area-inset-top, 0px)); gap: 3px; }
+    .tab-nav { top: calc(58px + var(--safe-top)); gap: 3px; }
   }
 
   /* ============ CALENDARIO MENSILE ============ */
@@ -1243,7 +1256,7 @@ body {
     .modal-bg, .cal-modal-bg, .cal-detail-bg {
       padding: 12px !important;
       align-items: flex-start !important;
-      padding-top: max(12px, env(safe-area-inset-top)) !important;
+      padding-top: max(12px, var(--safe-top)) !important;
     }
     .modal, .cal-modal, .cal-detail {
       max-width: 100% !important;
@@ -1359,7 +1372,7 @@ body {
     .modal-bg, .cal-modal-bg, .cal-detail-bg {
       padding: 0 !important;
       align-items: flex-start !important;
-      padding-top: env(safe-area-inset-top) !important;
+      padding-top: var(--safe-top) !important;
     }
     .modal, .cal-modal, .cal-detail {
       max-width: 100% !important;
@@ -1393,7 +1406,7 @@ body {
   /* === NAVBAR & HERO MOBILE === */
   /* ---- Responsive: nav bar, padding ridotto ---- */
   @media (max-width: 768px) {
-    .nav { padding: 0 !important; }
+    .nav { padding: 0 !important; padding-top: var(--safe-top) !important; }
     .nav-inner {
       padding: 10px 14px !important;
       gap: 10px !important;
@@ -1676,7 +1689,7 @@ body {
 
 /* ============ PULL-TO-REFRESH (PWA mobile) ============ */
 #ptr-indicator {
-  position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) - 44px);
+  position: fixed; left: 50%; top: calc(var(--safe-top) - 44px);
   width: 36px; height: 36px; border-radius: 50%;
   background: var(--bg-elev); border: 1px solid var(--line-strong);
   display: flex; align-items: center; justify-content: center;
