@@ -302,12 +302,12 @@ body {
 
 /* ============ WEEKS ============ */
 .weeks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-.week-card { background: var(--bg-elev-2); border-radius: 8px; padding: 14px 16px; border-top: 2px solid var(--ink-mute); position: relative; }
-.week-card.best { border-top-color: var(--pos); background: linear-gradient(180deg, rgba(54,201,118,0.07) 0%, var(--bg-elev-2) 100%); }
-.week-card.strong { border-top-color: var(--accent); }
-.week-card.mid { border-top-color: rgba(255,140,30,0.5); }
-.week-card.weak { border-top-color: rgba(255,140,30,0.2); }
-.week-card.current { border-top-color: var(--accent-bright); }
+.week-card { background: var(--bg-elev-2); border-radius: 8px; padding: 14px 16px 14px 18px; position: relative; border-left: 3px solid var(--ink-mute); }
+.week-card.best { border-left-color: var(--pos); background: linear-gradient(90deg, rgba(54,201,118,0.06) 0%, var(--bg-elev-2) 60%); }
+.week-card.strong { border-left-color: var(--accent); }
+.week-card.mid { border-left-color: rgba(255,140,30,0.5); }
+.week-card.weak { border-left-color: rgba(255,140,30,0.2); }
+.week-card.current { border-left-color: var(--accent-bright); }
 
 .week-posts .week-metric-val { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .week-types { display: inline-flex; gap: 4px; font-size: 9.5px; font-weight: 600; }
@@ -497,12 +497,15 @@ body {
   /* Generali */
   .container { padding: 20px 14px 40px; }
   .nav-inner { padding: 12px 14px; gap: 10px; }
-  .section { margin-bottom: 36px; }
+  .section { margin-bottom: 28px; }
   .panel { padding: 16px 14px; }
-  .section-title { font-size: 20px; }
+  .section-title { font-size: 19px; }
+  /* Testata di sezione più compatta su mobile (meno spazio morto in cima). */
+  .section-head { margin-bottom: 16px; padding-bottom: 12px; }
+  .section-eyebrow { margin-bottom: 4px; }
 
   /* Tab nav — l'offset sticky tiene conto della safe area (PWA installata) */
-  .tab-nav { top: calc(58px + var(--safe-top)); padding: 4px; gap: 3px; border-radius: 10px; margin-bottom: 24px; }
+  .tab-nav { top: calc(58px + var(--safe-top)); padding: 4px; gap: 3px; border-radius: 10px; margin-bottom: 16px; }
   .tab-btn { padding: 9px 6px; font-size: 10px; gap: 4px; border-radius: 7px; }
   .tab-btn .material-symbols-rounded { font-size: 17px; }
 
@@ -542,7 +545,13 @@ body {
   .latest-stat-val { font-size: 13px; }
 
   /* Content Lab */
-  .lab-grid-3 { grid-template-columns: 1fr; }
+  /* 3 stat riepilogo: restano su una riga a 3 colonne, compatte (prima si
+     impilavano diventando 3 card enormi che mangiavano mezzo schermo). */
+  .lab-grid-3 { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .lab-stat { padding: 10px 9px; }
+  .lab-stat-label { font-size: 8.5px; letter-spacing: 0.03em; margin-bottom: 5px; min-height: 2.6em; }
+  .lab-stat-value { font-size: 17px; }
+  .lab-stat-sub { display: none; }
   .lab-fmt-table { font-size: 11px; }
   .lab-fmt-table th, .lab-fmt-table td { padding: 7px 4px; }
   .wow-toggle { display: none !important; } /* su mobile nascondo il toggle WoW — troppo stretto (!important: la regola base più sotto nel file altrimenti vince per ordine sorgente) */
@@ -714,7 +723,7 @@ body {
   /* ============ DAILY ACTION PANEL ============ */
   .daily-action {
     background: linear-gradient(135deg, rgba(255,140,30,0.08) 0%, rgba(255,165,60,0.04) 100%);
-    border: 1px solid rgba(255,140,30,0.25);
+    border: 1px solid rgba(255,140,30,0.18);
     border-radius: 12px; padding: 22px 26px;
     margin-bottom: 24px; position: relative; overflow: hidden;
   }
@@ -970,7 +979,7 @@ body {
   .tab-btn:hover { color: var(--ink); background: var(--bg-elev-2); }
   .tab-btn.active {
     background: var(--accent); color: var(--bg);
-    box-shadow: 0 2px 8px rgba(255,140,30,0.35);
+    box-shadow: 0 2px 6px rgba(255,140,30,0.22);
   }
   .tab-btn .material-symbols-rounded { font-size: 16px; }
   section[data-tab] { display: none; }
@@ -1872,7 +1881,7 @@ body {
   }
   /* Intestazione di sezione: su mobile i tre blocchi (titolo · pulsante ·
      "LIVE") sulla stessa riga si accavallavano — li impilo. */
-  .section-head { flex-direction: column; align-items: stretch; gap: 12px; }
+  .section-head { flex-direction: column; align-items: stretch; gap: 6px; }
   .section-head .cal-btn, .section-head > a { align-self: flex-start; }
   .cal-nav { flex-direction: column; align-items: stretch; gap: 10px; }
   .cal-nav-btns { justify-content: space-between; width: 100%; }
