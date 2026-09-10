@@ -1826,6 +1826,20 @@ body {
   30%      { box-shadow: 0 0 0 4px rgba(54,201,118,0.35); }
 }
 .data-flash { animation: dataFlash 1.4s ease; }
+
+/* pillola "sei offline" — fissa in basso, sopra i toast */
+#offline-pill {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  z-index: 2900; display: flex; align-items: center; gap: 6px;
+  padding: 7px 13px; border-radius: 100px;
+  background: var(--bg-elev); color: var(--neg);
+  border: 1px solid rgba(239,90,90,0.5);
+  font-family: var(--font-mono); font-size: 11.5px; font-weight: 600;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+  animation: toastIn 0.24s ease both;
+}
+#offline-pill .material-symbols-rounded { font-size: 15px; }
 #loadingTitle {
   font-size: 16px; font-weight: 700; color: var(--ink);
   font-family: var(--font-display);

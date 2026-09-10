@@ -260,6 +260,34 @@ window.__onDataRevalidated = function (cacheKey) {
   }, 900);
 };
 
+// ============================================================================
+// INDICATORE OFFLINE — la PWA funziona anche senza rete (service worker), ma
+// l'utente deve sapere che sta guardando l'ultima copia salvata.
+// ============================================================================
+(function () {
+  const pill = document.createElement('div');
+  pill.id = 'offline-pill';
+  const i = document.createElement('span');
+  i.className = 'material-symbols-rounded'; i.textContent = 'cloud_off';
+  pill.append(i, document.createTextNode(' Offline · ultima copia salvata'));
+  let wasOffline = false;
+  const sync = () => {
+    const off = !navigator.onLine;
+    if (off && !pill.isConnected) (document.body || document.documentElement).appendChild(pill);
+    else if (!off && pill.isConnected) pill.remove();
+    if (off && !wasOffline && typeof toast === 'function') toast("Sei offline · vedi l'ultima copia salvata", 'warn', 6000);
+    if (!off && wasOffline) {
+      if (typeof toast === 'function') toast('Di nuovo online', 'ok', 2200);
+      if (typeof init === 'function') init({ silent: true }).catch(() => {});
+    }
+    wasOffline = off;
+  };
+  window.addEventListener('online', sync);
+  window.addEventListener('offline', sync);
+  window.addEventListener('load', sync);
+  sync();
+})();
+
 document.getElementById('btnConfig').addEventListener('click', () => {
   // Mostro l'URL backend corrente (vuoto = default) e verifico lo stato
   let saved = '';

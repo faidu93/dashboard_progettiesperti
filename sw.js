@@ -13,11 +13,28 @@
 // alla rete, il Service Worker non le tocca.
 // ============================================================================
 
-const CACHE_NAME = 'pep-dashboard-v3';
+const CACHE_NAME = 'pep-dashboard-v4';
 const NETWORK_FIRST = ['/dashboard_progettiesperti/', '/dashboard_progettiesperti/index.html', '/dashboard_progettiesperti/manifest.json'];
 
+// All'install pre-carichiamo lo shell + gli asset versionati elencati in
+// index.html, così la PWA installata si apre anche completamente offline
+// (prima funzionava offline solo DOPO una prima visita online completa).
 self.addEventListener('install', (event) => {
   self.skipWaiting();
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    try {
+      await cache.addAll(['./', './index.html', './manifest.json',
+        './favicon.png?v=1', './icons/icon-192.png?v=1', './icons/icon-512.png?v=1']);
+      // Estrae js/*.js?v=… e index.css?v=… dall'HTML e li mette in cache.
+      const html = await fetch('./index.html', { cache: 'no-store' }).then((r) => r.text());
+      const assets = [...html.matchAll(/(?:src|href)="((?:js\/[^"]+\.js|[^"/]+\.css)\?v=[^"]+)"/g)].map((m) => m[1]);
+      await Promise.all(assets.map((u) => cache.add(u).catch(() => {})));
+    } catch (e) {
+      // offline durante l'install: nessun problema, la cache si popola alla
+      // prima navigazione online (cache-first sugli asset versionati).
+    }
+  })());
 });
 
 self.addEventListener('activate', (event) => {
