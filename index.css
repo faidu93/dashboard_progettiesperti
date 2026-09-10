@@ -475,7 +475,10 @@ body {
 /* ---- Responsive: KPI band e funnel a 3 colonne poi impilati ---- */
 @media (max-width: 1100px) {
   .kpi-band { grid-template-columns: repeat(3, 1fr); }
-  .funnel-bar { grid-template-columns: 1fr; }
+  /* flex-column invece di grid 1fr: con 3-4 .funnel-step il grid a colonna
+     singola creava comunque colonne implicite (tracce strette affiancate che
+     sforavano lo schermo). In colonna flex si impilano e basta. */
+  .funnel-bar { display: flex; flex-direction: column; grid-template-columns: none; }
   .funnel-step { border-right: none; border-bottom: 1px solid var(--line); padding: 14px 18px; }
   .funnel-step:last-child { border-bottom: none; }
   .funnel-step-arrow { display: none !important; }
@@ -490,7 +493,8 @@ body {
 @media (max-width: 768px) {  /* Anti-overflow mobile */
   .panel, .section, .container, .heatmap-wrap, .tab-nav { max-width: 100%; }
   img, canvas, svg { max-width: 100%; height: auto; }
-  .heatmap-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* La heatmap ora si adatta alla larghezza (celle fluide), niente scroll. */
+  .heatmap-wrap { overflow-x: visible; }
 
   /* Generali */
   .container { padding: 20px 14px 40px; }
@@ -546,15 +550,36 @@ body {
   /* Content Lab */
   .lab-grid-3 { grid-template-columns: 1fr; }
   .lab-fmt-table { font-size: 11px; }
-  .lab-fmt-table th, .lab-fmt-table td { padding: 7px 5px; }
+  .lab-fmt-table th, .lab-fmt-table td { padding: 7px 4px; }
   .wow-toggle { display: none !important; } /* su mobile nascondo il toggle WoW — troppo stretto (!important: la regola base più sotto nel file altrimenti vince per ordine sorgente) */
-  /* Le 6 colonne (rank/data/formato/titolo/PI/reach) non entrano leggibili sotto 768px:
-     stesso pattern di scroll orizzontale già usato per calendario e heatmap. */
-  #piList { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .lab-pi-row { min-width: 550px; }
+  /* La tabella "media per formato" ha 8 colonne — impossibile leggerle a 375px.
+     Nascondo save/share/comm (già visibili nel donut "Composizione engagement"
+     qui accanto): restano formato · n · reach · views · ER, che entrano senza
+     scroll orizzontale. */
+  .lab-fmt-table th:nth-child(n+6), .lab-fmt-table td:nth-child(n+6) { display: none; }
+
+  /* Performance Index: la riga a 7 colonne (550px, prima scrollava in
+     orizzontale) diventa una scheda a 3 righe che sta nella larghezza:
+       riga 1  rank · data · formato ............... PI
+       riga 2  titolo + barra (piena larghezza)
+       riga 3  reach · views (piccolo, tenue)      */
+  #piList { overflow-x: visible; }
+  .lab-pi-row {
+    display: flex; flex-wrap: wrap; align-items: baseline;
+    min-width: 0; column-gap: 8px; row-gap: 5px;
+  }
+  .lab-pi-row > .post-rank      { order: 1; }
+  .lab-pi-row > .post-date-cell { order: 2; }
+  .lab-pi-row > .lab-fmt-badge  { order: 3; }
+  .lab-pi-row > .lab-pi-val     { order: 4; margin-left: auto; }
+  .lab-pi-row > .lab-pi-bar-wrap { order: 5; flex: 1 1 100%; }
+  .lab-pi-row > .post-metric-cell { order: 6; font-size: 11px; color: var(--ink-mute); }
+  /* il link-titolo è inline: senza display:block l'ellissi non compare
+     (il testo viene comunque ritagliato dal contenitore, ma è più pulito) */
+  .lab-pi-title a { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   /* Heatmap */
-  .heatmap { gap: 3px; }
+  .heatmap { gap: 3px; min-width: 0; }
   .heatmap-colhead { font-size: 8px; padding: 3px 0; }
   .heatmap-rowhead { font-size: 9px; padding-right: 3px; }
   .heatmap-cell { height: 26px; font-size: 9px; }
@@ -1272,9 +1297,9 @@ body {
     #gcalStatus { text-align: left; font-size: 12.5px !important; line-height: 1.5; }
     #gcalLoginBtn, #gcalLogoutBtn { width: 100% !important; justify-content: center !important; }
     
-    /* === HEATMAP: scroll touch === */
-    .heatmap-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .heatmap { min-width: 380px; }
+    /* === HEATMAP: celle fluide, nessuno scroll orizzontale === */
+    .heatmap-wrap { overflow-x: visible; }
+    .heatmap { min-width: 0; }
     
     /* === CALENDARIO: filter bar wrap === */
     .cal-filter-bar { 
@@ -1882,7 +1907,16 @@ body {
     display: inline; font-family: var(--font-mono); font-size: 10px;
     color: var(--ink-mute); text-transform: uppercase; font-weight: 600;
   }
-  .cal-post { font-size: 11.5px; padding: 5px 9px; max-width: none; }
+  /* Nell'agenda verticale ogni post sta su una riga a piena larghezza; senza
+     tetto alla larghezza un titolo lungo spingeva la riga oltre lo schermo
+     (niente scroll di pagina per via di overflow-x:hidden sul body, ma il
+     testo veniva comunque tagliato a destra). display:flex + max-width:100% +
+     min-width:0 lasciano che l'ellissi di .cp-lbl faccia il suo lavoro.
+     display:flex qui annulla anche la vecchia regola "solo il primo post per
+     cella" (display:none sugli altri) pensata per la griglia mensile stretta:
+     nell'agenda servono TUTTI i post del giorno, visibili e incolonnati. */
+  .cal-post,
+  .cal-post:first-of-type { display: flex; font-size: 11.5px; padding: 5px 9px; max-width: 100%; min-width: 0; flex-basis: 100%; }
   .cal-plus {
     position: static; margin-top: 0; margin-left: auto;
     width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
