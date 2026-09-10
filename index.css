@@ -1871,6 +1871,10 @@ body {
   .nav-group { gap: 6px; }
   .nav-divider { display: none; }
   .container { padding: 20px 16px 40px; }
+  /* Intestazione di sezione: su mobile i tre blocchi (titolo · pulsante ·
+     "LIVE") sulla stessa riga si accavallavano — li impilo. */
+  .section-head { flex-direction: column; align-items: stretch; gap: 12px; }
+  .section-head .cal-btn, .section-head > a { align-self: flex-start; }
   .cal-nav { flex-direction: column; align-items: stretch; gap: 10px; }
   .cal-nav-btns { justify-content: space-between; width: 100%; }
   /* Niente più scroll orizzontale sui filtri: vanno a capo (era overflow-x:auto). */
