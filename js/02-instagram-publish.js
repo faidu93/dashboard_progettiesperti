@@ -348,7 +348,11 @@ async function loadPublishQueue() {
     return;
   }
   try {
-    const res = await fetch(`${BACKEND_BASE}/api/schedule?action=list`, {
+    // fetchWithRetry (non un fetch() nudo): un "Load failed" è quasi sempre un
+    // blip di rete transitorio (cold start di Vercel, mobile che perde un
+    // pacchetto) — prima bastava un singolo intoppo per far sparire la coda
+    // dalla dashboard senza nessun secondo tentativo.
+    const res = await fetchWithRetry(`${BACKEND_BASE}/api/schedule?action=list`, {
       headers: { 'X-Publish-Secret': secret }
     });
     const j = await res.json().catch(() => ({}));
@@ -360,7 +364,7 @@ async function loadPublishQueue() {
     const queue = Array.isArray(j.posts) ? j.posts : (Array.isArray(j.queue) ? j.queue : (Array.isArray(j) ? j : []));
     renderPublishQueue(queue);
   } catch (e) {
-    box.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--warn);padding:16px 0;text-align:center;">Coda non disponibile al momento (${e.message}).</div>`;
+    box.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--warn);padding:16px 0;text-align:center;">Coda non disponibile al momento (${e.message}).<div style="margin-top:10px;"><button onclick="loadPublishQueue()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg-elev-2);border:1px solid var(--line-strong);border-radius:6px;color:var(--ink);font-size:12px;font-family:var(--font-body);cursor:pointer;"><span class="material-symbols-rounded" style="font-size:15px;">refresh</span> Riprova</button></div></div>`;
   }
 }
 
