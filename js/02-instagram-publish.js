@@ -368,9 +368,31 @@ async function loadPublishQueue() {
   }
 }
 
+// Post in errore già segnalati con un toast in questa sessione — evita di
+// riproporre lo stesso avviso a ogni refresh silenzioso (SWR) della coda.
+const _alertedQueueErrorIds = new Set();
 function renderPublishQueue(queue) {
   const box = document.getElementById('queueList');
   if (!box) return;
+
+  // Avviso PROATTIVO: prima un post in errore si vedeva solo aprendo il tab
+  // Calendario e scorrendo fino alla coda — capitava di accorgersene solo
+  // dopo, a mancata pubblicazione già avvenuta. Ora, appena la coda viene
+  // caricata (succede già ad ogni apertura/refresh della dashboard), un
+  // errore nuovo salta fuori subito con un toast, da qualunque tab si sia.
+  const newErrors = queue.filter(p => p.status === 'error' && !_alertedQueueErrorIds.has(p.id));
+  if (newErrors.length > 0 && typeof toast === 'function') {
+    newErrors.forEach(p => _alertedQueueErrorIds.add(p.id));
+    const msg = newErrors.length === 1
+      ? "Un post in coda ha un errore di pubblicazione"
+      : `${newErrors.length} post in coda hanno un errore di pubblicazione`;
+    toast(msg, 'error', 10000, () => {
+      const btn = document.querySelector('.tab-btn[data-tab="calendario"]');
+      if (btn && typeof tabSwitch === 'function') tabSwitch(btn);
+      setTimeout(() => document.getElementById('queueList')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+    });
+  }
+
   if (!queue.length) {
     box.innerHTML = '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-mute);padding:16px 0;text-align:center;">Nessun post in coda.</div>';
     return;
