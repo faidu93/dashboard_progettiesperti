@@ -114,6 +114,27 @@ async function fetchBackend(path) {
   return j;
 }
 
+// Giorni rimanenti alla scadenza del token Instagram (api/instagram.js
+// ?type=token-status). Serve sia al modal "Configura" sia all'avviso
+// proattivo — un solo posto che sa come chiamare l'endpoint. Non prova mai
+// a far comparire il prompt della password: se non è già salvata restituisce
+// null, e chi chiama semplicemente non mostra nulla.
+async function fetchTokenStatus() {
+  let secret = '';
+  try { secret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch (e) {}
+  if (!secret) return null;
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/instagram?type=token-status`, {
+      headers: { 'X-Publish-Secret': secret }
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || !j.available) return null;
+    return { daysLeft: (typeof j.daysLeft === 'number') ? j.daysLeft : null };
+  } catch (e) {
+    return null;
+  }
+}
+
 // Caching helper Stale-While-Revalidate: rende SUBITO l'ultima copia locale
 // (0ms) e, se è più vecchia di `revalidateMs`, rifà la chiamata in background.
 // Quando i dati freschi sono DIVERSI da quelli in cache, aggiorna localStorage

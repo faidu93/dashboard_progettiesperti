@@ -72,6 +72,7 @@ async function init(opts) {
   try { savedSecret = sessionStorage.getItem('publish_secret') || localStorage.getItem('publish_secret') || ''; } catch(e) {}
   if (!silent) {
     if (savedSecret) loadPublishQueue();
+    if (savedSecret) checkTokenExpiryToast();
     intelRestoreFields(); // ripristina API key e preferenze Intelligence
     if (typeof updateNavCloudinaryBadge === 'function') updateNavCloudinaryBadge();
     loadingDone('setup', 'Interfaccia pronta');
@@ -284,6 +285,33 @@ function updateFreshnessLabels() {
   }
 }
 
+// ============================================================================
+// AVVISO SCADENZA TOKEN INSTAGRAM — SOLO in dashboard, mai su Telegram
+// (Telegram è riservato alle notifiche sui post). Un toast persistente che
+// spiega quanti giorni mancano e, al tap, apre "Configura" dove c'è lo
+// stato dettagliato. Un avviso al giorno (localStorage): si ripresenta ad
+// ogni apertura della dashboard finché non viene rinnovato — è voluto,
+// serve proprio a non farlo dimenticare — ma non spam ad ogni singolo
+// refresh nella stessa giornata.
+// ============================================================================
+async function checkTokenExpiryToast() {
+  if (typeof fetchTokenStatus !== 'function' || typeof toast !== 'function') return;
+  const today = new Date().toISOString().slice(0, 10);
+  let lastWarnedDate = '';
+  try { lastWarnedDate = localStorage.getItem('token_expiry_warned_date') || ''; } catch (e) {}
+  if (lastWarnedDate === today) return;
+
+  const status = await fetchTokenStatus();
+  if (!status || status.daysLeft == null || status.daysLeft > 7) return;
+
+  try { localStorage.setItem('token_expiry_warned_date', today); } catch (e) {}
+  const d = status.daysLeft;
+  const quando = d <= 0 ? 'oggi (o è già scaduto)' : `tra ${d} giorn${d === 1 ? 'o' : 'i'}`;
+  toast(`Token Instagram in scadenza · ${quando} · tocca per la procedura di rinnovo`, d <= 1 ? 'error' : 'warn', 25000, () => {
+    document.getElementById('btnConfig')?.click();
+  });
+}
+
 // Piccolo segnale visivo quando un aggiornamento in background ha ridisegnato
 // la dashboard: un lampo tenue sul badge "Live" + toast se disponibile.
 function flashDataUpdated() {
@@ -358,6 +386,32 @@ document.getElementById('btnConfig').addEventListener('click', () => {
 
   // Stato Cloudinary (era un badge fisso in barra, ora vive solo qui)
   if (typeof updateNavCloudinaryBadge === 'function') updateNavCloudinaryBadge();
+
+  // Stato token Instagram: async, aggiorna la riga appena arriva la risposta.
+  const stToken = document.getElementById('stToken');
+  const stTokenIcon = document.getElementById('stTokenIcon');
+  if (stToken) {
+    stToken.textContent = 'Token Instagram · verifica…';
+    if (stTokenIcon) stTokenIcon.style.color = 'var(--ink-mute)';
+    if (typeof fetchTokenStatus === 'function') {
+      fetchTokenStatus().then(status => {
+        if (!stToken.isConnected) return; // il modal è stato chiuso nel frattempo
+        if (!status || status.daysLeft == null) {
+          stToken.textContent = 'Token Instagram · scadenza non verificabile';
+          if (stTokenIcon) stTokenIcon.style.color = 'var(--ink-mute)';
+          return;
+        }
+        const d = status.daysLeft;
+        if (d <= 7) {
+          stToken.textContent = `Token Instagram · scade tra ${d <= 0 ? '0' : d} giorn${d === 1 ? 'o' : 'i'} ⚠️`;
+          if (stTokenIcon) stTokenIcon.style.color = d <= 1 ? 'var(--neg)' : 'var(--accent)';
+        } else {
+          stToken.textContent = `Token Instagram · attivo (scade tra ${d} giorni)`;
+          if (stTokenIcon) stTokenIcon.style.color = 'var(--pos)';
+        }
+      });
+    }
+  }
 
   document.getElementById('modal').classList.add('show');
 });
