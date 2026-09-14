@@ -371,6 +371,7 @@ async function loadPublishQueue() {
 // Post in errore già segnalati con un toast in questa sessione — evita di
 // riproporre lo stesso avviso a ogni refresh silenzioso (SWR) della coda.
 const _alertedQueueErrorIds = new Set();
+const _alertedQueueOverdueIds = new Set();
 function renderPublishQueue(queue) {
   const box = document.getElementById('queueList');
   if (!box) return;
@@ -387,6 +388,28 @@ function renderPublishQueue(queue) {
       ? "Un post in coda ha un errore di pubblicazione"
       : `${newErrors.length} post in coda hanno un errore di pubblicazione`;
     toast(msg, 'error', 10000, () => {
+      const btn = document.querySelector('.tab-btn[data-tab="calendario"]');
+      if (btn && typeof tabSwitch === 'function') tabSwitch(btn);
+      setTimeout(() => document.getElementById('queueList')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+    });
+  }
+
+  // Avviso "cron fermo": il backend NON ha un trigger periodico nativo (Vercel
+  // Hobby non supporta cron a frequenza < 1/giorno), quindi /api/cron-publish
+  // dipende da un chiamante esterno. Se quel chiamante smette di funzionare,
+  // i post restano 'pending' per sempre senza che nessun errore venga mai
+  // scritto (nulla fallisce: semplicemente nessuno prova più a pubblicare).
+  // Unico modo per accorgersene: un post 'pending' il cui orario programmato
+  // è passato da un bel po' è un sintomo diretto che il cron non sta girando.
+  const OVERDUE_MS = 15 * 60 * 1000;
+  const now = Date.now();
+  const overdue = queue.filter(p => p.status === 'pending' && (now - new Date(p.scheduledAt).getTime()) > OVERDUE_MS && !_alertedQueueOverdueIds.has(p.id));
+  if (overdue.length > 0 && typeof toast === 'function') {
+    overdue.forEach(p => _alertedQueueOverdueIds.add(p.id));
+    const msg = overdue.length === 1
+      ? "Un post programmato è in ritardo: il cron di pubblicazione potrebbe essersi fermato"
+      : `${overdue.length} post programmati sono in ritardo: il cron di pubblicazione potrebbe essersi fermato`;
+    toast(msg, 'warn', 15000, () => {
       const btn = document.querySelector('.tab-btn[data-tab="calendario"]');
       if (btn && typeof tabSwitch === 'function') tabSwitch(btn);
       setTimeout(() => document.getElementById('queueList')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
