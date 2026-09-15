@@ -396,12 +396,14 @@ function renderPublishQueue(queue) {
 
   // Avviso "cron fermo": il backend NON ha un trigger periodico nativo (Vercel
   // Hobby non supporta cron a frequenza < 1/giorno), quindi /api/cron-publish
-  // dipende da un chiamante esterno. Se quel chiamante smette di funzionare,
-  // i post restano 'pending' per sempre senza che nessun errore venga mai
-  // scritto (nulla fallisce: semplicemente nessuno prova più a pubblicare).
-  // Unico modo per accorgersene: un post 'pending' il cui orario programmato
-  // è passato da un bel po' è un sintomo diretto che il cron non sta girando.
-  const OVERDUE_MS = 15 * 60 * 1000;
+  // dipende da un chiamante esterno (cron-job.org, ogni 15 min). Se quel
+  // chiamante smette di funzionare, i post restano 'pending' per sempre
+  // senza che nessun errore venga mai scritto (nulla fallisce: semplicemente
+  // nessuno prova più a pubblicare). Unico modo per accorgersene: un post
+  // 'pending' il cui orario è passato da un bel po' è il sintomo diretto.
+  // Soglia a 25 min (~1 ciclo di margine oltre ai 15 min normali) per non
+  // scattare ad ogni giro su un post schedulato subito dopo un'esecuzione.
+  const OVERDUE_MS = 25 * 60 * 1000;
   const now = Date.now();
   const overdue = queue.filter(p => p.status === 'pending' && (now - new Date(p.scheduledAt).getTime()) > OVERDUE_MS && !_alertedQueueOverdueIds.has(p.id));
   if (overdue.length > 0 && typeof toast === 'function') {
