@@ -33,6 +33,7 @@ const PROFIT_COSTI = [
   { mese: 'Settembre 2026', descrizione: 'Streamyard', importo: 45 },
   { mese: 'Settembre 2026', descrizione: 'Claude', importo: 22 },
   { mese: 'Ottobre 2026', descrizione: 'ChatGPT', importo: 23 },
+  { mese: 'Ottobre 2026', descrizione: 'Claude', importo: 22 },
 ];
 
 // Evita di rifare tutte le chiamate (iscritti + aste + FantaListone) ogni
