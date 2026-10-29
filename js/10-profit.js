@@ -207,9 +207,19 @@ function renderProfitContent(d) {
           <div class="mini-label" style="margin-top:8px; text-transform:none;">Il montepremio non è ricavo: va al vincitore. FantaListone escluso.</div>
         </div>
 
-        <div>
-          <div class="mini-section-label" style="color:var(--neg);">Costi</div>
-          <div style="overflow-x:auto;">
+        <details class="profit-costi">
+          <summary style="list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px; user-select:none;">
+            <span class="mini-section-label" style="color:var(--neg); margin:0;">Costi · ${PROFIT_COSTI.length} voci</span>
+            <span style="display:inline-flex; align-items:center; gap:4px; font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--neg);">
+              €${d.totaleCostiSostenuti}
+              <span class="material-symbols-rounded profit-costi-chevron" style="font-size:18px; color:var(--ink-mute); transition:transform .2s;">expand_more</span>
+            </span>
+          </summary>
+          <style>
+            .profit-costi > summary::-webkit-details-marker { display:none; }
+            .profit-costi[open] .profit-costi-chevron { transform:rotate(180deg); }
+          </style>
+          <div style="overflow-x:auto; margin-top:8px;">
             <table class="mini-table" style="font-size:12px; text-align:left;">
               <tbody>${costiRowsHtml}</tbody>
               <tfoot>
@@ -220,7 +230,7 @@ function renderProfitContent(d) {
               </tfoot>
             </table>
           </div>
-        </div>
+        </details>
       </div>
 
       <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--line);">
