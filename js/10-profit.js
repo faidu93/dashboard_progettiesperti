@@ -209,7 +209,7 @@ function renderProfitContent(d) {
 
         <details class="profit-costi">
           <summary style="list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px; user-select:none;">
-            <span class="mini-section-label" style="color:var(--neg); margin:0;">Costi · ${PROFIT_COSTI.length} voci</span>
+            <span class="mini-section-label" style="color:var(--neg); margin:0;">Dettaglio costi</span>
             <span style="display:inline-flex; align-items:center; gap:4px; font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--neg);">
               €${d.totaleCostiSostenuti}
               <span class="material-symbols-rounded profit-costi-chevron" style="font-size:18px; color:var(--ink-mute); transition:transform .2s;">expand_more</span>
