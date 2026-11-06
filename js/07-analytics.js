@@ -743,10 +743,12 @@ function intelRestoreFields() {
       });
     }
   } catch(e) {}
+  // La chiave YouTube NON è più nel codice (il repo è pubblico): si inserisce a mano nel campo
+  // e resta solo in questo browser (localStorage). Va creata su Google Cloud limitata a
+  // YouTube Data API v3 e al referrer https://faidu93.github.io/*.
   const ytKeyEl = document.getElementById('ytApiKey');
   if (ytKeyEl && !ytKeyEl.value) {
-    try { ytKeyEl.value = atob('QUl6YVN5QlB0bzk0RkwxcTlfWUpoS1hWX042Z0Q1dmNITGZwMUVN'); } catch(e) {}
-    intelSaveField('ytApiKey');
+    try { ytKeyEl.value = localStorage.getItem('intel_yt_apikey') || ''; } catch(e) {}
   }
   ytRenderChannelChips();
 }
@@ -841,7 +843,7 @@ let ytKeyIdx = 0;
 async function fetchYtApi(buildUrlFn) {
   const userKey = (document.getElementById('ytApiKey')?.value || '').trim() || localStorage.getItem('intel_yt_apikey') || '';
   const pool = userKey ? [userKey] : [];
-  if (pool.length === 0) throw new Error('Nessuna chiave YouTube API disponibile. Inseriscine una.');
+  if (pool.length === 0) throw new Error('Nessuna chiave YouTube API: incollala nel campo «API Key YouTube Data v3» (si salva solo su questo dispositivo).');
 
   let attempts = 0;
   let lastError = null;
