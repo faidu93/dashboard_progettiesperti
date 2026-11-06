@@ -475,7 +475,7 @@ async function onSubscribersRefresh() {
 // Renderizza il grafico e la tabella Economics per periodo
 function renderSubscribersChart() {
   const canvas = document.getElementById('chartSubscribers');
-  if (!canvas) return;
+  if (!canvas || typeof Chart === 'undefined') return;
   const ctx = canvas.getContext('2d');
   
   if (window.subscribersChartInstance) {
@@ -735,7 +735,7 @@ function renderTopPostsByFormat(posts) {
         html += `
           <div class="top-item">
             <div class="top-item-head">
-              <div class="top-item-title"><a href="${p.media_permalink}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${titleFromCaption(p.media_caption, 60)}</a></div>
+              <div class="top-item-title"><a href="${esc(p.media_permalink)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${esc(titleFromCaption(p.media_caption, 60))}</a></div>
               <div class="top-item-reach" title="Visualizzazioni" style="color:var(--accent);">${numIt(views)}<span style="font-size:10px;color:var(--ink-mute);font-weight:400;"> visual</span></div>
               <div class="top-item-reach" title="Reach">${numIt(reach)}<span style="font-size:10px;color:var(--ink-mute);font-weight:400;"> reach</span></div>
             </div>

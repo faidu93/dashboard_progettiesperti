@@ -101,7 +101,7 @@ function renderFollowerAnalysis(daily) {
   el('follNew', (netF >= 0 ? '+' : '') + netF);
   // Chart
   const ctx = document.getElementById('chartFollowers');
-  if (!ctx) return;
+  if (!ctx || typeof Chart === 'undefined') return;
   // Distruggo il grafico precedente su questo canvas, se esiste
   if (window.followersChart) { window.followersChart.destroy(); window.followersChart = null; }
   window.followersChart = new Chart(ctx.getContext('2d'), {
@@ -778,8 +778,8 @@ function ytRenderChannelChips() {
   }
   container.innerHTML = channels.map(ch => `
     <span class="ch-chip" style="display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line-strong);border-radius:14px;padding:3px 10px;font-family:var(--font-mono);font-size:11.5px;color:var(--ink);">
-      <span style="color:var(--accent);">▶</span> ${ch}
-      <button type="button" onclick="ytRemoveChannelChip('${ch.replace(/'/g, "\\'")}')" style="background:none;border:none;color:var(--ink-mute);cursor:pointer;font-size:15px;padding:8px 10px;margin:-8px -6px -8px 0;line-height:1;touch-action:manipulation;" title="Rimuovi" aria-label="Rimuovi">&times;</button>
+      <span style="color:var(--accent);">▶</span> ${esc(ch)}
+      <button type="button" data-ch="${esc(ch)}" onclick="ytRemoveChannelChip(this.dataset.ch)" style="background:none;border:none;color:var(--ink-mute);cursor:pointer;font-size:15px;padding:8px 10px;margin:-8px -6px -8px 0;line-height:1;touch-action:manipulation;" title="Rimuovi" aria-label="Rimuovi">&times;</button>
     </span>
   `).join('');
 }

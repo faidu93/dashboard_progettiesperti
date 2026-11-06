@@ -364,7 +364,7 @@ async function loadPublishQueue() {
     const queue = Array.isArray(j.posts) ? j.posts : (Array.isArray(j.queue) ? j.queue : (Array.isArray(j) ? j : []));
     renderPublishQueue(queue);
   } catch (e) {
-    box.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--warn);padding:16px 0;text-align:center;">Coda non disponibile al momento (${e.message}).<div style="margin-top:10px;"><button onclick="loadPublishQueue()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg-elev-2);border:1px solid var(--line-strong);border-radius:6px;color:var(--ink);font-size:12px;font-family:var(--font-body);cursor:pointer;"><span class="material-symbols-rounded" style="font-size:15px;">refresh</span> Riprova</button></div></div>`;
+    box.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--warn);padding:16px 0;text-align:center;">Coda non disponibile al momento (${esc(e.message)}).<div style="margin-top:10px;"><button onclick="loadPublishQueue()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg-elev-2);border:1px solid var(--line-strong);border-radius:6px;color:var(--ink);font-size:12px;font-family:var(--font-body);cursor:pointer;"><span class="material-symbols-rounded" style="font-size:15px;">refresh</span> Riprova</button></div></div>`;
   }
 }
 
@@ -448,7 +448,7 @@ function renderPublishQueue(queue) {
       <span class="material-symbols-rounded" style="color:${m.color};font-size:20px;">${m.icon}</span>
       <div class="queue-main">
         <div class="queue-cap">${cap}${cap.length >= 70 ? '…' : ''}</div>
-        <div class="queue-meta">${kind} · ${when} · <span style="color:${m.color};">${m.label}</span>${p.status==='error' && p.error ? ' · <span style="color:var(--neg);">'+p.error.slice(0,40)+'</span>' : ''}</div>
+        <div class="queue-meta">${kind} · ${when} · <span style="color:${m.color};">${m.label}</span>${p.status==='error' && p.error ? ' · <span style="color:var(--neg);">'+esc(p.error.slice(0,40))+'</span>' : ''}</div>
       </div>
       ${p.status === 'error' ? `
       <button class="queue-del" style="color:var(--pos); margin-right:8px;" title="Riprova Pubblicazione" onclick="retryPublishQueue('${p.id}')"><span class="material-symbols-rounded">replay</span></button>

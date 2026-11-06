@@ -180,7 +180,7 @@ async function loadProfitData(force) {
       const quando = new Date(ultimo.ts).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
       box.insertAdjacentHTML('afterbegin', `
         <div style="font-family:var(--font-mono);font-size:11.5px;color:var(--neg);border:1px solid var(--neg);border-radius:8px;padding:10px 14px;margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-          <span>Dati non aggiornati: ${e.message}. Mostro l'ultimo conto completo, salvato il ${quando}.</span>
+          <span>Dati non aggiornati: ${esc(e.message)}. Mostro l'ultimo conto completo, salvato il ${quando}.</span>
           <button onclick="loadProfitData(true)" style="padding:5px 12px;background:var(--bg-elev-2);border:1px solid var(--line-strong);border-radius:6px;color:var(--ink);font-size:12px;cursor:pointer;">Riprova</button>
         </div>`);
       return;
@@ -189,7 +189,7 @@ async function loadProfitData(force) {
     // riprovare sul colpo è meglio che dover cambiare tab e tornare indietro.
     box.innerHTML = `
       <div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:24px 0;text-align:center;">
-        Impossibile caricare il conto economico: ${e.message}
+        Impossibile caricare il conto economico: ${esc(e.message)}
         <div style="margin-top:12px;">
           <button onclick="loadProfitData(true)" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg-elev-2);border:1px solid var(--line-strong);border-radius:6px;color:var(--ink);font-size:12px;font-family:var(--font-body);cursor:pointer;">
             <span class="material-symbols-rounded" style="font-size:15px;">refresh</span> Riprova

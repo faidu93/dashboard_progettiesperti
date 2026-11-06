@@ -39,7 +39,9 @@ async function init(opts) {
   // Attiva tab calendario subito, SOLO al primo caricamento. In silent (SWR) la
   // tab scelta dall'utente deve restare: riattivare il calendario qui lo
   // sovrapponeva alla tab corrente (es. Profit) e il bottone sembrava rotto.
-  if (!silent) {
+  // Anche "Aggiorna tutti i dati" (init non silent) non deve spostare la scheda:
+  // il Calendario si attiva solo se nessuna scheda è già aperta.
+  if (!silent && !document.querySelector('section[data-tab].tab-active')) {
     document.querySelectorAll('section[data-tab="calendario"]').forEach(s => s.classList.add('tab-active'));
   }
   updateOnboarding();
@@ -132,9 +134,8 @@ async function init(opts) {
     const profile = ig.profile || {};
     daily.sort((a,b) => new Date(a.date) - new Date(b.date));
     CACHED = { daily, posts, profile };
-    if (isMockIg) {
-      window.IS_USING_MOCK_IG = true;
-    } else {
+    window.IS_USING_MOCK_IG = isMockIg; // torna false appena il backend risponde di nuovo
+    if (!isMockIg) {
       loadingDone('ig', `Instagram · ${posts.length} post · ${daily.length} giorni`);
     }
     loadingProgress(35);
@@ -465,6 +466,8 @@ setInterval(() => { if (typeof updateFreshnessLabels === 'function') updateFresh
 
   window.addEventListener('touchstart', (e) => {
     if (triggered || e.touches.length !== 1 || !atTop()) { pulling = false; return; }
+    // Dentro una finestra (es. nuovo post) il pull-to-refresh farebbe perdere bozza e upload.
+    if (e.target.closest && e.target.closest('.cal-modal-bg, .modal-bg, .cal-detail-bg')) { pulling = false; return; }
     // non partire se il tocco è dentro un elemento scrollabile in orizzontale/verticale proprio
     startY = e.touches[0].clientY;
     pulling = true; dist = 0;

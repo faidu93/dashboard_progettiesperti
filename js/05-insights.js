@@ -17,11 +17,12 @@ function renderSlots(posts) {
   const median = computeMedian(posts.map(p => p.media_reach || 0));
   const slotData = {}; // key "day-bucket" -> { reaches: [] }
   posts.forEach(p => {
-    const d = new Date(p.timestamp);
-    const dit = new Date(d.getTime() + 2*60*60*1000);
-    const dayJs = dit.getUTCDay();           // 0=Dom..6=Sab
-    const day = (dayJs + 6) % 7;             // 0=Lun..6=Dom
-    const h = dit.getUTCHours();
+    // Ora italiana vera (CET/CEST): prima era UTC+2 fisso, sbagliato da ottobre a marzo.
+    const itp = {};
+    new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Rome', weekday: 'short', hour: 'numeric', hourCycle: 'h23' })
+      .formatToParts(new Date(p.timestamp)).forEach(x => { itp[x.type] = x.value; });
+    const day = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].indexOf(itp.weekday); // 0=Lun..6=Dom
+    const h = parseInt(itp.hour, 10);
     let b;
     if (h >= 6 && h < 10) b = 0;
     else if (h >= 10 && h < 14) b = 1;
@@ -177,7 +178,7 @@ function renderPiList(posts) {
       <span class="post-date-cell">${fmtDate(d)}</span>
       <span class="lab-fmt-badge ${t}">${t==='IMAGE'?'img':t==='CAROUSEL'?'car':'reel'}</span>
       <div class="lab-pi-bar-wrap">
-        <span class="lab-pi-title"><a href="${p.media_permalink}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${title}</a>${isCollab?' <span style="color:var(--info);font-family:var(--font-mono);font-size:9.5px;">[collab]</span>':''}</span>
+        <span class="lab-pi-title"><a href="${esc(p.media_permalink)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${esc(title)}</a>${isCollab?' <span style="color:var(--info);font-family:var(--font-mono);font-size:9.5px;">[collab]</span>':''}</span>
         <div class="lab-pi-bar"><div class="lab-pi-bar-fill ${cls}" style="width:${barW}%"></div></div>
       </div>
       <span class="lab-pi-val ${cls}">${pi.toFixed(2)}×</span>
@@ -383,18 +384,20 @@ function setupWowToggle(posts) {
   const allBtn = document.getElementById('wowAll');
   const wowBtn = document.getElementById('wowDelta');
   if (!allBtn || !wowBtn) return;
-  allBtn.addEventListener('click', () => {
+  // onclick (non addEventListener): init() richiama questa funzione a ogni
+  // aggiornamento e i click si moltiplicavano, con `posts` vecchi nelle closure.
+  allBtn.onclick = () => {
     WOW_MODE = 'all';
     allBtn.classList.add('active');
     wowBtn.classList.remove('active');
     renderFormatTable(posts); // funzione esistente
-  });
-  wowBtn.addEventListener('click', () => {
+  };
+  wowBtn.onclick = () => {
     WOW_MODE = 'wow';
     wowBtn.classList.add('active');
     allBtn.classList.remove('active');
     renderFormatTableWow(posts);
-  });
+  };
 }
 
 // ============================================================================

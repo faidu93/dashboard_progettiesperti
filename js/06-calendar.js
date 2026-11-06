@@ -694,8 +694,13 @@ function calGenerateAiCaption() {
 }
 
 function calSetupEvents() {
-  calSetupUpload();
-  calSetupCoverUpload();
+  // Gli upload usano addEventListener: se init() gira di nuovo (Aggiorna tutti)
+  // i listener raddoppierebbero e ogni file verrebbe caricato due volte.
+  if (!window._calUploadBound) {
+    window._calUploadBound = true;
+    calSetupUpload();
+    calSetupCoverUpload();
+  }
   const aiCaptionBtn = document.getElementById('calAiCaptionBtn');
   if (aiCaptionBtn) aiCaptionBtn.onclick = calGenerateAiCaption;
   document.getElementById('calPrev').onclick = () => {
@@ -740,7 +745,7 @@ function calSetupEvents() {
     let finalTime = time;
     if (isImmediate) {
       const now = new Date();
-      finalDate = now.toISOString().slice(0, 10);
+      finalDate = calDateStr(now); // data locale (toISOString dava ieri tra 00:00 e 02:00)
       const hours = String(now.getHours()).padStart(2, '0');
       const mins = String(now.getMinutes()).padStart(2, '0');
       finalTime = `${hours}:${mins}`;

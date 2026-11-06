@@ -180,7 +180,10 @@ async function fetchCachedBackend(endpoint, cacheKey, ttlMs = 3600 * 1000, reval
       fetchBackend(endpoint).then(freshData => {
         let changed = true;
         try {
-          changed = JSON.stringify(freshData) !== cachedRaw;
+          // fetched_at cambia a ogni risposta del backend: va escluso, altrimenti
+          // sembra sempre "cambiato" e la dashboard si ridisegna ogni ~5 minuti.
+          const strip = (o) => JSON.stringify(o, (k, v) => (k === 'fetched_at' ? undefined : v));
+          changed = strip(freshData) !== strip(JSON.parse(cachedRaw));
           localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: freshData }));
         } catch(e) {}
         if (changed && typeof window.__onDataRevalidated === 'function') {
@@ -224,9 +227,9 @@ async function forceRefreshAllAnalytics(event) {
     icon.style.animation = 'spin 1s linear infinite';
   });
   
-  localStorage.removeItem('cache_ig_insights');
-  localStorage.removeItem('cache_yt_videos');
-  localStorage.removeItem('cache_ig_demo');
+  try {
+    ['cache_ig_insights', 'cache_yt_videos', 'cache_yt_videos_v2', 'cache_ig_demo'].forEach(k => localStorage.removeItem(k));
+  } catch (e) {}
   
   try {
     await init();

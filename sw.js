@@ -13,7 +13,7 @@
 // alla rete, il Service Worker non le tocca.
 // ============================================================================
 
-const CACHE_NAME = 'pep-dashboard-v4';
+const CACHE_NAME = 'pep-dashboard-v5';
 const NETWORK_FIRST = ['/dashboard_progettiesperti/', '/dashboard_progettiesperti/index.html', '/dashboard_progettiesperti/manifest.json'];
 
 // All'install pre-carichiamo lo shell + gli asset versionati elencati in
@@ -40,7 +40,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((names) =>
-      Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
+      Promise.all(names.filter((n) => n.startsWith('pep-dashboard-') && n !== CACHE_NAME).map((n) => caches.delete(n)))
     ).then(() => self.clients.claim())
   );
 });
@@ -90,10 +90,12 @@ self.addEventListener('fetch', (event) => {
     // opzioni modificate in tutti i browser.
     event.respondWith(
       fetch(req.url, { cache: 'no-store' }).then((res) => {
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then((c) => c.put(req, clone));
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(req, clone));
+        }
         return res;
-      }).catch(() => caches.match(req))
+      }).catch(() => caches.match(req, { ignoreSearch: true }))
     );
     return;
   }
@@ -103,8 +105,11 @@ self.addEventListener('fetch', (event) => {
     caches.match(req).then((cached) => {
       if (cached) return cached;
       return fetch(req).then((res) => {
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then((c) => c.put(req, clone));
+        // Solo risposte ok: un 404/5xx transitorio non deve restare in cache per sempre.
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(req, clone));
+        }
         return res;
       });
     })

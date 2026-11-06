@@ -55,8 +55,10 @@ function renderKPIs(daily, profile, posts, viewsTotal30d) {
   // Somma i daily il cui date cade in [from, to] (estremi inclusi), via sumWindow su indici
   const weekWindow = (mondayDate, posts) => {
     const sunday = new Date(mondayDate); sunday.setDate(sunday.getDate()+6); sunday.setHours(23,59,59,999);
-    const monStr = mondayDate.toISOString().slice(0,10);
-    const sunStr = sunday.toISOString().slice(0,10);
+    // Data LOCALE (toISOString converte in UTC: il lunedì diventava domenica).
+    const ymd = (x) => x.getFullYear() + '-' + String(x.getMonth()+1).padStart(2,'0') + '-' + String(x.getDate()).padStart(2,'0');
+    const monStr = ymd(mondayDate);
+    const sunStr = ymd(sunday);
     // Trovo indici start/end nei daily
     let startI = -1, endI = -1;
     for (let i=0;i<daily.length;i++){
@@ -312,6 +314,8 @@ function renderWeeks(period, posts) {
 }
 
 function renderReachChart(period) {
+  // Offline Chart.js (CDN) può mancare: senza questo init() si fermava a metà.
+  if (typeof Chart === 'undefined') return;
   const ctx = document.getElementById('chartReach').getContext('2d');
   // Se esiste già un grafico su questo canvas, lo distruggo prima di ricrearlo
   // (altrimenti Chart.js dà "Canvas is already in use" e il grafico non si aggiorna).

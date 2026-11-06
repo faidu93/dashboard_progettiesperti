@@ -60,10 +60,10 @@ function astaWeekday(name) {
   const day = parseInt(m[1], 10);
   const month = ASTE_MESI_IT[m[2].toLowerCase().slice(0, 3)];
   if (month === undefined || !day) return null;
+  // Stagione: agosto-dicembre = anno di inizio, gennaio-luglio = anno dopo.
   const now = new Date();
-  let year = now.getFullYear();
-  const candidate = new Date(year, month, day);
-  if (candidate < new Date(now.getFullYear(), now.getMonth(), now.getDate() - 300)) year++;
+  const seasonStart = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+  const year = month >= 7 ? seasonStart : seasonStart + 1;
   return ASTE_GIORNI_IT[new Date(year, month, day).getDay()];
 }
 
@@ -117,7 +117,7 @@ async function loadAsteSummary(force) {
     renderAsteSummary(asteCache.summary);
   } catch (e) {
     box.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--neg);padding:16px 0;text-align:center;">
-      Impossibile caricare il riepilogo: ${e.message}
+      Impossibile caricare il riepilogo: ${esc(e.message)}
       <div style="margin-top:12px;"><button onclick="loadAsteSummary(true)" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg-elev-2);border:1px solid var(--line-strong);border-radius:6px;color:var(--ink);font-size:12px;font-family:var(--font-body);cursor:pointer;"><span class="material-symbols-rounded" style="font-size:15px;">refresh</span> Riprova</button></div>
     </div>`;
   } finally {
@@ -154,7 +154,7 @@ function renderAsteSummary(rows) {
   }
 
   const asteNonLette = rows.filter(r => r.error);
-  const avvisoParziale = asteNonLette.length ? `<div style="font-family:var(--font-mono);font-size:11.5px;color:var(--neg);border:1px solid var(--neg);border-radius:8px;padding:10px 14px;margin-bottom:12px;">Attenzione: ${asteNonLette.length} aste non lette (${asteNonLette.map(r => r.name).join(', ')}). I totali sotto sono parziali: premi aggiorna per riprovare.</div>` : '';
+  const avvisoParziale = asteNonLette.length ? `<div style="font-family:var(--font-mono);font-size:11.5px;color:var(--neg);border:1px solid var(--neg);border-radius:8px;padding:10px 14px;margin-bottom:12px;">Attenzione: ${asteNonLette.length} aste non lette (${esc(asteNonLette.map(r => r.name).join(', '))}). I totali sotto sono parziali: premi aggiorna per riprovare.</div>` : '';
   const totMontepremi = visibleRows.reduce((s, r) => s + (r.montepremi || 0), 0);
   const totProgetto = visibleRows.reduce((s, r) => s + (r.progetto || 0), 0);
   const totMancanti = visibleRows.reduce((s, r) => s + (r.mancanti || 0), 0);
@@ -164,8 +164,8 @@ function renderAsteSummary(rows) {
   const trs = visibleRows.map(r => {
     if (r.error) {
       return `<tr style="border-bottom:1px solid var(--line); opacity:0.6;">
-        <td style="padding:8px 10px; color:var(--ink);">${r.name}</td>
-        <td colspan="7" style="padding:8px 10px; color:var(--neg); font-family:var(--font-mono); font-size:11px;">Errore: ${r.error}</td>
+        <td style="padding:8px 10px; color:var(--ink);">${esc(r.name)}</td>
+        <td colspan="7" style="padding:8px 10px; color:var(--neg); font-family:var(--font-mono); font-size:11px;">Errore: ${esc(r.error)}</td>
       </tr>`;
     }
     const completa = r.mancanti === 0;
@@ -173,8 +173,8 @@ function renderAsteSummary(rows) {
     const weekday = astaWeekday(r.name);
     const baseBg = completa ? 'rgba(34,197,94,0.08)' : 'transparent';
     return `<tr style="border-bottom:1px solid var(--line); background:${baseBg};">
-      <td style="padding:8px 10px; color:var(--ink); font-weight:600;">${weekday ? `<span style="color:var(--ink-mute); font-weight:400;">${weekday}</span> ` : ''}${r.name}</td>
-      <td style="padding:8px 10px; color:var(--ink-soft); font-family:var(--font-mono); font-size:11px;">${r.modalita || '—'}</td>
+      <td style="padding:8px 10px; color:var(--ink); font-weight:600;">${weekday ? `<span style="color:var(--ink-mute); font-weight:400;">${weekday}</span> ` : ''}${esc(r.name)}</td>
+      <td style="padding:8px 10px; color:var(--ink-soft); font-family:var(--font-mono); font-size:11px;">${esc(r.modalita || '—')}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono);">${r.count}${r.maxPosti !== null ? ` / ${r.maxPosti}` : ''}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); color:var(--ink-soft);" title="Utenti che pagano solo la quota montepremi, senza sovrapprezzo">${r.esperti !== undefined ? r.esperti : '—'}</td>
       <td style="padding:8px 10px; text-align:right; font-family:var(--font-mono); font-weight:600; color:${completa ? 'var(--pos)' : 'var(--accent)'};">${r.mancanti !== null ? r.mancanti : '—'}</td>
