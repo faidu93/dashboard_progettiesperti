@@ -54,9 +54,10 @@ const QUOTA_ISCRIZIONE_STANDARD = 15;
 // Come si divide ogni riga del conto economico tra le tre parti.
 //   iscrizioni: prima la quota del Profeta (profeta, calcolata sul teorico iscritti x 15 €);
 //               il resto si divide a metà tra Direzionale ed Esperti (direzionale/esperti);
-//   aste:       tutta al Direzionale;
+//   aste:       300 € fissi agli Esperti (vanno a due persone precise), il resto al Direzionale;
 //   costi:      a metà tra Direzionale ed Esperti, il Profeta non sostiene costi.
 // Per costruzione Profeta + Direzionale + Esperti == utile netto.
+const QUOTA_ASTE_ESPERTI = 300;
 const PROFIT_SPLIT = {
   iscrizioni: { profeta: 0.20, direzionale: 0.50, esperti: 0.50 },
   aste:       { profeta: 0,    direzionale: 1,    esperti: 0 },
@@ -217,7 +218,9 @@ function renderProfitContent(d) {
         esperti: (d.ricavoIscrizioni - quotaProfetaIscrizioni) * PROFIT_SPLIT.iscrizioni.esperti,
       },
       nota: haPaganti ? `Profeta 20% × ${d.numQuotaProfeta} iscritti × ${QUOTA_ISCRIZIONE_STANDARD}€ = 20% × ${fmtEuro(teoricoPaganti)}€ · il resto 50% · 50%` : 'Profeta 20% · il resto 50% · 50%' },
-    { label: '🔨 Quota extra aste',  totale: d.ricavoAste,       regola: PROFIT_SPLIT.aste,       segno: 1 },
+    { label: '🔨 Quota extra aste',  totale: d.ricavoAste,       regola: PROFIT_SPLIT.aste,       segno: 1,
+      override: { profeta: 0, direzionale: d.ricavoAste - QUOTA_ASTE_ESPERTI, esperti: QUOTA_ASTE_ESPERTI },
+      nota: `Esperti ${QUOTA_ASTE_ESPERTI}€ fissi · il resto al Direzionale` },
     { label: '💸 Costi sostenuti',   totale: d.totaleCostiSostenuti, regola: PROFIT_SPLIT.costi,  segno: -1 },
   ].map(r => ({ ...r, parti: Object.fromEntries(PARTI.map(k => [k, (r.override && k in r.override) ? r.override[k] : r.segno * r.totale * r.regola[k]])) }));
   const quota = Object.fromEntries(PARTI.map(k => [k, righeSplit.reduce((sum, r) => sum + r.parti[k], 0)]));
