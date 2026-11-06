@@ -960,6 +960,19 @@ async function runYtCompetitorAnalysis() {
           throw new Error(`Impossibile risolvere l'ID per "${ch}".`);
         }
 
+        // Iscritti: i canali noti saltano la ricerca per handle, quindi il conteggio restava 0 e
+        // non veniva mai salvato (colonna sempre a "—"). Una chiamata leggera per id (1 unità di quota).
+        if (!subscriberCount) {
+          try {
+            const stData = await fetchYtApi(k => 'https://www.googleapis.com/youtube/v3/channels?part=statistics&id=' + encodeURIComponent(channelId) + '&key=' + k);
+            subscriberCount = parseInt(stData.items?.[0]?.statistics?.subscriberCount || 0) || 0;
+          } catch(err) {
+            console.warn('Iscritti non disponibili per ' + ch + ':', err);
+          }
+        }
+        window.ytChannelSubs = window.ytChannelSubs || {};
+        window.ytChannelSubs[ch] = subscriberCount;
+
         const uploadsPlaylistId = 'UU' + channelId.slice(2);
 
         // Fetch fino a 50 caricamenti recenti dal canale con rotazione chiavi
