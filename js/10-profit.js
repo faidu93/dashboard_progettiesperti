@@ -50,12 +50,16 @@ const PROFIT_LAST_GOOD_KEY = 'epf_profit_last_good_v3';
 // vale esattamente 15 euro.
 const QUOTA_ISCRIZIONE_STANDARD = 15;
 
-// Come si divide ogni riga del conto economico tra le tre parti (la somma è sempre 1).
-// I costi seguono la stessa regola delle iscrizioni: ognuno sostiene la sua parte.
+// Come si divide ogni riga del conto economico tra le tre parti.
+//   iscrizioni: prima la quota del Profeta (profeta, calcolata sul teorico iscritti x 15 €);
+//               il resto si divide a metà tra Direzionale ed Esperti (direzionale/esperti);
+//   aste:       tutta al Direzionale;
+//   costi:      a metà tra Direzionale ed Esperti, il Profeta non sostiene costi.
+// Per costruzione Profeta + Direzionale + Esperti == utile netto.
 const PROFIT_SPLIT = {
-  iscrizioni: { profeta: 0.20, direzionale: 0.40, esperti: 0.40 },
+  iscrizioni: { profeta: 0.20, direzionale: 0.50, esperti: 0.50 },
   aste:       { profeta: 0,    direzionale: 1,    esperti: 0 },
-  costi:      { profeta: 0,    direzionale: 0.40, esperti: 0.40 }, // il Profeta non sostiene costi
+  costi:      { profeta: 0,    direzionale: 0.50, esperti: 0.50 },
 };
 const PROFIT_CACHE_TTL_MS = 45 * 1000;
 
@@ -200,11 +204,18 @@ function renderProfitContent(d) {
   const PARTI = ['profeta', 'direzionale', 'esperti'];
   const haPaganti = typeof d.numQuotaProfeta === 'number'; // assente nei conti salvati da versioni precedenti
   const teoricoPaganti = haPaganti ? d.numQuotaProfeta * QUOTA_ISCRIZIONE_STANDARD : null;
+  // senza il numero degli iscritti (conti salvati da versioni precedenti) ripiega sul 20% del ricavo reale
+  const quotaProfetaIscrizioni = PROFIT_SPLIT.iscrizioni.profeta * (haPaganti ? teoricoPaganti : d.ricavoIscrizioni);
   const righeSplit = [
     { label: '🎟️ Iscrizioni gruppo', totale: d.ricavoIscrizioni, regola: PROFIT_SPLIT.iscrizioni, segno: 1,
-      // il Profeta prende il 20% di tutti gli iscritti x 15 €, non del ricavo reale
-      override: haPaganti ? { profeta: PROFIT_SPLIT.iscrizioni.profeta * teoricoPaganti } : null,
-      nota: haPaganti ? `Profeta 20% × ${d.numQuotaProfeta} iscritti × ${QUOTA_ISCRIZIONE_STANDARD}€ = 20% × ${fmtEuro(teoricoPaganti)}€ · 40% · 40%` : null },
+      // il Profeta prende il 20% di tutti gli iscritti x 15 €, non del ricavo reale;
+      // il resto delle iscrizioni va a metà a Direzionale ed Esperti
+      override: {
+        profeta: quotaProfetaIscrizioni,
+        direzionale: (d.ricavoIscrizioni - quotaProfetaIscrizioni) * PROFIT_SPLIT.iscrizioni.direzionale,
+        esperti: (d.ricavoIscrizioni - quotaProfetaIscrizioni) * PROFIT_SPLIT.iscrizioni.esperti,
+      },
+      nota: haPaganti ? `Profeta 20% × ${d.numQuotaProfeta} iscritti × ${QUOTA_ISCRIZIONE_STANDARD}€ = 20% × ${fmtEuro(teoricoPaganti)}€ · il resto 50% · 50%` : 'Profeta 20% · il resto 50% · 50%' },
     { label: '🔨 Quota extra aste',  totale: d.ricavoAste,       regola: PROFIT_SPLIT.aste,       segno: 1 },
     { label: '💸 Costi sostenuti',   totale: d.totaleCostiSostenuti, regola: PROFIT_SPLIT.costi,  segno: -1 },
   ].map(r => ({ ...r, parti: Object.fromEntries(PARTI.map(k => [k, (r.override && k in r.override) ? r.override[k] : r.segno * r.totale * r.regola[k]])) }));
@@ -218,8 +229,8 @@ function renderProfitContent(d) {
       <td style="text-align:right; font-family:var(--font-mono); color:var(--ink-soft);">${fmtSigned(r.segno * r.totale)}</td>
       ${PARTI.map(k => `<td style="text-align:right; font-family:var(--font-mono); color:${r.parti[k] < 0 ? 'var(--neg)' : (r.parti[k] === 0 ? 'var(--ink-mute)' : 'var(--ink)')};">${fmtSigned(r.parti[k])}</td>`).join('')}
     </tr>`).join('');
-  // Il Profeta non sostiene costi e prende tutti gli iscritti x 15 €: la somma delle tre quote
-  // può quindi differire dall'utile netto. La differenza resta visibile, non assegnata.
+  // Controllo di coerenza: la somma delle tre quote deve coincidere con l'utile netto;
+  // se non coincide per qualche motivo la differenza resta visibile, non assegnata.
   const sommaQuote = PARTI.reduce((sum, k) => sum + quota[k], 0);
   const nonAssegnato = d.utile - sommaQuote;
 
