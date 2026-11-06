@@ -44,6 +44,14 @@ let profitCache = null; // { data, ts }
 // Ultimo conto economico calcolato con TUTTI i dati: se un caricamento fallisce si
 // mostra questo (con l'avviso) invece di una pagina vuota o, peggio, di ricavi parziali.
 const PROFIT_LAST_GOOD_KEY = 'epf_profit_last_good';
+
+// Come si divide ogni riga del conto economico tra le tre parti (la somma è sempre 1).
+// I costi seguono la stessa regola delle iscrizioni: ognuno sostiene la sua parte.
+const PROFIT_SPLIT = {
+  iscrizioni: { profeta: 0.20, direzionale: 0.40, esperti: 0.40 },
+  aste:       { profeta: 0,    direzionale: 1,    esperti: 0 },
+  costi:      { profeta: 0.20, direzionale: 0.40, esperti: 0.40 },
+};
 const PROFIT_CACHE_TTL_MS = 45 * 1000;
 
 async function loadProfitData(force) {
@@ -178,16 +186,26 @@ function renderProfitContent(d) {
   `).join('');
 
   const fmtEuro = n => Number.isInteger(n) ? n : n.toFixed(2);
-  // Suddivisione dell'utile netto (i costi si sottraggono qui, non prima):
-  // 1) ricavo iscrizioni MENO i costi sostenuti = "netto iscrizioni", diviso
-  //    20% Profeta / 40% Direzionale / 40% Esperti.
-  // 2) quota extra aste (5€/asta) NON tocca il Profeta: va per intero divisa
-  //    50/50 tra Direzionale ed Esperti.
-  // Per costruzione Profeta + Direzionale + Esperti == utile netto (i costi
-  // sono sottratti una sola volta, dal solo netto iscrizioni).
-  const nettoIscrizioni = d.ricavoIscrizioni - d.totaleCostiSostenuti;
-  const quotaProfeta = nettoIscrizioni * 0.20;
-  const quotaGruppo = nettoIscrizioni * 0.40 + d.ricavoAste * 0.50;
+  // Suddivisione per riga: ogni importo (iscrizioni, quota extra aste, costi) si
+  // distribuisce con le percentuali di PROFIT_SPLIT; le quote finali sono la somma
+  // delle righe, con i costi in negativo. Per costruzione Profeta + Direzionale +
+  // Esperti == utile netto.
+  const PARTI = ['profeta', 'direzionale', 'esperti'];
+  const righeSplit = [
+    { label: '🎟️ Iscrizioni gruppo', totale: d.ricavoIscrizioni, regola: PROFIT_SPLIT.iscrizioni, segno: 1 },
+    { label: '🔨 Quota extra aste',  totale: d.ricavoAste,       regola: PROFIT_SPLIT.aste,       segno: 1 },
+    { label: '💸 Costi sostenuti',   totale: d.totaleCostiSostenuti, regola: PROFIT_SPLIT.costi,  segno: -1 },
+  ].map(r => ({ ...r, parti: Object.fromEntries(PARTI.map(k => [k, r.segno * r.totale * r.regola[k]])) }));
+  const quota = Object.fromEntries(PARTI.map(k => [k, righeSplit.reduce((sum, r) => sum + r.parti[k], 0)]));
+  const quotaProfeta = quota.profeta, quotaDirezionale = quota.direzionale, quotaEsperti = quota.esperti;
+  const fmtSigned = n => (n < 0 ? '−' : '') + '€' + fmtEuro(Math.abs(n));
+  const fmtRegola = reg => PARTI.map(k => Math.round(reg[k] * 100) + '%').join(' · ');
+  const splitRowsHtml = righeSplit.map(r => `
+    <tr>
+      <td style="color:var(--ink);">${r.label}<div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute);">${fmtRegola(r.regola)}</div></td>
+      <td style="text-align:right; font-family:var(--font-mono); color:var(--ink-soft);">${fmtSigned(r.segno * r.totale)}</td>
+      ${PARTI.map(k => `<td style="text-align:right; font-family:var(--font-mono); color:${r.parti[k] < 0 ? 'var(--neg)' : (r.parti[k] === 0 ? 'var(--ink-mute)' : 'var(--ink)')};">${fmtSigned(r.parti[k])}</td>`).join('')}
+    </tr>`).join('');
 
   box.innerHTML = `
     <div class="panel" style="margin-bottom:28px;">
@@ -256,20 +274,40 @@ function renderProfitContent(d) {
       </div>
 
       <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--line);">
-        <div class="mini-section-label" style="color:var(--accent);">Suddivisione ricavi</div>
-        <div class="mini-label" style="margin-bottom:8px; text-transform:none;">Netto iscrizioni (${fmtEuro(d.ricavoIscrizioni)}€ − ${fmtEuro(d.totaleCostiSostenuti)}€ costi = ${fmtEuro(nettoIscrizioni)}€): 20% Profeta · 40% Direzionale · 40% Esperti. Quota extra aste: 50/50 Direzionale/Esperti, Profeta escluso.</div>
+        <div class="mini-section-label" style="color:var(--accent);">Suddivisione ricavi e costi</div>
+        <div style="overflow-x:auto; margin-bottom:12px;">
+          <table class="mini-table" style="font-size:12px; text-align:left; min-width:420px;">
+            <thead>
+              <tr style="color:var(--ink-mute); font-family:var(--font-mono); font-size:10px; text-transform:uppercase;">
+                <th style="font-weight:600;">Voce</th>
+                <th style="font-weight:600; text-align:right;">Totale</th>
+                <th style="font-weight:600; text-align:right;">Profeta</th>
+                <th style="font-weight:600; text-align:right;">Direzionale</th>
+                <th style="font-weight:600; text-align:right;">Esperti</th>
+              </tr>
+            </thead>
+            <tbody>${splitRowsHtml}</tbody>
+            <tfoot>
+              <tr style="border-top:2px solid var(--line-strong); font-weight:700;">
+                <td style="color:var(--ink);">Totale spettante</td>
+                <td style="text-align:right; font-family:var(--font-mono); color:${d.utile >= 0 ? 'var(--pos)' : 'var(--neg)'};">${fmtSigned(d.utile)}</td>
+                ${PARTI.map(k => `<td style="text-align:right; font-family:var(--font-mono); color:${quota[k] >= 0 ? 'var(--pos)' : 'var(--neg)'};">${fmtSigned(quota[k])}</td>`).join('')}
+              </tr>
+            </tfoot>
+          </table>
+        </div>
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
           <div class="mini-card" style="flex:1; min-width:140px;">
             <div class="mini-label">👤 Quota Profeta</div>
-            <div class="mini-value">€${fmtEuro(quotaProfeta)}</div>
+            <div class="mini-value">${fmtSigned(quotaProfeta)}</div>
           </div>
           <div class="mini-card" style="flex:1; min-width:140px;">
             <div class="mini-label">🧭 Gruppo Direzionale</div>
-            <div class="mini-value">€${fmtEuro(quotaGruppo)}</div>
+            <div class="mini-value">${fmtSigned(quotaDirezionale)}</div>
           </div>
           <div class="mini-card" style="flex:1; min-width:140px;">
             <div class="mini-label">🎙️ Gruppo Esperti</div>
-            <div class="mini-value">€${fmtEuro(quotaGruppo)}</div>
+            <div class="mini-value">${fmtSigned(quotaEsperti)}</div>
           </div>
         </div>
       </div>
