@@ -8,6 +8,18 @@ let CACHED = { daily: null, posts: null, profile: null };
 let calPublishedPosts = [];
 
 // ============================================================================
+// ESCAPE HTML — da usare su OGNI valore esterno (iscritti, Google Calendar,
+// YouTube, Instagram) inserito in innerHTML o in un attributo. Senza, un nome
+// iscritto o un titolo video con <img onerror=...> eseguirebbe codice nella
+// dashboard e potrebbe leggere la password salvata nel browser.
+// ============================================================================
+function esc(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+// Per id/valori che finiscono dentro onclick="f('...')": solo caratteri sicuri.
+function escId(v) { return String(v == null ? '' : v).replace(/[^\w.\-]/g, ''); }
+
+// ============================================================================
 // TOAST — notifiche non bloccanti (sostituiscono i popup alert() di sistema)
 // ============================================================================
 function toast(message, type = 'info', duration = 3800, onClick = null) {

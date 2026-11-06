@@ -337,12 +337,18 @@ function renderSubscribersTablePage() {
   
   tbody.innerHTML = pageItems.map(s => {
     const dateStr = s.date ? new Date(s.date).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—';
-    const tgUsername = s.telegram ? `<a href="https://t.me/${s.telegram.replace('@','')}" target="_blank" style="color:var(--info);text-decoration:none;">${s.telegram}</a>` : 'Non inserito';
+    const tgHandle = s.telegram ? String(s.telegram).replace('@','') : '';
+    // t.me è un link solo se l'handle è valido; altrimenti testo semplice (mai HTML dai dati).
+    const tgUsername = tgHandle
+      ? (/^[A-Za-z0-9_]{3,32}$/.test(tgHandle)
+          ? `<a href="https://t.me/${tgHandle}" target="_blank" rel="noopener" style="color:var(--info);text-decoration:none;">${esc(s.telegram)}</a>`
+          : esc(s.telegram))
+      : 'Non inserito';
     const amountVal = s.amount !== undefined ? `${s.amount.toLocaleString('it-IT')} €` : '15 €';
     return `
       <tr style="border-bottom:1px solid var(--line); transition:background 0.15s;">
         <td style="padding:11px 8px 11px 0;color:var(--ink-soft);font-family:var(--font-mono);font-size:11.5px;">${dateStr}</td>
-        <td style="padding:11px 8px 11px 0;color:var(--ink);font-weight:500;">${s.name}</td>
+        <td style="padding:11px 8px 11px 0;color:var(--ink);font-weight:500;">${esc(s.name)}</td>
         <td style="padding:11px 8px 11px 0;text-align:center;color:var(--ink);font-family:var(--font-mono);">${amountVal}</td>
         <td style="padding:11px 0;text-align:right;font-family:var(--font-mono);font-size:12px;">${tgUsername}</td>
       </tr>

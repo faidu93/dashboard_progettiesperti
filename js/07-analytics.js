@@ -779,7 +779,7 @@ function ytRenderChannelChips() {
   container.innerHTML = channels.map(ch => `
     <span class="ch-chip" style="display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line-strong);border-radius:14px;padding:3px 10px;font-family:var(--font-mono);font-size:11.5px;color:var(--ink);">
       <span style="color:var(--accent);">▶</span> ${ch}
-      <button type="button" onclick="ytRemoveChannelChip('${ch.replace(/'/g, "\\'")}')" style="background:none;border:none;color:var(--ink-mute);cursor:pointer;font-size:13px;padding:0;margin-left:2px;line-height:1;" title="Rimuovi">&times;</button>
+      <button type="button" onclick="ytRemoveChannelChip('${ch.replace(/'/g, "\\'")}')" style="background:none;border:none;color:var(--ink-mute);cursor:pointer;font-size:15px;padding:8px 10px;margin:-8px -6px -8px 0;line-height:1;touch-action:manipulation;" title="Rimuovi" aria-label="Rimuovi">&times;</button>
     </span>
   `).join('');
 }
@@ -1140,32 +1140,32 @@ function renderYtRawTable(videos) {
   
   let h = '';
   sorted.forEach(v => {
-    const watchUrl = 'https://youtube.com/watch?v=' + v.videoId;
-    const channelUrl = 'https://youtube.com/' + v.channel;
+    const watchUrl = 'https://youtube.com/watch?v=' + encodeURIComponent(v.videoId);
+    const channelUrl = 'https://youtube.com/' + encodeURIComponent(v.channel);
     const engColor = v.engScore >= 5 ? '#2ec4b6' : v.engScore >= 2 ? '#ff9f1c' : 'var(--ink-mute)';
-    const descText = v.description ? v.description.slice(0, 100) + (v.description.length > 100 ? '…' : '') : '';
+    const descText = v.description ? esc(v.description.slice(0, 100) + (v.description.length > 100 ? '…' : '')) : '';
     
     h += `
       <div class="yt-card">
         <div class="yt-card-thumb">
           <a href="${watchUrl}" target="_blank" rel="noopener">
-            <img src="${v.thumbnail || 'https://img.youtube.com/vi/' + v.videoId + '/mqdefault.jpg'}" alt="cover" loading="lazy">
+            <img src="${esc(v.thumbnail || 'https://img.youtube.com/vi/' + encodeURIComponent(v.videoId) + '/mqdefault.jpg')}" alt="cover" loading="lazy">
           </a>
         </div>
         <div class="yt-card-content">
           <div>
             <div class="yt-card-channel">
-              <a href="${channelUrl}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;font-weight:600;">${v.channel}</a>
+              <a href="${channelUrl}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;font-weight:600;">${esc(v.channel)}</a>
             </div>
-            <div class="yt-card-title" title="${v.title}">
-              <a href="${watchUrl}" target="_blank" rel="noopener">${v.title}</a>
+            <div class="yt-card-title" title="${esc(v.title)}">
+              <a href="${watchUrl}" target="_blank" rel="noopener">${esc(v.title)}</a>
             </div>
             ${descText ? `<div style="font-size:10.5px;color:var(--ink-soft);margin-bottom:6px;line-height:1.35;">${descText}</div>` : ''}
           </div>
           <div class="yt-card-footer" style="color:#e2e8f0;">
-            <span style="font-size:10px;color:#cbd5e1;font-weight:500;">${v.publishedAt}</span>
+            <span style="font-size:10px;color:#cbd5e1;font-weight:500;">${esc(v.publishedAt)}</span>
             <div class="yt-card-stats" style="color:#f8fafc;font-weight:600;">
-              <span style="color:#f8fafc;">⏱️ ${v.durationFormatted || '—'}</span>
+              <span style="color:#f8fafc;">⏱️ ${esc(v.durationFormatted || '—')}</span>
               <span style="color:#f8fafc;">👁 ${fmt(v.views)}</span>
               <span style="color:#f8fafc;">💬 ${fmt(v.comments)}</span>
             </div>

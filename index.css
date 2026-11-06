@@ -2059,3 +2059,10 @@ body {
 
 
 
+
+/* Finestra password (Profit, Aste, ecc.): su telefono resta una scheda compatta
+   invece di occupare tutto lo schermo come l'editor dei post. */
+@media (max-width: 480px) {
+  #publishSecretModal.cal-modal-bg { padding: 16px !important; align-items: center !important; }
+  #publishSecretModal .cal-modal { height: auto !important; max-height: 90dvh !important; border-radius: 16px !important; }
+}

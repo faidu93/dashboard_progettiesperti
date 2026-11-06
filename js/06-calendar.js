@@ -390,7 +390,7 @@ function calRender() {
 
     let posts = '';
     igPub.forEach(p => {
-      const t = calShortTitle(p.media_caption).replace(/"/g, '&quot;');
+      const t = esc(calShortTitle(p.media_caption));
       const reach = p.media_views ? ' · ' + numIt(p.media_views) + ' visual' : (p.media_reach ? ' · ' + numIt(p.media_reach) + ' reach' : '');
       const encoded = encodeURIComponent(JSON.stringify({
         type: p.media_type,
@@ -400,12 +400,12 @@ function calRender() {
         ts: p.timestamp,
         url: p.media_permalink||''
       })).replace(/'/g, '%27');
-      posts += `<div class="cal-post pub ${p.media_type}"
+      posts += `<div class="cal-post pub ${esc(p.media_type)}"
         onclick="calShowDetail(event,'${encoded}')"
-        title="IG · ${t}${reach}">${calPostChip('ig', p.media_type, (p.time?p.time.slice(0,5)+' ':'')+t)}</div>`;
+        title="IG · ${t}${reach}">${calPostChip('ig', p.media_type, (p.time?esc(p.time.slice(0,5))+' ':'')+t)}</div>`;
     });
     ytPub.forEach(v => {
-      const shortT = (v.title.length > 25 ? v.title.slice(0,25)+'…' : v.title).replace(/"/g, '&quot;');
+      const shortT = esc(v.title.length > 25 ? v.title.slice(0,25)+'…' : v.title);
       const ytUrl = v.videoId ? 'https://www.youtube.com/watch?v=' + v.videoId : '';
       const encoded = encodeURIComponent(JSON.stringify({
         type: 'YT_VIDEO',
@@ -417,29 +417,29 @@ function calRender() {
       })).replace(/'/g, '%27');
       // Determino il tipo YT: la dashboard salva 'VIDEO','SHORT','LIVE' — uso VIDEO come default
       const ytType = v.ytType || 'VIDEO';
-      posts += `<div class="cal-post pub ${ytType}"
+      posts += `<div class="cal-post pub ${esc(ytType)}"
         onclick="calShowYtDetail(event,'${encoded}')"
-        title="YT · ${(v.title||'').replace(/"/g, '&quot;')} · ${v.views} views">${calPostChip('yt', ytType, shortT)}</div>`;
+        title="YT · ${esc(v.title||'')} · ${esc(v.views)} views">${calPostChip('yt', ytType, shortT)}</div>`;
     });
     igPlanned.forEach(p => {
       // Un post si auto-pubblica se è stato salvato con media caricato:
       // lo riconosco dal ✅ nel titolo o dal marcatore nelle note.
       const isAutoPub = /✅/.test(p.title || '') || /Pubblicazione automatica/i.test(p.notes || '');
-      const safeTitle = (p.title||'').replace(/"/g,'&quot;');
-      posts += `<div class="cal-post plan ${p.type}${isAutoPub ? ' autopub' : ''}"
+      const safeTitle = esc(p.title||'');
+      posts += `<div class="cal-post plan ${esc(p.type)}${isAutoPub ? ' autopub' : ''}"
         draggable="true"
-        data-evid="${p.id}" data-platform="ig" data-evtype="${p.type}" data-evtitle="${safeTitle}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}"
-        onclick="calEditPlanned(event,'${p.id}','ig')"
-        title="${isAutoPub ? '✅ Pubblicazione automatica · ' : ''}IG · ${p.time||''} ${safeTitle} (trascina per spostare)">${calPostChip('ig', p.type, (p.time?p.time.slice(0,5)+' ':'')+safeTitle)}</div>`;
+        data-evid="${esc(p.id)}" data-platform="ig" data-evtype="${esc(p.type)}" data-evtitle="${safeTitle}" data-evnotes="${esc(p.notes||'')}" data-evtime="${esc(p.time||'10:00')}"
+        onclick="calEditPlanned(event,'${escId(p.id)}','ig')"
+        title="${isAutoPub ? '✅ Pubblicazione automatica · ' : ''}IG · ${esc(p.time||'')} ${safeTitle} (trascina per spostare)">${calPostChip('ig', p.type, (p.time?esc(p.time.slice(0,5))+' ':'')+safeTitle)}</div>`;
     });
     ytPlanned.forEach(p => {
-      const hostSuffix = p.host ? ` · Host: ${(p.host||'').replace(/"/g, '&quot;')}` : '';
-      const safeTitle = (p.title||'').replace(/"/g,'&quot;');
-      posts += `<div class="cal-post plan ${p.type||'VIDEO'}"
+      const hostSuffix = p.host ? ` · Host: ${esc(p.host||'')}` : '';
+      const safeTitle = esc(p.title||'');
+      posts += `<div class="cal-post plan ${esc(p.type||'VIDEO')}"
         draggable="true"
-        data-evid="${p.id}" data-platform="yt" data-evtype="${p.type}" data-evtitle="${safeTitle}" data-evnotes="${(p.notes||'').replace(/"/g,'&quot;')}" data-evtime="${p.time||'10:00'}" data-evhost="${(p.host||'').replace(/"/g,'&quot;')}"
-        onclick="calEditPlanned(event,'${p.id}','yt')"
-        title="YT · ${p.time||''} ${safeTitle}${hostSuffix} (trascina per spostare)">${calPostChip('yt', p.type||'VIDEO', (p.time?p.time.slice(0,5)+' ':'')+safeTitle)}</div>`;
+        data-evid="${esc(p.id)}" data-platform="yt" data-evtype="${esc(p.type)}" data-evtitle="${safeTitle}" data-evnotes="${esc(p.notes||'')}" data-evtime="${esc(p.time||'10:00')}" data-evhost="${esc(p.host||'')}"
+        onclick="calEditPlanned(event,'${escId(p.id)}','yt')"
+        title="YT · ${esc(p.time||'')} ${safeTitle}${hostSuffix} (trascina per spostare)">${calPostChip('yt', p.type||'VIDEO', (p.time?esc(p.time.slice(0,5))+' ':'')+safeTitle)}</div>`;
     });
 
     // La label del giorno settimana serve solo alla vista agenda mobile (il
