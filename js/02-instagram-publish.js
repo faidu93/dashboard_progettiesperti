@@ -488,6 +488,8 @@ async function retryPublishQueue(id) {
     } else if (j.failed > 0) {
       const errMsg = j.results?.find(r => !r.ok)?.error || 'Errore durante il tentativo';
       alert('⚠️ Riprova fallita: ' + errMsg);
+    } else if (j.message) {
+      alert('ℹ️ ' + j.message); // es. "Post già in elaborazione": un altro processo lo sta già pubblicando
     }
   } catch (e) {
     alert('Tentativo di ripubblicazione fallito: ' + e.message);
