@@ -45,6 +45,10 @@ let profitCache = null; // { data, ts }
 // mostra questo (con l'avviso) invece di una pagina vuota o, peggio, di ricavi parziali.
 const PROFIT_LAST_GOOD_KEY = 'epf_profit_last_good';
 
+// Confronto per il Profeta: la sua quota calcolata a percentuale (20% dei ricavi
+// iscrizioni meno il 20% dei costi) contro una quota fissa per ogni iscritto pagante.
+const PROFETA_QUOTA_FISSA_PER_ISCRITTO = 15;
+
 // Come si divide ogni riga del conto economico tra le tre parti (la somma è sempre 1).
 // I costi seguono la stessa regola delle iscrizioni: ognuno sostiene la sua parte.
 const PROFIT_SPLIT = {
@@ -133,6 +137,8 @@ async function loadProfitData(force) {
 
     const d = {
       ricavoIscrizioni, numIscrizioni: iscrizioniStagione.length,
+      // Solo chi ha pagato davvero (importo > 0): gli iscritti a 0 € non contano.
+      numPaganti: iscrizioniStagione.filter(s => (Number(s.amount) || 0) > 0).length,
       ricavoAste,
       ricavoTotale,
       totaleCostiSostenuti, totaleCostiPrevisti,
@@ -206,6 +212,36 @@ function renderProfitContent(d) {
       <td style="text-align:right; font-family:var(--font-mono); color:var(--ink-soft);">${fmtSigned(r.segno * r.totale)}</td>
       ${PARTI.map(k => `<td style="text-align:right; font-family:var(--font-mono); color:${r.parti[k] < 0 ? 'var(--neg)' : (r.parti[k] === 0 ? 'var(--ink-mute)' : 'var(--ink)')};">${fmtSigned(r.parti[k])}</td>`).join('')}
     </tr>`).join('');
+  // Mini confronto delle due quote possibili per il Profeta.
+  const quotaProfetaPercentuale = PROFIT_SPLIT.iscrizioni.profeta * d.ricavoIscrizioni - PROFIT_SPLIT.costi.profeta * d.totaleCostiSostenuti;
+  const haPaganti = typeof d.numPaganti === 'number'; // assente nei conti salvati da versioni precedenti
+  const quotaProfetaFissa = haPaganti ? d.numPaganti * PROFETA_QUOTA_FISSA_PER_ISCRITTO : null;
+  const differenza = haPaganti ? quotaProfetaFissa - quotaProfetaPercentuale : null;
+  const confrontoProfetaHtml = `
+    <div style="margin-top:16px;">
+      <div class="mini-label" style="margin-bottom:6px; text-transform:none;">Quota del Profeta a confronto</div>
+      <div style="overflow-x:auto;">
+        <table class="mini-table" style="font-size:12px; text-align:left; min-width:360px;">
+          <tbody>
+            <tr>
+              <td style="color:var(--ink);">A) Percentuale<div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute);">20% × ${fmtEuro(d.ricavoIscrizioni)}€ iscrizioni − 20% × ${fmtEuro(d.totaleCostiSostenuti)}€ costi</div></td>
+              <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--ink);">${fmtSigned(quotaProfetaPercentuale)}</td>
+            </tr>
+            <tr>
+              <td style="color:var(--ink);">B) Fissa per iscritto<div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute);">${haPaganti ? d.numPaganti : '—'} paganti (esclusi i 0 €) × ${PROFETA_QUOTA_FISSA_PER_ISCRITTO}€</div></td>
+              <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--ink);">${haPaganti ? fmtSigned(quotaProfetaFissa) : '—'}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr style="border-top:2px solid var(--line-strong); font-weight:700;">
+              <td style="color:var(--ink);">Differenza (B − A)</td>
+              <td style="text-align:right; font-family:var(--font-mono); color:${haPaganti ? (differenza > 0 ? 'var(--neg)' : 'var(--pos)') : 'var(--ink-mute)'};">${haPaganti ? (differenza > 0 ? '+' : '') + fmtSigned(differenza) : '—'}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="mini-label" style="margin-top:6px; text-transform:none;">${haPaganti ? (differenza > 0 ? 'Con la quota fissa il Profeta riceverebbe di più.' : (differenza < 0 ? 'Con la quota fissa il Profeta riceverebbe meno.' : 'Le due quote coincidono.')) : 'Aggiorna per calcolare il confronto.'}</div>
+    </div>`;
 
   box.innerHTML = `
     <div class="panel" style="margin-bottom:28px;">
@@ -310,6 +346,7 @@ function renderProfitContent(d) {
             <div class="mini-value">${fmtSigned(quotaEsperti)}</div>
           </div>
         </div>
+        ${confrontoProfetaHtml}
       </div>
     </div>
 
