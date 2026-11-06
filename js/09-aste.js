@@ -153,6 +153,8 @@ function renderAsteSummary(rows) {
     return;
   }
 
+  const asteNonLette = rows.filter(r => r.error);
+  const avvisoParziale = asteNonLette.length ? `<div style="font-family:var(--font-mono);font-size:11.5px;color:var(--neg);border:1px solid var(--neg);border-radius:8px;padding:10px 14px;margin-bottom:12px;">Attenzione: ${asteNonLette.length} aste non lette (${asteNonLette.map(r => r.name).join(', ')}). I totali sotto sono parziali: premi aggiorna per riprovare.</div>` : '';
   const totMontepremi = visibleRows.reduce((s, r) => s + (r.montepremi || 0), 0);
   const totProgetto = visibleRows.reduce((s, r) => s + (r.progetto || 0), 0);
   const totMancanti = visibleRows.reduce((s, r) => s + (r.mancanti || 0), 0);
@@ -185,6 +187,7 @@ function renderAsteSummary(rows) {
   }).join('');
 
   box.innerHTML = `
+    ${avvisoParziale}
     <table style="width:100%; border-collapse:collapse; font-size:12.5px; text-align:left;">
       <thead>
         <tr style="border-bottom:1px solid var(--line); color:var(--ink-soft); font-family:var(--font-mono); font-size:10px; text-transform:uppercase;">

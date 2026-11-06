@@ -41,6 +41,9 @@ const PROFIT_COSTI = [
 // volta che si riapre il tab Profit andando avanti e indietro — entro questa
 // finestra i dati già in memoria bastano.
 let profitCache = null; // { data, ts }
+// Ultimo conto economico calcolato con TUTTI i dati: se un caricamento fallisce si
+// mostra questo (con l'avviso) invece di una pagina vuota o, peggio, di ricavi parziali.
+const PROFIT_LAST_GOOD_KEY = 'epf_profit_last_good';
 const PROFIT_CACHE_TTL_MS = 45 * 1000;
 
 async function loadProfitData(force) {
@@ -85,6 +88,12 @@ async function loadProfitData(force) {
 
     const subscribers = Array.isArray(subJson.subscribers) ? subJson.subscribers : [];
     const asteRows = Array.isArray(asteJson.aste) ? asteJson.aste : [];
+    // Un'asta che non si è letta non ha i suoi importi: sommarla come 0 farebbe
+    // risultare i ricavi più bassi del vero senza dire niente. Meglio fermarsi.
+    const asteNonLette = asteRows.filter(r => r.error);
+    if (asteNonLette.length > 0) {
+      throw new Error(`${asteNonLette.length} aste non lette (${asteNonLette.map(r => r.name).join(', ')}): ricavi incompleti`);
+    }
     const fantalistoneCount = Number(flJson.count) || 0;
 
     // --- 1) Costi/Ricavi: solo il ricavo del progetto, dall'inizio stagione ---
@@ -127,8 +136,21 @@ async function loadProfitData(force) {
       saldoPaypal,
     };
     profitCache = { data: d, ts: Date.now() };
+    try { localStorage.setItem(PROFIT_LAST_GOOD_KEY, JSON.stringify({ d, ts: Date.now() })); } catch (err) {}
     renderProfitContent(d);
   } catch (e) {
+    let ultimo = null;
+    try { ultimo = JSON.parse(localStorage.getItem(PROFIT_LAST_GOOD_KEY) || 'null'); } catch (err) {}
+    if (ultimo && ultimo.d) {
+      renderProfitContent(ultimo.d);
+      const quando = new Date(ultimo.ts).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+      box.insertAdjacentHTML('afterbegin', `
+        <div style="font-family:var(--font-mono);font-size:11.5px;color:var(--neg);border:1px solid var(--neg);border-radius:8px;padding:10px 14px;margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <span>Dati non aggiornati: ${e.message}. Mostro l'ultimo conto completo, salvato il ${quando}.</span>
+          <button onclick="loadProfitData(true)" style="padding:5px 12px;background:var(--bg-elev-2);border:1px solid var(--line-strong);border-radius:6px;color:var(--ink);font-size:12px;cursor:pointer;">Riprova</button>
+        </div>`);
+      return;
+    }
     // Errori di rete transitori (es. "Load failed") capitano — un pulsante per
     // riprovare sul colpo è meglio che dover cambiare tab e tornare indietro.
     box.innerHTML = `
