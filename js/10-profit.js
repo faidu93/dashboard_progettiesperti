@@ -36,6 +36,19 @@ const PROFIT_COSTI = [
   { mese: 'Ottobre 2026', descrizione: 'Claude', importo: 22 },
   { mese: 'Novembre 2026', descrizione: 'ChatGPT', importo: 23 },
   { mese: 'Novembre 2026', descrizione: 'Quota mancante (da ritrovare)', importo: 20 },
+  // Previsti fino ad aprile 2027: solo gli abbonamenti che continuano (ChatGPT 23 €/mese,
+  // Claude 22 €/mese). Streamyard, Editor e Fantalab non rientrano.
+  { mese: 'Novembre 2026', descrizione: 'Claude', importo: 22, previsto: true },
+  { mese: 'Dicembre 2026', descrizione: 'ChatGPT', importo: 23, previsto: true },
+  { mese: 'Dicembre 2026', descrizione: 'Claude', importo: 22, previsto: true },
+  { mese: 'Gennaio 2027', descrizione: 'ChatGPT', importo: 23, previsto: true },
+  { mese: 'Gennaio 2027', descrizione: 'Claude', importo: 22, previsto: true },
+  { mese: 'Febbraio 2027', descrizione: 'ChatGPT', importo: 23, previsto: true },
+  { mese: 'Febbraio 2027', descrizione: 'Claude', importo: 22, previsto: true },
+  { mese: 'Marzo 2027', descrizione: 'ChatGPT', importo: 23, previsto: true },
+  { mese: 'Marzo 2027', descrizione: 'Claude', importo: 22, previsto: true },
+  { mese: 'Aprile 2027', descrizione: 'ChatGPT', importo: 23, previsto: true },
+  { mese: 'Aprile 2027', descrizione: 'Claude', importo: 22, previsto: true },
 ];
 
 // Evita di rifare tutte le chiamate (iscritti + aste + FantaListone) ogni
@@ -222,6 +235,8 @@ function renderProfitContent(d) {
       override: { profeta: 0, direzionale: d.ricavoAste - QUOTA_ASTE_ESPERTI, esperti: QUOTA_ASTE_ESPERTI },
       nota: `Esperti ${QUOTA_ASTE_ESPERTI}€ fissi · il resto al Direzionale` },
     { label: '💸 Costi sostenuti',   totale: d.totaleCostiSostenuti, regola: PROFIT_SPLIT.costi,  segno: -1 },
+    // costi previsti (abbonamenti fino ad aprile): detratti subito, così il conto è "pulito"
+    ...(d.totaleCostiPrevisti > 0 ? [{ label: '🔮 Costi previsionali', totale: d.totaleCostiPrevisti, regola: PROFIT_SPLIT.costi, segno: -1 }] : []),
   ].map(r => ({ ...r, parti: Object.fromEntries(PARTI.map(k => [k, (r.override && k in r.override) ? r.override[k] : r.segno * r.totale * r.regola[k]])) }));
   const quota = Object.fromEntries(PARTI.map(k => [k, righeSplit.reduce((sum, r) => sum + r.parti[k], 0)]));
   const quotaProfeta = quota.profeta, quotaDirezionale = quota.direzionale, quotaEsperti = quota.esperti;
@@ -236,7 +251,8 @@ function renderProfitContent(d) {
   // Controllo di coerenza: la somma delle tre quote deve coincidere con l'utile netto;
   // se non coincide per qualche motivo la differenza resta visibile, non assegnata.
   const sommaQuote = PARTI.reduce((sum, k) => sum + quota[k], 0);
-  const nonAssegnato = d.utile - sommaQuote;
+  const utileDopoPrevisti = d.utile - (d.totaleCostiPrevisti || 0);
+  const nonAssegnato = utileDopoPrevisti - sommaQuote;
 
   box.innerHTML = `
     <div class="panel" style="margin-bottom:28px;">
@@ -298,6 +314,10 @@ function renderProfitContent(d) {
                   <td colspan="2" style="color:var(--ink);">Totale sostenuti</td>
                   <td style="text-align:right; font-family:var(--font-mono); color:var(--neg);">€${d.totaleCostiSostenuti}</td>
                 </tr>
+                ${d.totaleCostiPrevisti > 0 ? `<tr style="font-weight:700;">
+                  <td colspan="2" style="color:var(--ink-mute);">Totale previsti (fino ad aprile)</td>
+                  <td style="text-align:right; font-family:var(--font-mono); color:var(--ink-mute);">€${d.totaleCostiPrevisti}</td>
+                </tr>` : ''}
               </tfoot>
             </table>
           </div>
@@ -320,12 +340,12 @@ function renderProfitContent(d) {
             <tbody>${splitRowsHtml}</tbody>
             <tfoot>
               <tr style="border-top:2px solid var(--line-strong); font-weight:700;">
-                <td style="color:var(--ink);">Totale spettante</td>
-                <td style="text-align:right; font-family:var(--font-mono); color:${d.utile >= 0 ? 'var(--pos)' : 'var(--neg)'};">${fmtSigned(d.utile)}</td>
+                <td style="color:var(--ink);">Totale spettante${d.totaleCostiPrevisti > 0 ? '<div style="font-family:var(--font-mono); font-size:10px; font-weight:400; color:var(--ink-mute);">dopo i costi previsionali</div>' : ''}</td>
+                <td style="text-align:right; font-family:var(--font-mono); color:${utileDopoPrevisti >= 0 ? 'var(--pos)' : 'var(--neg)'};">${fmtSigned(utileDopoPrevisti)}</td>
                 ${PARTI.map(k => `<td style="text-align:right; font-family:var(--font-mono); color:${quota[k] >= 0 ? 'var(--pos)' : 'var(--neg)'};">${fmtSigned(quota[k])}</td>`).join('')}
               </tr>
               ${Math.abs(nonAssegnato) >= 0.005 ? `<tr>
-                <td colspan="5" style="color:var(--ink-mute); font-family:var(--font-mono); font-size:10px; font-weight:400;">Somma delle quote ${fmtSigned(sommaQuote)} · utile netto ${fmtSigned(d.utile)} · differenza non assegnata ${fmtSigned(nonAssegnato)}</td>
+                <td colspan="5" style="color:var(--ink-mute); font-family:var(--font-mono); font-size:10px; font-weight:400;">Somma delle quote ${fmtSigned(sommaQuote)} · utile netto ${fmtSigned(utileDopoPrevisti)} · differenza non assegnata ${fmtSigned(nonAssegnato)}</td>
               </tr>` : ''}
             </tfoot>
           </table>
