@@ -132,16 +132,15 @@ let gcalTokenClient = null;
 let gcalSignedIn = false;
 let gcalEvents = []; // cache eventi Google
 
-// Freno anti-popup: se il "silent refresh" fallisce ripetutamente (es. cookie
-// di terze parti bloccati dal browser), Google può mostrare un popup visibile
-// invece di fallire silenziosamente. Senza limiti, gcalLoadEvents (ogni 60s)
-// lo ritenterebbe all'infinito mostrando il popup ogni minuto. Questi due
-// valori impongono una pausa minima tra tentativi e uno stop dopo troppi
-// fallimenti consecutivi, lasciando poi il login esplicito (click utente).
-const GCAL_SILENT_REFRESH_COOLDOWN_MS = 5 * 60 * 1000; // min 5 min tra un tentativo e l'altro
-const GCAL_SILENT_REFRESH_MAX_FAILURES = 3; // dopo 3 fallimenti di fila, smetto di ritentare da solo
-let gcalSilentRefreshFailCount = 0;
-let gcalLastSilentRefreshAt = 0;
+// Niente più rinnovi automatici del token. Il token Google dura 1 ora e, con il
+// solo login nel browser (Google Identity Services), ogni rinnovo apre una
+// finestra di Google: farlo da timer o al caricamento della pagina faceva
+// ricomparire il popup "da solo" anche se Calendar era già collegato. Ora:
+// token valido nel browser → si riusa senza popup; token scaduto → la barra
+// mostra "Sessione scaduta" e il rinnovo parte solo da un click dell'utente.
+function gcalWasConnected() {
+  try { return localStorage.getItem('gcal_was_signed_in') === '1'; } catch (e) { return false; }
+}
 
 function gcalUpdateUI() {
   const status = document.getElementById('gcalStatus');
@@ -152,9 +151,15 @@ function gcalUpdateUI() {
     status.innerHTML = '<strong style="color:var(--pos);">✓ Connesso a Google Calendar</strong> · sync automatico ogni 60s · <span id="gcalEvtCount">' + gcalEvents.length + '</span> eventi caricati';
     loginBtn.style.display = 'none';
     logoutBtn.style.display = 'inline-flex';
+  } else if (gcalWasConnected()) {
+    status.innerHTML = '<strong>Sessione Google scaduta</strong> · dura 1 ora · tocca Riconnetti per ripartire (un secondo, senza password)';
+    loginBtn.style.display = 'inline-flex';
+    loginBtn.lastChild.textContent = 'Riconnetti';
+    logoutBtn.style.display = 'inline-flex';
   } else {
     status.innerHTML = '<strong>Google Calendar non connesso</strong> · accedi per sincronizzare post pianificati tra dispositivi e team';
     loginBtn.style.display = 'inline-flex';
+    loginBtn.lastChild.textContent = 'Accedi a Google';
     logoutBtn.style.display = 'none';
   }
   // Aggiorno anche l'onboarding banner
@@ -279,8 +284,6 @@ async function gcalInit() {
         localStorage.setItem('gcal_token', resp.access_token);
         localStorage.setItem('gcal_expires', String(expiresAt));
         localStorage.setItem('gcal_was_signed_in', '1');
-        // Token ottenuto con successo → azzero il freno anti-popup
-        gcalSilentRefreshFailCount = 0;
 
         // Aspetto che gapi.client sia pronto prima di setToken
         let attempts = 0;
@@ -312,7 +315,12 @@ async function gcalInit() {
         if (!window.gcalRefreshInterval) {
           window.gcalRefreshInterval = setInterval(gcalLoadEvents, 60000);
         }
-        gcalScheduleSilentRefresh(expiresAt);
+        gcalScheduleExpiry(expiresAt);
+      },
+      // Popup chiuso/bloccato dall'utente: non è un errore da mostrare.
+      error_callback: (err) => {
+        console.warn('[gcal] login non completato:', err && err.type);
+        gcalUpdateUI();
       }
     });
     // Auto-restore se c'è un token valido
@@ -332,61 +340,36 @@ async function gcalInit() {
       if (!window.gcalRefreshInterval) {
         window.gcalRefreshInterval = setInterval(gcalLoadEvents, 60000);
       }
-      gcalScheduleSilentRefresh(expires);
-    } else if (localStorage.getItem('gcal_was_signed_in') === '1') {
-      // L'utente si era loggato — tenta silent auth (no popup)
-      gcalUpdateUI();
-      setTimeout(() => gcalSilentRefresh(), 500);
+      gcalScheduleExpiry(expires);
     } else {
+      // Token assente o scaduto: nessun popup automatico. Se Calendar era già
+      // collegato la barra propone "Riconnetti" (un click dell'utente).
       gcalUpdateUI();
     }
   } catch(e) { console.error('Token client init error:', e); gcalUpdateUI(); }
 }
 
 
-// Silent refresh: richiede un nuovo access token senza popup (se l'utente
-// è ancora loggato a Google nel browser). Per casi in cui il token è scaduto.
-function gcalSilentRefresh() {
-  if (!gcalTokenClient) return;
-  // Troppi fallimenti di fila: smetto di ritentare in automatico (evita di
-  // riproporre il popup ogni 60s) e torno al banner "Accedi a Google" —
-  // un click esplicito dell'utente è un gesto reale e non rischia il popup
-  // a sorpresa che invece capita con i tentativi silenziosi in background.
-  if (gcalSilentRefreshFailCount >= GCAL_SILENT_REFRESH_MAX_FAILURES) {
-    gcalUpdateUI();
-    return;
-  }
-  // Cooldown: non ritento più di una volta ogni GCAL_SILENT_REFRESH_COOLDOWN_MS,
-  // anche se gcalLoadEvents (ogni 60s) continua a chiamarmi nel frattempo.
-  const now = Date.now();
-  if (now - gcalLastSilentRefreshAt < GCAL_SILENT_REFRESH_COOLDOWN_MS) return;
-  gcalLastSilentRefreshAt = now;
-  gcalSilentRefreshFailCount++; // azzerato al successo nel callback del token
-  try {
-    // prompt: '' = silent — niente popup, niente richiesta di consenso.
-    // Funziona se l'utente è già loggato a Google nel browser.
-    gcalTokenClient.requestAccessToken({ prompt: '' });
-  } catch (e) {
-    console.warn('Silent refresh fallito:', e);
-  }
+// Alla scadenza del token ferma la sincronizzazione e mostra "Riconnetti".
+// Non apre nessuna finestra Google: il rinnovo parte solo da gcalLogin().
+function gcalScheduleExpiry(expiresAt) {
+  if (window.gcalExpiryTimer) clearTimeout(window.gcalExpiryTimer);
+  const ms = expiresAt - Date.now() - 60 * 1000; // 1 min di margine
+  window.gcalExpiryTimer = setTimeout(gcalHandleExpiry, Math.max(ms, 0));
 }
 
-// Programma un silent refresh ~1 minuto prima che il token scada
-function gcalScheduleSilentRefresh(expiresAt) {
-  if (window.gcalSilentRefreshTimer) clearTimeout(window.gcalSilentRefreshTimer);
-  const msUntilRefresh = expiresAt - Date.now() - 60 * 1000; // 1 min prima
-  if (msUntilRefresh > 0) {
-    window.gcalSilentRefreshTimer = setTimeout(gcalSilentRefresh, msUntilRefresh);
-  }
+function gcalHandleExpiry() {
+  gcalSignedIn = false;
+  if (window.gcalRefreshInterval) { clearInterval(window.gcalRefreshInterval); window.gcalRefreshInterval = null; }
+  gcalUpdateUI();
 }
 
 function gcalLogin() {
   if (!gcalTokenClient) { alert('Google non ancora pronto. Riprova tra qualche secondo.'); return; }
   // prompt:'' riusa il consenso già dato (niente schermata ripetuta se già autorizzato).
   // Se non c'è ancora alcun consenso, Google mostra comunque il popup la prima volta.
-  // Il flag forza 'consent' solo se l'utente preme di nuovo dopo un fallimento.
-  const needConsent = (localStorage.getItem('gcal_was_signed_in') !== '1');
-  gcalTokenClient.requestAccessToken({ prompt: needConsent ? 'consent' : '' });
+  // hint: preseleziona l'account del progetto, così la finestra si chiude da sola.
+  gcalTokenClient.requestAccessToken({ prompt: gcalWasConnected() ? '' : 'consent', hint: GCAL_CALENDAR_ID });
 }
 
 function gcalLogout() {
@@ -401,7 +384,7 @@ function gcalLogout() {
   gcalSignedIn = false;
   gcalEvents = [];
   if (window.gcalRefreshInterval) { clearInterval(window.gcalRefreshInterval); window.gcalRefreshInterval = null; }
-  if (window.gcalSilentRefreshTimer) { clearTimeout(window.gcalSilentRefreshTimer); window.gcalSilentRefreshTimer = null; }
+  if (window.gcalExpiryTimer) { clearTimeout(window.gcalExpiryTimer); window.gcalExpiryTimer = null; }
   gcalUpdateUI();
   calRender();
 }
@@ -432,8 +415,8 @@ async function gcalLoadEvents() {
   } catch(e) {
     console.error('gcalLoadEvents error:', e);
     if (e?.status === 401 || e?.result?.error?.code === 401) {
-      // Token scaduto → tento silent refresh PRIMA di sloggare l'utente
-      gcalSilentRefresh();
+      // Token scaduto/revocato: niente popup, la barra propone "Riconnetti"
+      gcalHandleExpiry();
     }
   }
 }

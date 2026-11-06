@@ -36,8 +36,12 @@ async function init(opts) {
     loadingStep('setup', 'Configurazione interfaccia…');
   }
 
-  // Attiva tab calendario subito
-  document.querySelectorAll('section[data-tab="calendario"]').forEach(s => s.classList.add('tab-active'));
+  // Attiva tab calendario subito, SOLO al primo caricamento. In silent (SWR) la
+  // tab scelta dall'utente deve restare: riattivare il calendario qui lo
+  // sovrapponeva alla tab corrente (es. Profit) e il bottone sembrava rotto.
+  if (!silent) {
+    document.querySelectorAll('section[data-tab="calendario"]').forEach(s => s.classList.add('tab-active'));
+  }
   updateOnboarding();
   if (!silent) setStatus('', 'Caricamento dati…');
   // CRITICAL: setup eventi PRIMA del fetch — così i bottoni funzionano anche se
