@@ -43,11 +43,11 @@ const PROFIT_COSTI = [
 let profitCache = null; // { data, ts }
 // Ultimo conto economico calcolato con TUTTI i dati: se un caricamento fallisce si
 // mostra questo (con l'avviso) invece di una pagina vuota o, peggio, di ricavi parziali.
-const PROFIT_LAST_GOOD_KEY = 'epf_profit_last_good_v2';
+const PROFIT_LAST_GOOD_KEY = 'epf_profit_last_good_v3';
 
-// Quota del Profeta: 20% di (iscritti paganti x quota standard), senza costi.
-// Conta solo chi ha pagato la quota standard o più (>= 15 euro): chi ha pagato 0 o
-// una quota ridotta resta fuori, e ogni pagante vale esattamente 15 euro.
+// Quota del Profeta: 20% di (numero totale di iscritti x quota standard), senza costi.
+// Contano tutti gli iscritti, anche chi ha pagato 0 o una quota ridotta, e ognuno
+// vale esattamente 15 euro.
 const QUOTA_ISCRIZIONE_STANDARD = 15;
 
 // Come si divide ogni riga del conto economico tra le tre parti (la somma è sempre 1).
@@ -138,8 +138,8 @@ async function loadProfitData(force) {
 
     const d = {
       ricavoIscrizioni, numIscrizioni: iscrizioniStagione.length,
-      // Solo chi ha pagato la quota standard o più: 0 € e quote ridotte non contano.
-      numPaganti: iscrizioniStagione.filter(s => (Number(s.amount) || 0) >= QUOTA_ISCRIZIONE_STANDARD).length,
+      // Base della quota del Profeta: tutti gli iscritti della stagione, anche a 0 €.
+      numQuotaProfeta: iscrizioniStagione.length,
       ricavoAste,
       ricavoTotale,
       totaleCostiSostenuti, totaleCostiPrevisti,
@@ -198,13 +198,13 @@ function renderProfitContent(d) {
   // delle righe, con i costi in negativo. Per costruzione Profeta + Direzionale +
   // Esperti == utile netto.
   const PARTI = ['profeta', 'direzionale', 'esperti'];
-  const haPaganti = typeof d.numPaganti === 'number'; // assente nei conti salvati da versioni precedenti
-  const teoricoPaganti = haPaganti ? d.numPaganti * QUOTA_ISCRIZIONE_STANDARD : null;
+  const haPaganti = typeof d.numQuotaProfeta === 'number'; // assente nei conti salvati da versioni precedenti
+  const teoricoPaganti = haPaganti ? d.numQuotaProfeta * QUOTA_ISCRIZIONE_STANDARD : null;
   const righeSplit = [
     { label: '🎟️ Iscrizioni gruppo', totale: d.ricavoIscrizioni, regola: PROFIT_SPLIT.iscrizioni, segno: 1,
-      // il Profeta prende il 20% dei soli paganti x 15 €, non del ricavo reale
+      // il Profeta prende il 20% di tutti gli iscritti x 15 €, non del ricavo reale
       override: haPaganti ? { profeta: PROFIT_SPLIT.iscrizioni.profeta * teoricoPaganti } : null,
-      nota: haPaganti ? `Profeta 20% × ${d.numPaganti} paganti × ${QUOTA_ISCRIZIONE_STANDARD}€ = 20% × ${fmtEuro(teoricoPaganti)}€ · 40% · 40%` : null },
+      nota: haPaganti ? `Profeta 20% × ${d.numQuotaProfeta} iscritti × ${QUOTA_ISCRIZIONE_STANDARD}€ = 20% × ${fmtEuro(teoricoPaganti)}€ · 40% · 40%` : null },
     { label: '🔨 Quota extra aste',  totale: d.ricavoAste,       regola: PROFIT_SPLIT.aste,       segno: 1 },
     { label: '💸 Costi sostenuti',   totale: d.totaleCostiSostenuti, regola: PROFIT_SPLIT.costi,  segno: -1 },
   ].map(r => ({ ...r, parti: Object.fromEntries(PARTI.map(k => [k, (r.override && k in r.override) ? r.override[k] : r.segno * r.totale * r.regola[k]])) }));
@@ -218,7 +218,7 @@ function renderProfitContent(d) {
       <td style="text-align:right; font-family:var(--font-mono); color:var(--ink-soft);">${fmtSigned(r.segno * r.totale)}</td>
       ${PARTI.map(k => `<td style="text-align:right; font-family:var(--font-mono); color:${r.parti[k] < 0 ? 'var(--neg)' : (r.parti[k] === 0 ? 'var(--ink-mute)' : 'var(--ink)')};">${fmtSigned(r.parti[k])}</td>`).join('')}
     </tr>`).join('');
-  // Il Profeta non sostiene costi e prende i soli paganti: la somma delle tre quote
+  // Il Profeta non sostiene costi e prende tutti gli iscritti x 15 €: la somma delle tre quote
   // può quindi differire dall'utile netto. La differenza resta visibile, non assegnata.
   const sommaQuote = PARTI.reduce((sum, k) => sum + quota[k], 0);
   const nonAssegnato = d.utile - sommaQuote;
