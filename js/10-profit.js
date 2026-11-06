@@ -43,12 +43,11 @@ const PROFIT_COSTI = [
 let profitCache = null; // { data, ts }
 // Ultimo conto economico calcolato con TUTTI i dati: se un caricamento fallisce si
 // mostra questo (con l'avviso) invece di una pagina vuota o, peggio, di ricavi parziali.
-const PROFIT_LAST_GOOD_KEY = 'epf_profit_last_good';
+const PROFIT_LAST_GOOD_KEY = 'epf_profit_last_good_v2';
 
-// Confronto per il Profeta, due modi di calcolare la sua quota:
-//   A) 20% dei ricavi iscrizioni meno il 20% dei costi (dai dati reali);
-//   B) 20% del teorico "iscritti paganti x quota standard", senza costi: gli iscritti
-//      a 0 euro non contano e le quote diverse da 15 euro vengono ricondotte a 15.
+// Quota del Profeta: 20% di (iscritti paganti x quota standard), senza costi.
+// Conta solo chi ha pagato la quota standard o più (>= 15 euro): chi ha pagato 0 o
+// una quota ridotta resta fuori, e ogni pagante vale esattamente 15 euro.
 const QUOTA_ISCRIZIONE_STANDARD = 15;
 
 // Come si divide ogni riga del conto economico tra le tre parti (la somma è sempre 1).
@@ -56,7 +55,7 @@ const QUOTA_ISCRIZIONE_STANDARD = 15;
 const PROFIT_SPLIT = {
   iscrizioni: { profeta: 0.20, direzionale: 0.40, esperti: 0.40 },
   aste:       { profeta: 0,    direzionale: 1,    esperti: 0 },
-  costi:      { profeta: 0.20, direzionale: 0.40, esperti: 0.40 },
+  costi:      { profeta: 0,    direzionale: 0.40, esperti: 0.40 }, // il Profeta non sostiene costi
 };
 const PROFIT_CACHE_TTL_MS = 45 * 1000;
 
@@ -139,8 +138,8 @@ async function loadProfitData(force) {
 
     const d = {
       ricavoIscrizioni, numIscrizioni: iscrizioniStagione.length,
-      // Solo chi ha pagato davvero (importo > 0): gli iscritti a 0 € non contano.
-      numPaganti: iscrizioniStagione.filter(s => (Number(s.amount) || 0) > 0).length,
+      // Solo chi ha pagato la quota standard o più: 0 € e quote ridotte non contano.
+      numPaganti: iscrizioniStagione.filter(s => (Number(s.amount) || 0) >= QUOTA_ISCRIZIONE_STANDARD).length,
       ricavoAste,
       ricavoTotale,
       totaleCostiSostenuti, totaleCostiPrevisti,
@@ -199,52 +198,30 @@ function renderProfitContent(d) {
   // delle righe, con i costi in negativo. Per costruzione Profeta + Direzionale +
   // Esperti == utile netto.
   const PARTI = ['profeta', 'direzionale', 'esperti'];
+  const haPaganti = typeof d.numPaganti === 'number'; // assente nei conti salvati da versioni precedenti
+  const teoricoPaganti = haPaganti ? d.numPaganti * QUOTA_ISCRIZIONE_STANDARD : null;
   const righeSplit = [
-    { label: '🎟️ Iscrizioni gruppo', totale: d.ricavoIscrizioni, regola: PROFIT_SPLIT.iscrizioni, segno: 1 },
+    { label: '🎟️ Iscrizioni gruppo', totale: d.ricavoIscrizioni, regola: PROFIT_SPLIT.iscrizioni, segno: 1,
+      // il Profeta prende il 20% dei soli paganti x 15 €, non del ricavo reale
+      override: haPaganti ? { profeta: PROFIT_SPLIT.iscrizioni.profeta * teoricoPaganti } : null,
+      nota: haPaganti ? `Profeta 20% × ${d.numPaganti} paganti × ${QUOTA_ISCRIZIONE_STANDARD}€ = 20% × ${fmtEuro(teoricoPaganti)}€ · 40% · 40%` : null },
     { label: '🔨 Quota extra aste',  totale: d.ricavoAste,       regola: PROFIT_SPLIT.aste,       segno: 1 },
     { label: '💸 Costi sostenuti',   totale: d.totaleCostiSostenuti, regola: PROFIT_SPLIT.costi,  segno: -1 },
-  ].map(r => ({ ...r, parti: Object.fromEntries(PARTI.map(k => [k, r.segno * r.totale * r.regola[k]])) }));
+  ].map(r => ({ ...r, parti: Object.fromEntries(PARTI.map(k => [k, (r.override && k in r.override) ? r.override[k] : r.segno * r.totale * r.regola[k]])) }));
   const quota = Object.fromEntries(PARTI.map(k => [k, righeSplit.reduce((sum, r) => sum + r.parti[k], 0)]));
   const quotaProfeta = quota.profeta, quotaDirezionale = quota.direzionale, quotaEsperti = quota.esperti;
   const fmtSigned = n => (n < 0 ? '−' : '') + '€' + fmtEuro(Math.abs(n));
   const fmtRegola = reg => PARTI.map(k => Math.round(reg[k] * 100) + '%').join(' · ');
   const splitRowsHtml = righeSplit.map(r => `
     <tr>
-      <td style="color:var(--ink);">${r.label}<div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute);">${fmtRegola(r.regola)}</div></td>
+      <td style="color:var(--ink);">${r.label}<div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute);">${r.nota || fmtRegola(r.regola)}</div></td>
       <td style="text-align:right; font-family:var(--font-mono); color:var(--ink-soft);">${fmtSigned(r.segno * r.totale)}</td>
       ${PARTI.map(k => `<td style="text-align:right; font-family:var(--font-mono); color:${r.parti[k] < 0 ? 'var(--neg)' : (r.parti[k] === 0 ? 'var(--ink-mute)' : 'var(--ink)')};">${fmtSigned(r.parti[k])}</td>`).join('')}
     </tr>`).join('');
-  // Mini confronto delle due quote possibili per il Profeta.
-  const quotaProfetaPercentuale = PROFIT_SPLIT.iscrizioni.profeta * d.ricavoIscrizioni - PROFIT_SPLIT.costi.profeta * d.totaleCostiSostenuti;
-  const haPaganti = typeof d.numPaganti === 'number'; // assente nei conti salvati da versioni precedenti
-  const teoricoPaganti = haPaganti ? d.numPaganti * QUOTA_ISCRIZIONE_STANDARD : null;
-  const quotaProfetaPaganti = haPaganti ? PROFIT_SPLIT.iscrizioni.profeta * teoricoPaganti : null;
-  const differenza = haPaganti ? quotaProfetaPaganti - quotaProfetaPercentuale : null;
-  const confrontoProfetaHtml = `
-    <div style="margin-top:16px;">
-      <div class="mini-label" style="margin-bottom:6px; text-transform:none;">Quota del Profeta a confronto</div>
-      <div style="overflow-x:auto;">
-        <table class="mini-table" style="font-size:12px; text-align:left; min-width:360px;">
-          <tbody>
-            <tr>
-              <td style="color:var(--ink);">A) Percentuale<div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute);">20% × ${fmtEuro(d.ricavoIscrizioni)}€ iscrizioni − 20% × ${fmtEuro(d.totaleCostiSostenuti)}€ costi</div></td>
-              <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--ink);">${fmtSigned(quotaProfetaPercentuale)}</td>
-            </tr>
-            <tr>
-              <td style="color:var(--ink);">B) Solo iscritti paganti<div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute);">20% × ${haPaganti ? d.numPaganti : '—'} paganti (esclusi i 0 €) × ${QUOTA_ISCRIZIONE_STANDARD}€${haPaganti ? ' = 20% × ' + fmtEuro(teoricoPaganti) + '€' : ''}</div></td>
-              <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--ink);">${haPaganti ? fmtSigned(quotaProfetaPaganti) : '—'}</td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr style="border-top:2px solid var(--line-strong); font-weight:700;">
-              <td style="color:var(--ink);">Differenza (B − A)</td>
-              <td style="text-align:right; font-family:var(--font-mono); color:${haPaganti ? (differenza > 0 ? 'var(--neg)' : 'var(--pos)') : 'var(--ink-mute)'};">${haPaganti ? (differenza > 0 ? '+' : '') + fmtSigned(differenza) : '—'}</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-      <div class="mini-label" style="margin-top:6px; text-transform:none;">${haPaganti ? (differenza > 0 ? 'Con il calcolo sui paganti il Profeta riceverebbe di più.' : (differenza < 0 ? 'Con il calcolo sui paganti il Profeta riceverebbe meno.' : 'Le due quote coincidono.')) : 'Aggiorna per calcolare il confronto.'}</div>
-    </div>`;
+  // Il Profeta non sostiene costi e prende i soli paganti: la somma delle tre quote
+  // può quindi differire dall'utile netto. La differenza resta visibile, non assegnata.
+  const sommaQuote = PARTI.reduce((sum, k) => sum + quota[k], 0);
+  const nonAssegnato = d.utile - sommaQuote;
 
   box.innerHTML = `
     <div class="panel" style="margin-bottom:28px;">
@@ -332,6 +309,9 @@ function renderProfitContent(d) {
                 <td style="text-align:right; font-family:var(--font-mono); color:${d.utile >= 0 ? 'var(--pos)' : 'var(--neg)'};">${fmtSigned(d.utile)}</td>
                 ${PARTI.map(k => `<td style="text-align:right; font-family:var(--font-mono); color:${quota[k] >= 0 ? 'var(--pos)' : 'var(--neg)'};">${fmtSigned(quota[k])}</td>`).join('')}
               </tr>
+              ${Math.abs(nonAssegnato) >= 0.005 ? `<tr>
+                <td colspan="5" style="color:var(--ink-mute); font-family:var(--font-mono); font-size:10px; font-weight:400;">Somma delle quote ${fmtSigned(sommaQuote)} · utile netto ${fmtSigned(d.utile)} · differenza non assegnata ${fmtSigned(nonAssegnato)}</td>
+              </tr>` : ''}
             </tfoot>
           </table>
         </div>
@@ -349,7 +329,6 @@ function renderProfitContent(d) {
             <div class="mini-value">${fmtSigned(quotaEsperti)}</div>
           </div>
         </div>
-        ${confrontoProfetaHtml}
       </div>
     </div>
 
