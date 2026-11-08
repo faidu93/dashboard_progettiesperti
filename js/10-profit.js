@@ -67,10 +67,11 @@ const QUOTA_ISCRIZIONE_STANDARD = 15;
 // Come si divide ogni riga del conto economico tra le tre parti.
 //   iscrizioni: prima la quota del Profeta (profeta, calcolata sul teorico iscritti x 15 €);
 //               il resto si divide a metà tra Direzionale ed Esperti (direzionale/esperti);
-//   aste:       300 € fissi agli Esperti (vanno a due persone precise), il resto al Direzionale;
+//   aste:       200 € fissi agli Esperti (vanno a due persone precise), il resto al Direzionale
+//               (con 1500 € di quota extra: 1300 € Direzionale, 200 € Esperti);
 //   costi:      a metà tra Direzionale ed Esperti, il Profeta non sostiene costi.
 // Per costruzione Profeta + Direzionale + Esperti == utile netto.
-const QUOTA_ASTE_ESPERTI = 300;
+const QUOTA_ASTE_ESPERTI = 200;
 const PROFIT_SPLIT = {
   iscrizioni: { profeta: 0.20, direzionale: 0.50, esperti: 0.50 },
   aste:       { profeta: 0,    direzionale: 1,    esperti: 0 },
