@@ -14,7 +14,7 @@
 // ============================================================================
 
 const CACHE_NAME = 'pep-dashboard-v5';
-const NETWORK_FIRST = ['/dashboard_progettiesperti/', '/dashboard_progettiesperti/index.html', '/dashboard_progettiesperti/manifest.json'];
+const NETWORK_FIRST = ['/esperti-dashboard/', '/esperti-dashboard/index.html', '/esperti-dashboard/manifest.json'];
 
 // All'install pre-carichiamo lo shell + gli asset versionati elencati in
 // index.html, così la PWA installata si apre anche completamente offline
@@ -79,7 +79,7 @@ self.addEventListener('fetch', (event) => {
   // link, reload) — più robusto del solo confronto sul path, che si è rivelato
   // insufficiente (una navigazione reale non passava dal ramo network-first).
   const isShell = req.mode === 'navigate' ||
-    NETWORK_FIRST.some((p) => url.pathname === p || url.pathname.endsWith('/dashboard_progettiesperti/'));
+    NETWORK_FIRST.some((p) => url.pathname === p || url.pathname.endsWith('/esperti-dashboard/'));
 
   if (isShell) {
     // Network-first: prova la rete, cache solo come fallback offline.
