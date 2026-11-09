@@ -20,7 +20,9 @@ const FANTALISTONE_QUOTA = 10;
 const FANTALISTONE_NON_PAGANTI = 1;
 
 // Costi fissi della stagione, inseriti a mano (nessun foglio li tiene — se ne
-// aggiungi uno nuovo, aggiungi una riga qui). "previsto: true" = costo atteso
+// aggiungi uno nuovo, aggiungi una riga qui). Se il nuovo costo corrisponde a una
+// riga "previsto" (stesso mese e stessa voce), togli quella riga: il costo passa da
+// previsto a sostenuto e non va contato due volte. "previsto: true" = costo atteso
 // ma non ancora sostenuto, escluso dai totali principali e mostrato a parte.
 const PROFIT_COSTI = [
   { mese: 'Luglio 2026', descrizione: 'ChatGPT', importo: 23 },
@@ -284,7 +286,7 @@ function renderProfitContent(d) {
 
       <div class="profit-grid" style="grid-template-columns:repeat(3,1fr); margin:10px 0;">
         <div class="mini-card"><div class="mini-label">💰 Ricavi</div><div class="mini-value" style="color:var(--accent);">€${fmtEuro(d.ricavoTotale)}</div></div>
-        <div class="mini-card"><div class="mini-label">💸 Costi</div><div class="mini-value" style="color:var(--neg);">€${fmtEuro(d.totaleCostiSostenuti)}</div></div>
+        <div class="mini-card"><div class="mini-label">💸 Costi</div><div class="mini-value" style="color:var(--neg);">€${fmtEuro(d.totaleCostiSostenuti)}</div>${d.totaleCostiPrevisti > 0 ? `<div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute); white-space:nowrap;">+ €${fmtEuro(d.totaleCostiPrevisti)} previsti</div>` : ''}</div>
         <div class="mini-card"><div class="mini-label">${d.utile >= 0 ? '📈' : '📉'} Utile</div><div class="mini-value" style="color:${d.utile >= 0 ? 'var(--pos)' : 'var(--neg)'};">€${fmtEuro(d.utile)}</div></div>
       </div>
 
