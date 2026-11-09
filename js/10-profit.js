@@ -72,6 +72,10 @@ const QUOTA_ISCRIZIONE_STANDARD = 15;
 //   costi:      a metà tra Direzionale ed Esperti, il Profeta non sostiene costi.
 // Per costruzione Profeta + Direzionale + Esperti == utile netto.
 const QUOTA_ASTE_ESPERTI = 200;
+// Come si divide la quota del Direzionale tra le persone (deciso il 9/11/2026):
+// a Nic una quota fissa, il resto in parti uguali tra gli altri tre.
+const DIREZIONALE_FISSI = { Nic: 700 };
+const DIREZIONALE_RESTO = ['Marco', 'Frenk', 'Lerry'];
 const PROFIT_SPLIT = {
   iscrizioni: { profeta: 0.20, direzionale: 0.50, esperti: 0.50 },
   aste:       { profeta: 0,    direzionale: 1,    esperti: 0 },
@@ -241,6 +245,13 @@ function renderProfitContent(d) {
   ].map(r => ({ ...r, parti: Object.fromEntries(PARTI.map(k => [k, (r.override && k in r.override) ? r.override[k] : r.segno * r.totale * r.regola[k]])) }));
   const quota = Object.fromEntries(PARTI.map(k => [k, righeSplit.reduce((sum, r) => sum + r.parti[k], 0)]));
   const quotaProfeta = quota.profeta, quotaDirezionale = quota.direzionale, quotaEsperti = quota.esperti;
+  // Quota del Direzionale per persona: prima i fissi, il resto in parti uguali.
+  const totaleFissiDirezionale = Object.values(DIREZIONALE_FISSI).reduce((a, b) => a + b, 0);
+  const quotaRestoDirezionale = (quotaDirezionale - totaleFissiDirezionale) / DIREZIONALE_RESTO.length;
+  const quotePersoneDirezionale = [
+    ...Object.entries(DIREZIONALE_FISSI).map(([nome, importo]) => ({ nome, importo, nota: 'fissa' })),
+    ...DIREZIONALE_RESTO.map(nome => ({ nome, importo: quotaRestoDirezionale, nota: `1/${DIREZIONALE_RESTO.length} del resto` })),
+  ];
   const fmtSigned = n => (n < 0 ? '−' : '') + '€' + fmtEuro(Math.abs(n));
   const fmtRegola = reg => PARTI.map(k => Math.round(reg[k] * 100) + '%').join(' · ');
   const splitRowsHtml = righeSplit.map(r => `
@@ -364,6 +375,14 @@ function renderProfitContent(d) {
             <div class="mini-label">🎙️ Gruppo Esperti</div>
             <div class="mini-value">${fmtSigned(quotaEsperti)}</div>
           </div>
+        </div>
+        <div class="mini-section-label" style="color:var(--accent); margin-top:16px;">Quote del Direzionale</div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          ${quotePersoneDirezionale.map(p => `<div class="mini-card" style="flex:1; min-width:110px;">
+            <div class="mini-label">${p.nome}</div>
+            <div class="mini-value">${fmtSigned(Math.round(p.importo * 100) / 100)}</div>
+            <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute);">${p.nota}</div>
+          </div>`).join('')}
         </div>
       </div>
     </div>
