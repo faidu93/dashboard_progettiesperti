@@ -76,10 +76,6 @@ const QUOTA_ASTE_ESPERTI = 200;
 // quote fisse a persona; quello che avanza va nella riserva per il prossimo anno,
 // insieme a ogni altro ricavo non distribuito.
 const DIREZIONALE_FISSI = { Nic: 700, Marco: 570, Frenk: 570, Lerry: 570 };
-// Ricavo del canale YouTube: va tutto a Lerry (in più alla sua quota fissa).
-// Non passa da PayPal, quindi non entra nel saldo PayPal.
-const RICAVO_CANALE = 700;
-const RICAVO_CANALE_A = 'Lerry';
 const PROFIT_SPLIT = {
   iscrizioni: { profeta: 0.20, direzionale: 0.50, esperti: 0.50 },
   aste:       { profeta: 0,    direzionale: 1,    esperti: 0 },
@@ -208,12 +204,9 @@ async function loadProfitData(force) {
   }
 }
 
-function renderProfitContent(dati) {
+function renderProfitContent(d) {
   const box = document.getElementById('profitContent');
   if (!box) return;
-  // Il ricavo del canale si aggiunge qui (non in loadProfitData), così vale anche
-  // per i conti salvati in precedenza e non si somma mai due volte.
-  const d = { ...dati, ricavoTotale: dati.ricavoTotale + RICAVO_CANALE, utile: dati.utile + RICAVO_CANALE };
 
   const costiRowsHtml = PROFIT_COSTI.map(c => `
     <tr>
@@ -246,8 +239,6 @@ function renderProfitContent(dati) {
     { label: '🔨 Aste', totale: d.ricavoAste,       regola: PROFIT_SPLIT.aste,       segno: 1,
       override: { profeta: 0, direzionale: d.ricavoAste - QUOTA_ASTE_ESPERTI, esperti: QUOTA_ASTE_ESPERTI },
       nota: `Esperti ${QUOTA_ASTE_ESPERTI}€ fissi · il resto al Direzionale` },
-    { label: '📺 Canale', totale: RICAVO_CANALE, segno: 1,
-      override: { profeta: 0, direzionale: RICAVO_CANALE, esperti: 0 }, nota: `tutto a ${RICAVO_CANALE_A}` },
     { label: '💸 Costi', totale: d.totaleCostiSostenuti, regola: PROFIT_SPLIT.costi,  segno: -1 },
     // costi previsti (abbonamenti fino ad aprile): detratti subito, così il conto è "pulito"
     ...(d.totaleCostiPrevisti > 0 ? [{ label: '🔮 Previsti', totale: d.totaleCostiPrevisti, regola: PROFIT_SPLIT.costi, segno: -1 }] : []),
@@ -256,10 +247,8 @@ function renderProfitContent(dati) {
   const quotaDirezionale = quota.direzionale;
   // Quota del Direzionale per persona: importi fissi; l'avanzo va in riserva.
   const totaleFissiDirezionale = Object.values(DIREZIONALE_FISSI).reduce((a, b) => a + b, 0);
-  const avanzoDirezionale = quotaDirezionale - totaleFissiDirezionale - RICAVO_CANALE;
-  const quotePersoneDirezionale = Object.entries(DIREZIONALE_FISSI).map(([nome, importo]) =>
-    ({ nome, importo: importo + (nome === RICAVO_CANALE_A ? RICAVO_CANALE : 0),
-       nota: nome === RICAVO_CANALE_A ? `${importo} + ${RICAVO_CANALE} canale` : 'fissa' }));
+  const avanzoDirezionale = quotaDirezionale - totaleFissiDirezionale;
+  const quotePersoneDirezionale = Object.entries(DIREZIONALE_FISSI).map(([nome, importo]) => ({ nome, importo, nota: 'fissa' }));
   const fmtSigned = n => (n < 0 ? '−' : '') + '€' + fmtEuro(Math.abs(n));
   const fmtRegola = reg => PARTI.map(k => Math.round(reg[k] * 100) + '%').join(' · ');
   // Tabella compatta (sta nella larghezza di un telefono): numeri senza €.
@@ -319,7 +308,7 @@ function renderProfitContent(dati) {
         </tfoot>
       </table>
       <div style="font-family:var(--font-mono); font-size:9.5px; color:var(--ink-mute); margin:4px 0 10px;">
-        Iscrizioni: Profeta 20% × ${haPaganti ? `${d.numQuotaProfeta} × ${QUOTA_ISCRIZIONE_STANDARD}€` : 'ricavo'}, resto 50/50 · Aste: ${QUOTA_ASTE_ESPERTI}€ agli Esperti · Canale: tutto a ${RICAVO_CANALE_A} · Costi 50/50, previsti fino ad aprile
+        Iscrizioni: Profeta 20% × ${haPaganti ? `${d.numQuotaProfeta} × ${QUOTA_ISCRIZIONE_STANDARD}€` : 'ricavo'}, resto 50/50 · Aste: ${QUOTA_ASTE_ESPERTI}€ agli Esperti · Costi 50/50, previsti fino ad aprile
       </div>
 
       <div class="mini-section-label" style="color:var(--accent); margin-bottom:4px;">Direzionale per persona</div>
@@ -333,7 +322,7 @@ function renderProfitContent(dati) {
           <div class="mini-value" style="color:${riservaProssimoAnno < 0 ? 'var(--neg)' : 'var(--pos)'};">${fmtSigned(Math.round(riservaProssimoAnno * 100) / 100)}</div>
         </div>
       </div>
-      <div style="font-family:var(--font-mono); font-size:9.5px; color:var(--ink-mute); margin-top:4px;">${RICAVO_CANALE_A}: ${DIREZIONALE_FISSI[RICAVO_CANALE_A]} + ${RICAVO_CANALE} del canale · Riserva = avanzo per il prossimo anno${Math.abs(nonAssegnato) >= 0.005 ? ` (di cui ${fmtSigned(nonAssegnato)} non assegnati)` : ''}</div>
+      <div style="font-family:var(--font-mono); font-size:9.5px; color:var(--ink-mute); margin-top:4px;">Riserva = avanzo per il prossimo anno${Math.abs(nonAssegnato) >= 0.005 ? ` (di cui ${fmtSigned(nonAssegnato)} non assegnati)` : ''}</div>
 
       <details class="profit-costi" style="margin-top:10px;">
         <summary style="list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px; user-select:none;">
