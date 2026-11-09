@@ -76,6 +76,10 @@ const QUOTA_ASTE_ESPERTI = 200;
 // quote fisse a persona; quello che avanza va nella riserva per il prossimo anno,
 // insieme a ogni altro ricavo non distribuito.
 const DIREZIONALE_FISSI = { Nic: 700, Marco: 570, Frenk: 570, Lerry: 570 };
+// Ricavo del canale YouTube: va tutto a Lerry (in più alla sua quota fissa).
+// Non passa da PayPal, quindi non entra nel saldo PayPal.
+const RICAVO_CANALE = 700;
+const RICAVO_CANALE_A = 'Lerry';
 const PROFIT_SPLIT = {
   iscrizioni: { profeta: 0.20, direzionale: 0.50, esperti: 0.50 },
   aste:       { profeta: 0,    direzionale: 1,    esperti: 0 },
@@ -204,9 +208,12 @@ async function loadProfitData(force) {
   }
 }
 
-function renderProfitContent(d) {
+function renderProfitContent(dati) {
   const box = document.getElementById('profitContent');
   if (!box) return;
+  // Il ricavo del canale si aggiunge qui (non in loadProfitData), così vale anche
+  // per i conti salvati in precedenza e non si somma mai due volte.
+  const d = { ...dati, ricavoTotale: dati.ricavoTotale + RICAVO_CANALE, utile: dati.utile + RICAVO_CANALE };
 
   const costiRowsHtml = PROFIT_COSTI.map(c => `
     <tr>
@@ -227,7 +234,7 @@ function renderProfitContent(d) {
   // senza il numero degli iscritti (conti salvati da versioni precedenti) ripiega sul 20% del ricavo reale
   const quotaProfetaIscrizioni = PROFIT_SPLIT.iscrizioni.profeta * (haPaganti ? teoricoPaganti : d.ricavoIscrizioni);
   const righeSplit = [
-    { label: '🎟️ Iscrizioni gruppo', totale: d.ricavoIscrizioni, regola: PROFIT_SPLIT.iscrizioni, segno: 1,
+    { label: '🎟️ Iscrizioni', totale: d.ricavoIscrizioni, regola: PROFIT_SPLIT.iscrizioni, segno: 1,
       // il Profeta prende il 20% di tutti gli iscritti x 15 €, non del ricavo reale;
       // il resto delle iscrizioni va a metà a Direzionale ed Esperti
       override: {
@@ -236,26 +243,33 @@ function renderProfitContent(d) {
         esperti: (d.ricavoIscrizioni - quotaProfetaIscrizioni) * PROFIT_SPLIT.iscrizioni.esperti,
       },
       nota: haPaganti ? `Profeta 20% × ${d.numQuotaProfeta} iscritti × ${QUOTA_ISCRIZIONE_STANDARD}€ = 20% × ${fmtEuro(teoricoPaganti)}€ · il resto 50% · 50%` : 'Profeta 20% · il resto 50% · 50%' },
-    { label: '🔨 Quota extra aste',  totale: d.ricavoAste,       regola: PROFIT_SPLIT.aste,       segno: 1,
+    { label: '🔨 Aste', totale: d.ricavoAste,       regola: PROFIT_SPLIT.aste,       segno: 1,
       override: { profeta: 0, direzionale: d.ricavoAste - QUOTA_ASTE_ESPERTI, esperti: QUOTA_ASTE_ESPERTI },
       nota: `Esperti ${QUOTA_ASTE_ESPERTI}€ fissi · il resto al Direzionale` },
-    { label: '💸 Costi sostenuti',   totale: d.totaleCostiSostenuti, regola: PROFIT_SPLIT.costi,  segno: -1 },
+    { label: '📺 Canale', totale: RICAVO_CANALE, segno: 1,
+      override: { profeta: 0, direzionale: RICAVO_CANALE, esperti: 0 }, nota: `tutto a ${RICAVO_CANALE_A}` },
+    { label: '💸 Costi', totale: d.totaleCostiSostenuti, regola: PROFIT_SPLIT.costi,  segno: -1 },
     // costi previsti (abbonamenti fino ad aprile): detratti subito, così il conto è "pulito"
-    ...(d.totaleCostiPrevisti > 0 ? [{ label: '🔮 Costi previsionali', totale: d.totaleCostiPrevisti, regola: PROFIT_SPLIT.costi, segno: -1 }] : []),
+    ...(d.totaleCostiPrevisti > 0 ? [{ label: '🔮 Previsti', totale: d.totaleCostiPrevisti, regola: PROFIT_SPLIT.costi, segno: -1 }] : []),
   ].map(r => ({ ...r, parti: Object.fromEntries(PARTI.map(k => [k, (r.override && k in r.override) ? r.override[k] : r.segno * r.totale * r.regola[k]])) }));
   const quota = Object.fromEntries(PARTI.map(k => [k, righeSplit.reduce((sum, r) => sum + r.parti[k], 0)]));
-  const quotaProfeta = quota.profeta, quotaDirezionale = quota.direzionale, quotaEsperti = quota.esperti;
+  const quotaDirezionale = quota.direzionale;
   // Quota del Direzionale per persona: importi fissi; l'avanzo va in riserva.
   const totaleFissiDirezionale = Object.values(DIREZIONALE_FISSI).reduce((a, b) => a + b, 0);
-  const avanzoDirezionale = quotaDirezionale - totaleFissiDirezionale;
-  const quotePersoneDirezionale = Object.entries(DIREZIONALE_FISSI).map(([nome, importo]) => ({ nome, importo, nota: 'fissa' }));
+  const avanzoDirezionale = quotaDirezionale - totaleFissiDirezionale - RICAVO_CANALE;
+  const quotePersoneDirezionale = Object.entries(DIREZIONALE_FISSI).map(([nome, importo]) =>
+    ({ nome, importo: importo + (nome === RICAVO_CANALE_A ? RICAVO_CANALE : 0),
+       nota: nome === RICAVO_CANALE_A ? `${importo} + ${RICAVO_CANALE} canale` : 'fissa' }));
   const fmtSigned = n => (n < 0 ? '−' : '') + '€' + fmtEuro(Math.abs(n));
   const fmtRegola = reg => PARTI.map(k => Math.round(reg[k] * 100) + '%').join(' · ');
+  // Tabella compatta (sta nella larghezza di un telefono): numeri senza €.
+  const fmtN = n => (n < 0 ? '−' : '') + Math.abs(n).toLocaleString('it-IT', { maximumFractionDigits: 2 });
+  const cellaN = 'text-align:right; font-family:var(--font-mono); white-space:nowrap; padding:5px 2px;';
   const splitRowsHtml = righeSplit.map(r => `
     <tr>
-      <td style="color:var(--ink);">${r.label}<div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute);">${r.nota || fmtRegola(r.regola)}</div></td>
-      <td style="text-align:right; font-family:var(--font-mono); color:var(--ink-soft);">${fmtSigned(r.segno * r.totale)}</td>
-      ${PARTI.map(k => `<td style="text-align:right; font-family:var(--font-mono); color:${r.parti[k] < 0 ? 'var(--neg)' : (r.parti[k] === 0 ? 'var(--ink-mute)' : 'var(--ink)')};">${fmtSigned(r.parti[k])}</td>`).join('')}
+      <td style="color:var(--ink); padding:5px 2px;" title="${esc(r.nota || fmtRegola(r.regola))}">${r.label}</td>
+      <td style="${cellaN} color:var(--ink-soft);">${fmtN(r.segno * r.totale)}</td>
+      ${PARTI.map(k => `<td style="${cellaN} color:${r.parti[k] < 0 ? 'var(--neg)' : (r.parti[k] === 0 ? 'var(--ink-mute)' : 'var(--ink)')};">${fmtN(r.parti[k])}</td>`).join('')}
     </tr>`).join('');
   // Controllo di coerenza: la somma delle tre quote deve coincidere con l'utile netto;
   // se non coincide per qualche motivo la differenza resta visibile, non assegnata.
@@ -266,131 +280,84 @@ function renderProfitContent(d) {
   const riservaProssimoAnno = avanzoDirezionale + nonAssegnato;
 
   box.innerHTML = `
-    <div class="panel" style="margin-bottom:28px;">
+    <div class="panel profit-conto" style="margin-bottom:28px;">
+      <style>
+        .profit-conto .mini-table td, .profit-conto .mini-table th { padding:5px 2px; }
+        .profit-costi > summary::-webkit-details-marker { display:none; }
+        .profit-costi[open] .profit-costi-chevron { transform:rotate(180deg); }
+        .profit-grid { display:grid; gap:6px; }
+        .profit-grid .mini-card { padding:7px 8px; min-width:0; }
+        .profit-grid .mini-value { font-size:15px; white-space:nowrap; }
+        .profit-grid .mini-label { font-size:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      </style>
       <div class="panel-title"><span class="material-symbols-rounded">account_balance</span> Conto economico</div>
-      <div class="panel-sub">Ricavi e costi del progetto, da giugno in poi</div>
+      <div class="panel-sub">Da giugno in poi · il montepremio non è ricavo · FantaListone escluso</div>
 
-      <div class="mini-card" style="display:flex; gap:20px; flex-wrap:wrap; margin:12px 0 16px;">
-        <div style="flex:1; min-width:110px;">
-          <div class="mini-label">💰 Ricavi</div>
-          <div class="mini-value" style="font-size:19px; color:var(--accent);">€${fmtEuro(d.ricavoTotale)}</div>
-        </div>
-        <div style="flex:1; min-width:110px;">
-          <div class="mini-label">💸 Costi</div>
-          <div class="mini-value" style="font-size:19px; color:var(--neg);">€${fmtEuro(d.totaleCostiSostenuti)}</div>
-        </div>
-        <div style="flex:1; min-width:110px;">
-          <div class="mini-label">${d.utile >= 0 ? '📈' : '📉'} Utile netto</div>
-          <div class="mini-value" style="font-size:19px; color:${d.utile >= 0 ? 'var(--pos)' : 'var(--neg)'};">€${fmtEuro(d.utile)}</div>
-        </div>
+      <div class="profit-grid" style="grid-template-columns:repeat(3,1fr); margin:10px 0;">
+        <div class="mini-card"><div class="mini-label">💰 Ricavi</div><div class="mini-value" style="color:var(--accent);">€${fmtEuro(d.ricavoTotale)}</div></div>
+        <div class="mini-card"><div class="mini-label">💸 Costi</div><div class="mini-value" style="color:var(--neg);">€${fmtEuro(d.totaleCostiSostenuti)}</div></div>
+        <div class="mini-card"><div class="mini-label">${d.utile >= 0 ? '📈' : '📉'} Utile</div><div class="mini-value" style="color:${d.utile >= 0 ? 'var(--pos)' : 'var(--neg)'};">€${fmtEuro(d.utile)}</div></div>
       </div>
 
-      <div class="panel-grid equal" style="align-items:start;">
-        <div>
-          <div class="mini-section-label" style="color:var(--pos);">Ricavi</div>
-          <table class="mini-table">
-            <tbody>
-              <tr>
-                <td style="color:var(--ink);">🎟️ Iscrizioni gruppo</td>
-                <td style="color:var(--ink-mute); font-family:var(--font-mono); font-size:10.5px; text-align:right;">${d.numIscrizioni} isc.</td>
-                <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--ink-soft);">€${d.ricavoIscrizioni}</td>
-              </tr>
-              <tr>
-                <td style="color:var(--ink);">🔨 Quota extra aste</td>
-                <td style="color:var(--ink-mute); font-family:var(--font-mono); font-size:10.5px; text-align:right;">5€/asta</td>
-                <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--pos);">€${d.ricavoAste}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="mini-label" style="margin-top:8px; text-transform:none;">Il montepremio non è ricavo: va al vincitore. FantaListone escluso.</div>
-        </div>
-
-        <details class="profit-costi">
-          <summary style="list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px; user-select:none;">
-            <span class="mini-section-label" style="color:var(--neg); margin:0;">Dettaglio costi</span>
-            <span style="display:inline-flex; align-items:center; gap:4px; font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--neg);">
-              €${d.totaleCostiSostenuti}
-              <span class="material-symbols-rounded profit-costi-chevron" style="font-size:18px; color:var(--ink-mute); transition:transform .2s;">expand_more</span>
-            </span>
-          </summary>
-          <style>
-            .profit-costi > summary::-webkit-details-marker { display:none; }
-            .profit-costi[open] .profit-costi-chevron { transform:rotate(180deg); }
-          </style>
-          <div style="overflow-x:auto; margin-top:8px;">
-            <table class="mini-table" style="font-size:12px; text-align:left;">
-              <tbody>${costiRowsHtml}</tbody>
-              <tfoot>
-                <tr style="border-top:2px solid var(--line-strong); font-weight:700;">
-                  <td colspan="2" style="color:var(--ink);">Totale sostenuti</td>
-                  <td style="text-align:right; font-family:var(--font-mono); color:var(--neg);">€${d.totaleCostiSostenuti}</td>
-                </tr>
-                ${d.totaleCostiPrevisti > 0 ? `<tr style="font-weight:700;">
-                  <td colspan="2" style="color:var(--ink-mute);">Totale previsti (fino ad aprile)</td>
-                  <td style="text-align:right; font-family:var(--font-mono); color:var(--ink-mute);">€${d.totaleCostiPrevisti}</td>
-                </tr>` : ''}
-              </tfoot>
-            </table>
-          </div>
-        </details>
+      <table class="mini-table" style="font-size:11.5px; text-align:left; width:100%;">
+        <thead>
+          <tr style="color:var(--ink-mute); font-family:var(--font-mono); font-size:9.5px; text-transform:uppercase;">
+            <th style="font-weight:600;">Voce (€)</th>
+            <th style="font-weight:600; text-align:right;">Tot.</th>
+            <th style="font-weight:600; text-align:right;">Profeta</th>
+            <th style="font-weight:600; text-align:right;">Dir.</th>
+            <th style="font-weight:600; text-align:right;">Esperti</th>
+          </tr>
+        </thead>
+        <tbody>${splitRowsHtml}</tbody>
+        <tfoot>
+          <tr style="border-top:2px solid var(--line-strong); font-weight:700;">
+            <td style="color:var(--ink); padding:5px 2px;">Spettante</td>
+            <td style="${cellaN} color:${utileDopoPrevisti >= 0 ? 'var(--pos)' : 'var(--neg)'};">${fmtN(utileDopoPrevisti)}</td>
+            ${PARTI.map(k => `<td style="${cellaN} color:${quota[k] >= 0 ? 'var(--pos)' : 'var(--neg)'};">${fmtN(quota[k])}</td>`).join('')}
+          </tr>
+        </tfoot>
+      </table>
+      <div style="font-family:var(--font-mono); font-size:9.5px; color:var(--ink-mute); margin:4px 0 10px;">
+        Iscrizioni: Profeta 20% × ${haPaganti ? `${d.numQuotaProfeta} × ${QUOTA_ISCRIZIONE_STANDARD}€` : 'ricavo'}, resto 50/50 · Aste: ${QUOTA_ASTE_ESPERTI}€ agli Esperti · Canale: tutto a ${RICAVO_CANALE_A} · Costi 50/50, previsti fino ad aprile
       </div>
 
-      <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--line);">
-        <div class="mini-section-label" style="color:var(--accent);">Suddivisione ricavi e costi</div>
-        <div style="overflow-x:auto; margin-bottom:12px;">
-          <table class="mini-table" style="font-size:12px; text-align:left; min-width:420px;">
-            <thead>
-              <tr style="color:var(--ink-mute); font-family:var(--font-mono); font-size:10px; text-transform:uppercase;">
-                <th style="font-weight:600;">Voce</th>
-                <th style="font-weight:600; text-align:right;">Totale</th>
-                <th style="font-weight:600; text-align:right;">Profeta</th>
-                <th style="font-weight:600; text-align:right;">Direzionale</th>
-                <th style="font-weight:600; text-align:right;">Esperti</th>
-              </tr>
-            </thead>
-            <tbody>${splitRowsHtml}</tbody>
-            <tfoot>
-              <tr style="border-top:2px solid var(--line-strong); font-weight:700;">
-                <td style="color:var(--ink);">Totale spettante${d.totaleCostiPrevisti > 0 ? '<div style="font-family:var(--font-mono); font-size:10px; font-weight:400; color:var(--ink-mute);">dopo i costi previsionali</div>' : ''}</td>
-                <td style="text-align:right; font-family:var(--font-mono); color:${utileDopoPrevisti >= 0 ? 'var(--pos)' : 'var(--neg)'};">${fmtSigned(utileDopoPrevisti)}</td>
-                ${PARTI.map(k => `<td style="text-align:right; font-family:var(--font-mono); color:${quota[k] >= 0 ? 'var(--pos)' : 'var(--neg)'};">${fmtSigned(quota[k])}</td>`).join('')}
-              </tr>
-              ${Math.abs(nonAssegnato) >= 0.005 ? `<tr>
-                <td colspan="5" style="color:var(--ink-mute); font-family:var(--font-mono); font-size:10px; font-weight:400;">Somma delle quote ${fmtSigned(sommaQuote)} · utile netto ${fmtSigned(utileDopoPrevisti)} · differenza non assegnata ${fmtSigned(nonAssegnato)}</td>
-              </tr>` : ''}
-            </tfoot>
-          </table>
-        </div>
-        <div style="display:flex; gap:12px; flex-wrap:wrap;">
-          <div class="mini-card" style="flex:1; min-width:140px;">
-            <div class="mini-label">👤 Quota Profeta</div>
-            <div class="mini-value">${fmtSigned(quotaProfeta)}</div>
-          </div>
-          <div class="mini-card" style="flex:1; min-width:140px;">
-            <div class="mini-label">🧭 Gruppo Direzionale</div>
-            <div class="mini-value">${fmtSigned(quotaDirezionale)}</div>
-          </div>
-          <div class="mini-card" style="flex:1; min-width:140px;">
-            <div class="mini-label">🎙️ Gruppo Esperti</div>
-            <div class="mini-value">${fmtSigned(quotaEsperti)}</div>
-          </div>
-        </div>
-        <div class="mini-section-label" style="color:var(--accent); margin-top:16px;">Quote del Direzionale</div>
-        <div style="display:flex; gap:12px; flex-wrap:wrap;">
-          ${quotePersoneDirezionale.map(p => `<div class="mini-card" style="flex:1; min-width:110px;">
-            <div class="mini-label">${p.nome}</div>
-            <div class="mini-value">${fmtSigned(Math.round(p.importo * 100) / 100)}</div>
-            <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute);">${p.nota}</div>
-          </div>`).join('')}
-          <div class="mini-card" style="flex:1; min-width:110px;">
-            <div class="mini-label">🏦 Riserva prossimo anno</div>
-            <div class="mini-value" style="color:${riservaProssimoAnno < 0 ? 'var(--neg)' : 'var(--pos)'};">${fmtSigned(Math.round(riservaProssimoAnno * 100) / 100)}</div>
-            <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute);">avanzo e ricavi non distribuiti</div>
-          </div>
+      <div class="mini-section-label" style="color:var(--accent); margin-bottom:4px;">Direzionale per persona</div>
+      <div class="profit-grid" style="grid-template-columns:repeat(5,1fr);">
+        ${quotePersoneDirezionale.map(p => `<div class="mini-card" title="${esc(p.nota)}">
+          <div class="mini-label">${p.nome}</div>
+          <div class="mini-value">€${fmtEuro(Math.round(p.importo * 100) / 100)}</div>
+        </div>`).join('')}
+        <div class="mini-card" title="avanzo del Direzionale e ricavi non distribuiti">
+          <div class="mini-label">Riserva</div>
+          <div class="mini-value" style="color:${riservaProssimoAnno < 0 ? 'var(--neg)' : 'var(--pos)'};">${fmtSigned(Math.round(riservaProssimoAnno * 100) / 100)}</div>
         </div>
       </div>
+      <div style="font-family:var(--font-mono); font-size:9.5px; color:var(--ink-mute); margin-top:4px;">${RICAVO_CANALE_A}: ${DIREZIONALE_FISSI[RICAVO_CANALE_A]} + ${RICAVO_CANALE} del canale · Riserva = avanzo per il prossimo anno${Math.abs(nonAssegnato) >= 0.005 ? ` (di cui ${fmtSigned(nonAssegnato)} non assegnati)` : ''}</div>
+
+      <details class="profit-costi" style="margin-top:10px;">
+        <summary style="list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px; user-select:none;">
+          <span class="mini-section-label" style="color:var(--neg); margin:0;">Dettaglio costi</span>
+          <span style="display:inline-flex; align-items:center; gap:4px; font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--neg);">
+            €${d.totaleCostiSostenuti}
+            <span class="material-symbols-rounded profit-costi-chevron" style="font-size:18px; color:var(--ink-mute); transition:transform .2s;">expand_more</span>
+          </span>
+        </summary>
+        <table class="mini-table" style="font-size:12px; text-align:left; margin-top:6px;">
+          <tbody>${costiRowsHtml}</tbody>
+          <tfoot>
+            <tr style="border-top:2px solid var(--line-strong); font-weight:700;">
+              <td colspan="2" style="color:var(--ink);">Totale sostenuti</td>
+              <td style="text-align:right; font-family:var(--font-mono); color:var(--neg);">€${d.totaleCostiSostenuti}</td>
+            </tr>
+            ${d.totaleCostiPrevisti > 0 ? `<tr style="font-weight:700;">
+              <td colspan="2" style="color:var(--ink-mute);">Totale previsti (fino ad aprile)</td>
+              <td style="text-align:right; font-family:var(--font-mono); color:var(--ink-mute);">€${d.totaleCostiPrevisti}</td>
+            </tr>` : ''}
+          </tfoot>
+        </table>
+      </details>
     </div>
-
     <div class="panel">
       <div class="panel-title"><span class="material-symbols-rounded">account_balance_wallet</span> Saldo PayPal</div>
       <div class="panel-sub">Tutto l'incassato, senza filtri di data — montepremio delle aste compreso, perché è ancora lì finché non lo versiamo al vincitore</div>
