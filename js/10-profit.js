@@ -73,9 +73,9 @@ const QUOTA_ISCRIZIONE_STANDARD = 15;
 // Per costruzione Profeta + Direzionale + Esperti == utile netto.
 const QUOTA_ASTE_ESPERTI = 200;
 // Come si divide la quota del Direzionale tra le persone (deciso il 9/11/2026):
-// a Nic una quota fissa, il resto in parti uguali tra gli altri tre.
-const DIREZIONALE_FISSI = { Nic: 700 };
-const DIREZIONALE_RESTO = ['Marco', 'Frenk', 'Lerry'];
+// quote fisse a persona; quello che avanza va nella riserva per il prossimo anno,
+// insieme a ogni altro ricavo non distribuito.
+const DIREZIONALE_FISSI = { Nic: 700, Marco: 570, Frenk: 570, Lerry: 570 };
 const PROFIT_SPLIT = {
   iscrizioni: { profeta: 0.20, direzionale: 0.50, esperti: 0.50 },
   aste:       { profeta: 0,    direzionale: 1,    esperti: 0 },
@@ -245,13 +245,10 @@ function renderProfitContent(d) {
   ].map(r => ({ ...r, parti: Object.fromEntries(PARTI.map(k => [k, (r.override && k in r.override) ? r.override[k] : r.segno * r.totale * r.regola[k]])) }));
   const quota = Object.fromEntries(PARTI.map(k => [k, righeSplit.reduce((sum, r) => sum + r.parti[k], 0)]));
   const quotaProfeta = quota.profeta, quotaDirezionale = quota.direzionale, quotaEsperti = quota.esperti;
-  // Quota del Direzionale per persona: prima i fissi, il resto in parti uguali.
+  // Quota del Direzionale per persona: importi fissi; l'avanzo va in riserva.
   const totaleFissiDirezionale = Object.values(DIREZIONALE_FISSI).reduce((a, b) => a + b, 0);
-  const quotaRestoDirezionale = (quotaDirezionale - totaleFissiDirezionale) / DIREZIONALE_RESTO.length;
-  const quotePersoneDirezionale = [
-    ...Object.entries(DIREZIONALE_FISSI).map(([nome, importo]) => ({ nome, importo, nota: 'fissa' })),
-    ...DIREZIONALE_RESTO.map(nome => ({ nome, importo: quotaRestoDirezionale, nota: `1/${DIREZIONALE_RESTO.length} del resto` })),
-  ];
+  const avanzoDirezionale = quotaDirezionale - totaleFissiDirezionale;
+  const quotePersoneDirezionale = Object.entries(DIREZIONALE_FISSI).map(([nome, importo]) => ({ nome, importo, nota: 'fissa' }));
   const fmtSigned = n => (n < 0 ? '−' : '') + '€' + fmtEuro(Math.abs(n));
   const fmtRegola = reg => PARTI.map(k => Math.round(reg[k] * 100) + '%').join(' · ');
   const splitRowsHtml = righeSplit.map(r => `
@@ -265,6 +262,8 @@ function renderProfitContent(d) {
   const sommaQuote = PARTI.reduce((sum, k) => sum + quota[k], 0);
   const utileDopoPrevisti = d.utile - (d.totaleCostiPrevisti || 0);
   const nonAssegnato = utileDopoPrevisti - sommaQuote;
+  // Riserva per il prossimo anno: l'avanzo del Direzionale più ogni ricavo non distribuito.
+  const riservaProssimoAnno = avanzoDirezionale + nonAssegnato;
 
   box.innerHTML = `
     <div class="panel" style="margin-bottom:28px;">
@@ -383,6 +382,11 @@ function renderProfitContent(d) {
             <div class="mini-value">${fmtSigned(Math.round(p.importo * 100) / 100)}</div>
             <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute);">${p.nota}</div>
           </div>`).join('')}
+          <div class="mini-card" style="flex:1; min-width:110px;">
+            <div class="mini-label">🏦 Riserva prossimo anno</div>
+            <div class="mini-value" style="color:${riservaProssimoAnno < 0 ? 'var(--neg)' : 'var(--pos)'};">${fmtSigned(Math.round(riservaProssimoAnno * 100) / 100)}</div>
+            <div style="font-family:var(--font-mono); font-size:10px; color:var(--ink-mute);">avanzo e ricavi non distribuiti</div>
+          </div>
         </div>
       </div>
     </div>
