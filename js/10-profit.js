@@ -19,6 +19,16 @@ const FANTALISTONE_QUOTA = 10;
 // Un iscritto risulta nel foglio ma non paga la quota — va escluso dall'incasso.
 const FANTALISTONE_NON_PAGANTI = 1;
 
+// Quote già pagate dal conto PayPal (escono dal saldo PayPal, non toccano il conto
+// economico). Quando si paga qualcuno, aggiungi una riga qui.
+const PAYPAL_QUOTE_PAGATE = [
+  { mese: 'Novembre 2026', chi: 'Profeta', importo: 696 },
+  { mese: 'Novembre 2026', chi: 'Lerry', importo: 700 },
+  { mese: 'Novembre 2026', chi: 'Nic', importo: 570 },
+  { mese: 'Novembre 2026', chi: 'Marco', importo: 570 },
+  { mese: 'Novembre 2026', chi: 'Frenk', importo: 570 },
+];
+
 // Costi fissi della stagione, inseriti a mano (nessun foglio li tiene — se ne
 // aggiungi uno nuovo, aggiungi una riga qui). Se il nuovo costo corrisponde a una
 // riga "previsto" (stesso mese e stessa voce), togli quella riga: il costo passa da
@@ -209,6 +219,10 @@ async function loadProfitData(force) {
 function renderProfitContent(d) {
   const box = document.getElementById('profitContent');
   if (!box) return;
+  // Le quote pagate si tolgono qui (non in loadProfitData): così valgono anche per
+  // i conti salvati prima e non si sottraggono mai due volte.
+  const totaleQuotePagate = PAYPAL_QUOTE_PAGATE.reduce((sum, q) => sum + q.importo, 0);
+  const saldoPaypalNetto = d.saldoPaypal - totaleQuotePagate;
 
   const costiRowsHtml = PROFIT_COSTI.map(c => `
     <tr>
@@ -365,9 +379,14 @@ function renderProfitContent(d) {
           <div class="kpi-target">Stessi costi di sopra</div>
         </div>
         <div class="kpi">
+          <div class="kpi-label">🤝 Quote pagate</div>
+          <div class="kpi-value" style="color:var(--neg);">€${totaleQuotePagate}</div>
+          <div class="kpi-target">Profeta e direttivo</div>
+        </div>
+        <div class="kpi">
           <div class="kpi-label">🏦 Saldo atteso</div>
-          <div class="kpi-value" style="color:${d.saldoPaypal >= 0 ? 'var(--pos)' : 'var(--neg)'};">€${d.saldoPaypal}</div>
-          <div class="kpi-target">Incassato meno costi</div>
+          <div class="kpi-value" style="color:${saldoPaypalNetto >= 0 ? 'var(--pos)' : 'var(--neg)'};">€${saldoPaypalNetto}</div>
+          <div class="kpi-target">Incassato meno costi e quote pagate</div>
         </div>
       </div>
 
@@ -388,6 +407,11 @@ function renderProfitContent(d) {
             <td style="color:var(--ink-mute); font-family:var(--font-mono); font-size:11px;">${d.fantalistonePaganti} paganti × 10€ (${d.fantalistoneCount} iscritti)</td>
             <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--ink-soft);">€${d.incassoFantalistone}</td>
           </tr>
+          ${PAYPAL_QUOTE_PAGATE.map(q => `<tr>
+            <td style="color:var(--ink);">🤝 ${q.chi}</td>
+            <td style="color:var(--ink-mute); font-family:var(--font-mono); font-size:11px;">quota pagata · ${q.mese}</td>
+            <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--neg); white-space:nowrap;">−€${q.importo}</td>
+          </tr>`).join('')}
         </tbody>
       </table>
     </div>
